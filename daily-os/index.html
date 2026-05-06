@@ -1,0 +1,3979 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Daily OS</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1A1917" id="themeColorMeta">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Daily OS">
+  <link rel="apple-touch-icon" href="icon.svg">
+
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --surface: #FFFFFF;
+      --surface2: #F5F5F5;
+      --border: #EBEBEB;
+      --text: #1A1917;
+      --text-2: #6B6A65;
+      --text-3: #A8A7A2;
+      --accent: #1A1917;
+      --accent-fg: #FFFFFF;
+      --urgent: #C0392B;
+      --urgent-bg: #FDF2F0;
+      --soon: #B7770D;
+      --soon-bg: #FEF9EC;
+      --normal: #2C7A7B;
+      --normal-bg: #F0F8F8;
+      --xp: #555555;
+      --xp-bg: #F5F5F5;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    body.dark {
+      --bg: #0F0F0F;
+      --surface: #1A1A1A;
+      --surface2: #222222;
+      --border: #2A2A2A;
+      --text: #F0F0F0;
+      --text-2: #A0A0A0;
+      --text-3: #606060;
+      --accent: #F0F0F0;
+      --accent-fg: #0F0F0F;
+      --urgent: #E05A4A;
+      --urgent-bg: #1F1210;
+      --soon: #D4922A;
+      --soon-bg: #1A1508;
+      --normal: #3D9B9C;
+      --normal-bg: #0A1A1A;
+      --xp: #E0E0E0;
+      --xp-bg: #1E1E1E;
+      --shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    input, textarea, select, [contenteditable] {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* ===== HEADER ===== */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .top-bar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    .top-bar-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+      margin-top: 1px;
+    }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border: none;
+      background: var(--surface2);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .icon-btn:hover { background: var(--border); }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      padding: 6px 0 20px;
+      z-index: 100;
+    }
+    .nav-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 3px;
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      font-size: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      padding: 6px 0;
+      transition: color 0.15s;
+    }
+    .nav-item svg { width: 20px; height: 20px; }
+    .nav-item.active { color: var(--text); }
+    .nav-item.active svg { stroke-width: 2.5; }
+
+    /* ===== VIEWS ===== */
+    .view { display: none; padding: 20px; }
+    .view.active { display: block; }
+
+    /* ===== XP BANNER ===== */
+    .xp-card {
+      background: var(--xp-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .xp-icon {
+      width: 36px; height: 36px;
+      background: var(--xp);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--bg);
+      flex-shrink: 0;
+    }
+    .xp-label { font-size: 10px; color: var(--xp); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+    .xp-value { font-size: 20px; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }
+    .xp-bar-track {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: var(--xp);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ===== FAB ===== */
+    .fab {
+      position: fixed;
+      bottom: 90px;
+      right: calc(50% - 220px);
+      width: 48px; height: 48px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-md);
+      z-index: 90;
+      transition: transform 0.15s, opacity 0.2s;
+    }
+    .fab:hover { transform: scale(1.05); }
+    .fab.hidden { opacity: 0; pointer-events: none; }
+    @media (max-width: 480px) { .fab { right: 20px; } }
+
+    /* ===== HABIT CARD ===== */
+    .habit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      overflow: visible;
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 1;
+    }
+    .habit-card.menu-open {
+      z-index: 50;
+    }
+    .habit-card-header {
+      padding: 14px 14px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .habit-color-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(128,128,128,0.2);
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    body.dark .habit-color-dot[data-dark-invert="1"] {
+      background: #E0E0E0 !important;
+    }
+    .habit-name {
+      font-size: 14px;
+      font-weight: 500;
+      flex: 1;
+      line-height: 1.3;
+    }
+    .habit-cat {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 2px;
+      font-family: 'DM Mono', monospace;
+    }
+    .habit-actions {
+      display: flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .card-btn {
+      width: 32px; height: 32px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-2);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, color 0.15s;
+    }
+    .card-btn:hover { background: var(--surface2); color: var(--text); }
+    .card-btn svg { width: 16px; height: 16px; }
+
+    .habit-subtasks { padding: 0 14px 14px 30px; }
+    .habit-subtasks.collapsed { display: none; }
+    /* Jaga border-radius card bawah tetap rapi */
+    .habit-card-header { border-radius: var(--radius) var(--radius) 0 0; }
+
+    .subtask-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0;
+      border-top: 1px solid var(--border);
+    }
+    .subtask-row:first-child { border-top: none; }
+    .checkbox {
+      width: 16px; height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .checkbox.checked {
+      background: var(--text);
+      border-color: var(--text);
+    }
+    .checkbox.checked::after {
+      content: '';
+      width: 8px; height: 5px;
+      border-left: 1.5px solid var(--accent-fg);
+      border-bottom: 1.5px solid var(--accent-fg);
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+    .subtask-text {
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      user-select: none;
+    }
+    .subtask-text.done {
+      color: var(--text-3);
+      text-decoration: line-through;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-3);
+    }
+    .empty-state svg { margin-bottom: 12px; opacity: 0.3; }
+    .empty-state p { font-size: 13px; }
+
+    /* ===== DROPDOWN MENU ===== */
+    .dropdown-wrapper { position: relative; }
+    .dropdown-menu {
+      position: absolute;
+      right: 0; top: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-md);
+      z-index: 200;
+      overflow: hidden;
+      min-width: 120px;
+    }
+    .dropdown-menu.hidden { display: none; }
+    .dropdown-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      background: none; border: none;
+      cursor: pointer;
+      width: 100%;
+      color: var(--text);
+      transition: background 0.1s;
+      font-family: 'DM Sans', sans-serif;
+      text-align: left;
+      line-height: 1;
+    }
+    .dropdown-item svg { width: 14px; height: 14px; flex-shrink: 0; stroke: currentColor; fill: none; }
+    .dropdown-item:hover { background: var(--surface2); }
+    .dropdown-item.danger { color: var(--urgent); }
+
+    /* ===== TO-DO SECTION ===== */
+    .todo-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      box-shadow: var(--shadow);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: opacity 0.2s;
+    }
+    .todo-card.done-card { opacity: 0.5; }
+    .todo-info { flex: 1; }
+    .todo-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+    .todo-title.done { text-decoration: line-through; color: var(--text-3); }
+    .todo-meta {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 5px;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .badge-urgent { background: var(--urgent-bg); color: var(--urgent); }
+    .badge-soon { background: var(--soon-bg); color: var(--soon); }
+    .badge-normal { background: var(--normal-bg); color: var(--normal); }
+    .todo-deadline {
+      font-size: 11px;
+      color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+    }
+    .todo-deadline.overdue { color: var(--urgent); }
+    .todo-checkbox {
+      width: 18px; height: 18px;
+      border: 1.5px solid var(--border);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.15s;
+    }
+    .todo-checkbox.checked {
+      background: var(--text);
+      border-color: var(--text);
+    }
+    .todo-checkbox.checked::after {
+      content: '';
+      width: 8px; height: 5px;
+      border-left: 1.5px solid var(--accent-fg);
+      border-bottom: 1.5px solid var(--accent-fg);
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+    .todo-del {
+      width: 24px; height: 24px;
+      background: none; border: none;
+      cursor: pointer;
+      color: var(--text-3);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .todo-del:hover { color: var(--urgent); }
+    .todo-del svg { width: 13px; height: 13px; }
+
+    /* ===== TODO SUBTASKS ===== */
+    .todo-subtasks {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+    }
+    .todo-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 4px 0;
+    }
+    .todo-sub-check {
+      width: 14px; height: 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .todo-sub-check.checked {
+      background: var(--text-3);
+      border-color: var(--text-3);
+    }
+    .todo-sub-check.checked::after {
+      content: '';
+      width: 7px; height: 4px;
+      border-left: 1.5px solid var(--accent-fg);
+      border-bottom: 1.5px solid var(--accent-fg);
+      transform: rotate(-45deg) translateY(-1px);
+      display: block;
+    }
+    .todo-sub-text {
+      font-size: 12px;
+      color: var(--text-2);
+      flex: 1;
+      line-height: 1.3;
+    }
+    .todo-sub-text.done {
+      color: var(--text-3);
+      text-decoration: line-through;
+    }
+
+    /* ===== STATS ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .stat-val {
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 4px;
+      font-family: 'DM Mono', monospace;
+    }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 10px;
+    }
+    .chart-card h3 { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+    .chart-wrapper { height: 140px; }
+    .range-select {
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .chart-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+    /* Calendar */
+    .calendar-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 10px;
+    }
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .cal-nav-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text); font-size: 16px; padding: 4px 8px;
+    }
+    .cal-month { font-size: 13px; font-weight: 500; }
+    .cal-sub { font-size: 10px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+    .cal-weekdays {
+      display: grid; grid-template-columns: repeat(7,1fr);
+      margin-bottom: 6px;
+    }
+    .cal-weekdays span {
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+      padding: 4px 0;
+    }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px;
+      font-size: 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-2);
+      transition: background 0.1s;
+      position: relative;
+    }
+    .cal-day:hover { background: var(--surface2); }
+    .cal-day.today { background: var(--text); color: var(--bg); font-weight: 600; }
+    .cal-day.has-data { color: var(--text); font-weight: 500; }
+    .cal-day.today.has-data { background: var(--text); color: var(--bg); }
+    .cal-day.empty { cursor: default; }
+    /* Titik indikator habit */
+    .cal-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--text);
+      flex-shrink: 0;
+    }
+    .cal-day.today .cal-dot { background: var(--bg); }
+
+    .cal-detail {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .cal-detail.hidden { display: none; }
+    .cal-detail h4 { font-size: 12px; font-weight: 500; margin-bottom: 8px; color: var(--text-2); }
+    .cal-detail ul { list-style: none; }
+    .cal-detail li {
+      font-size: 12px;
+      color: var(--text-2);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cal-detail li:last-child { border-bottom: none; }
+
+    .settings-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+    .setting-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-info strong { font-size: 13px; font-weight: 500; display: block; }
+    .setting-info p { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+    .setting-info { flex: 1; }
+    .btn-sm {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-sm:hover { background: var(--border); }
+    .btn-sm.danger { background: var(--urgent-bg); color: var(--urgent); border-color: #F5C0B8; }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 300;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+    .modal-overlay.open { display: flex; align-items: flex-end; justify-content: center; }
+    .modal-sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px;
+      padding: 0 0 40px;
+      max-height: 90vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px auto 16px;
+    }
+    .modal-header-bar {
+      display: flex; align-items: center;
+      padding: 0 16px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header-bar h3 { font-size: 15px; font-weight: 600; flex: 1; }
+    .modal-close {
+      background: none; border: none;
+      font-size: 13px; color: var(--text-3);
+      cursor: pointer; padding: 4px 8px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .modal-save {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border: none;
+      font-size: 13px; font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .modal-body { padding: 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'DM Mono', monospace;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--text); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .priority-toggle {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+    }
+    .priority-btn {
+      padding: 9px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: none;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-3);
+      transition: all 0.15s;
+    }
+    .priority-btn.active-urgent {
+      border-color: var(--urgent);
+      background: var(--urgent-bg);
+      color: var(--urgent);
+    }
+    .priority-btn.active-soon {
+      border-color: var(--soon);
+      background: var(--soon-bg);
+      color: var(--soon);
+    }
+    .priority-btn.active-normal {
+      border-color: var(--normal);
+      background: var(--normal-bg);
+      color: var(--normal);
+    }
+    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-dot.active { border-color: var(--text); transform: scale(1.15); }
+
+    .sub-input-row {
+      display: flex; gap: 8px; margin-bottom: 8px; align-items: center;
+    }
+    .sub-input-row input { flex: 1; }
+    .sub-remove {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-size: 16px; padding: 0 4px;
+      line-height: 1;
+    }
+    .sub-remove:hover { color: var(--urgent); }
+    .btn-add-sub {
+      font-size: 12px; color: var(--text-3);
+      background: none; border: 1px dashed var(--border);
+      width: 100%; padding: 8px;
+      border-radius: 7px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-add-sub:hover { border-color: var(--text-3); color: var(--text); }
+
+    /* ===== CUSTOM ALERT ===== */
+    .alert-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 500;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(2px);
+    }
+    .alert-overlay.open { display: flex; }
+    .alert-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px;
+      max-width: 320px;
+      width: 100%;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+    .alert-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 12px;
+    }
+    .alert-icon.success { background: #EBF9F0; color: #2D9B60; }
+    .alert-icon.warning { background: #FEF6E4; color: #D48806; }
+    .alert-icon.error { background: var(--urgent-bg); color: var(--urgent); }
+    .alert-icon.info { background: var(--surface2); color: var(--text-2); }
+    .alert-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .alert-msg { font-size: 13px; color: var(--text-2); line-height: 1.5; margin-bottom: 20px; white-space: pre-line; }
+    .alert-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .alert-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .alert-btn:hover { background: var(--border); }
+    .alert-btn.primary {
+      background: var(--text);
+      color: var(--accent-fg);
+      border-color: var(--text);
+    }
+    .alert-btn.primary:hover { opacity: 0.85; }
+    .alert-btn.hidden { display: none; }
+
+    /* ===== UTILS ===== */
+    .hidden { display: none !important; }
+    .divider { height: 1px; background: var(--border); margin: 12px 0; }
+    .hint { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+    .mb-4 { margin-bottom: 4px; }
+    .todo-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 16px 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .todo-section-label::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-3);
+    }
+    /* Clickable done label */
+    .todo-section-label.done-lbl {
+      cursor: pointer;
+      user-select: none;
+      padding: 6px 0;
+    }
+    .todo-section-label.done-lbl:hover { color: var(--text-2); }
+    .done-chevron {
+      margin-left: auto;
+      transition: transform 0.2s;
+      color: var(--text-3);
+    }
+    .done-chevron.open { transform: rotate(180deg); }
+    .done-items {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+    .done-items.open { max-height: 9999px; }
+    .todo-section-label.urgent::before { background: var(--urgent); }
+    .todo-section-label.soon::before { background: var(--soon); }
+    .todo-section-label.normal::before { background: var(--normal); }
+    .todo-section-label.done-lbl::before { background: var(--border); }
+    .todo-section-label:first-of-type { margin-top: 0; }
+
+    .habit-card.off-schedule { opacity: 0.45; }
+    .checkbox.disabled { cursor: not-allowed; pointer-events: none; }
+
+    /* ===== ICON PICKER ===== */
+    .icon-picker {
+      display: grid; grid-template-columns: repeat(6, 1fr);
+      gap: 6px; margin-top: 4px;
+    }
+    .icon-opt {
+      aspect-ratio: 1; border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.15s; padding: 6px;
+      color: var(--text-2);
+    }
+    .icon-opt:hover { border-color: var(--text-2); color: var(--text); }
+    .icon-opt.active {
+      border-color: var(--text);
+      background: var(--text);
+      color: var(--accent-fg);
+    }
+    .icon-opt svg { width: 18px; height: 18px; }
+
+    /* Habit icon di card */
+    .habit-icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; color: white;
+    }
+    .habit-icon svg { width: 16px; height: 16px; }
+    /* Warna terang (putih) — icon jadi gelap + border */
+    .habit-icon.light-color {
+      color: #1A1917;
+      border: 1.5px solid #E5E5E5;
+    }
+    /* Warna gelap (hitam) di dark mode — background jadi terang */
+    body.dark .habit-icon.dark-invert {
+      background: #E8E8E8 !important;
+      color: #1A1917;
+    }
+
+    /* ===== DRAG HANDLE ===== */
+    .drag-handle {
+      color: var(--border); cursor: grab; padding: 4px 5px 4px 0px;
+      display: flex; align-items: center; flex-shrink: 0;
+      touch-action: none; opacity: 0.6;
+    }
+    .drag-handle:hover { color: var(--text-3); opacity: 1; }
+    .drag-handle:active { cursor: grabbing; }
+    .drag-handle svg { width: 11px; height: 11px; }
+    .todo-drag-handle { padding: 0 5px 0 0; }
+    .habit-card.dragging, .todo-card.dragging {
+      opacity: 0.4; border: 1.5px dashed var(--text-3);
+    }
+    .habit-card.drag-over, .todo-card.drag-over {
+      border-color: var(--text); background: var(--surface2);
+    }
+
+    /* ===== TODO STATS BREAKDOWN ===== */
+    .todo-breakdown-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .todo-breakdown-row:last-child { border-bottom: none; }
+    .tbd-label { font-size: 13px; color: var(--text); flex: 1; }
+    .tbd-bar-wrap { width: 100px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .tbd-bar { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+    .tbd-count { font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--text-2); width: 28px; text-align: right; }
+
+    /* ===== DAY PICKER (Recurring Habit) ===== */
+    .day-picker {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 5px; margin-bottom: 8px;
+    }
+    .day-btn {
+      padding: 8px 0; border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: none; color: var(--text-3);
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s; text-align: center;
+    }
+    .day-btn.active {
+      background: var(--text); color: var(--accent-fg);
+      border-color: var(--text);
+    }
+    .day-presets {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+    }
+    .day-preset {
+      padding: 5px 10px; border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text-2);
+      font-size: 11.5px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.12s;
+    }
+    .day-preset:hover { background: var(--border); color: var(--text); }
+
+    /* Badge hari di habit card */
+    .habit-days {
+      display: flex; gap: 3px; flex-wrap: wrap; margin-top: 3px;
+    }
+    .habit-day-chip {
+      font-size: 9px; font-weight: 600;
+      padding: 1px 5px; border-radius: 4px;
+      background: var(--surface2); color: var(--text-3);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* Todo edit button */
+    .todo-edit {
+      width: 24px; height: 24px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      transition: color 0.15s; flex-shrink: 0;
+    }
+    .todo-edit:hover { color: var(--text); }
+    .todo-edit svg { width: 13px; height: 13px; }
+
+    /* ===== AI PANEL ===== */
+    .ai-section-label {
+      font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-3); font-family: 'DM Mono', monospace;
+      margin-bottom: 10px;
+    }
+    .ai-coach-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    .habit-preview-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
+    }
+    .habit-preview-row:last-child { border-bottom: none; }
+    .hp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .hp-name { flex: 1; font-size: 13px; font-weight: 500; }
+    .hp-streak { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+    .hp-badge {
+      font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px;
+    }
+    .hp-done { background: #e8f5e9; color: #2e7d32; }
+    .hp-miss { background: var(--surface2); color: var(--text-3); }
+    body.dark .hp-done { background: #0d2e0f; color: #66bb6a; }
+
+    .btn-ai-action {
+      width: 100%; padding: 11px 14px;
+      background: var(--accent); color: var(--accent-fg);
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      margin-bottom: 12px;
+    }
+    .btn-ai-action:hover { opacity: 0.85; }
+    .btn-ai-action:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .ai-response-card {
+      background: #F0F7F0; border: 1px solid #C8E0C9;
+      border-radius: var(--radius); padding: 14px 16px;
+      display: none; animation: aiFadeIn 0.2s ease;
+      margin-bottom: 12px;
+    }
+    body.dark .ai-response-card { background: #0A150A; border-color: #1E3A1F; }
+    .ai-response-card.visible { display: block; }
+    @keyframes aiFadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+    .ai-resp-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+    }
+    .ai-resp-avatar {
+      width: 26px; height: 26px; background: #2C5F2E;
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    body.dark .ai-resp-avatar { background: #3a7d3c; }
+    .ai-resp-avatar svg { width: 14px; height: 14px; color: white; }
+    .ai-resp-label { font-size: 11px; font-weight: 600; color: #2C5F2E; font-family: 'DM Mono', monospace; }
+    body.dark .ai-resp-label { color: #5BA85E; }
+    .ai-resp-text { font-size: 13.5px; line-height: 1.65; color: var(--text); white-space: pre-wrap; }
+
+    .loading-dots { display: inline-flex; gap: 4px; align-items: center; }
+    .loading-dots span {
+      width: 5px; height: 5px; background: #2C5F2E; border-radius: 50%;
+      animation: ldBlink 1.2s infinite;
+    }
+    body.dark .loading-dots span { background: #5BA85E; }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes ldBlink { 0%,80%,100%{opacity:0.2;} 40%{opacity:1;} }
+
+    /* Smart Todo */
+    .smart-todo-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 16px;
+      margin-bottom: 12px; box-shadow: var(--shadow);
+    }
+    .smart-input-label {
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      font-family: 'DM Mono', monospace; text-transform: uppercase;
+      letter-spacing: 0.7px; margin-bottom: 8px; display: block;
+    }
+    .smart-textarea {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 12px; color: var(--text);
+      font-size: 14px; font-family: 'DM Sans', sans-serif;
+      outline: none; resize: none; height: 70px;
+      transition: border-color 0.12s; line-height: 1.5;
+    }
+    .smart-textarea:focus { border-color: var(--text-2); }
+    .smart-textarea::placeholder { color: var(--text-3); }
+    
+    .parsed-result {
+      background: #F0F7F0; border: 1px solid #C8E0C9;
+      border-radius: var(--radius); padding: 14px 16px;
+      display: none; margin-bottom: 10px; animation: aiFadeIn 0.2s ease;
+    }
+    body.dark .parsed-result { background: #0A150A; border-color: #1E3A1F; }
+    .parsed-result.visible { display: block; }
+
+    .parsed-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 6px 0; border-bottom: 1px solid #C8E0C9;
+    }
+    body.dark .parsed-row { border-bottom-color: #1E3A1F; }
+    .parsed-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .parsed-key {
+      font-size: 10px; font-weight: 600; color: #2C5F2E;
+      font-family: 'DM Mono', monospace; text-transform: uppercase;
+      letter-spacing: 0.5px; width: 68px; flex-shrink: 0; padding-top: 1px;
+    }
+    body.dark .parsed-key { color: #5BA85E; }
+    .parsed-val { font-size: 13.5px; color: var(--text); line-height: 1.5; flex: 1; }
+    .pv-urgent { color: var(--urgent); font-weight: 600; }
+    .pv-soon { color: var(--soon); font-weight: 600; }
+    .pv-normal { color: var(--normal); font-weight: 600; }
+    .subtask-dots { display: flex; flex-direction: column; gap: 4px; }
+    .subtask-dot-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-2); }
+    .subtask-dot-item::before { content:''; width:5px;height:5px;border-radius:50%;background:#2C5F2E;flex-shrink:0; }
+    body.dark .subtask-dot-item::before { background:#5BA85E; }
+
+    .btn-confirm-add {
+      width: 100%; padding: 11px;
+      background: #2C5F2E; color: white;
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s; display: none;
+    }
+    body.dark .btn-confirm-add { background: #3a7d3c; }
+    .btn-confirm-add.visible { display: block; }
+    .btn-confirm-add:hover { opacity: 0.85; }
+    .add-success {
+      background: #F0F7F0; border: 1px solid #C8E0C9;
+      border-radius: var(--radius-sm); padding: 9px 13px;
+      font-size: 13px; color: #2C5F2E; font-weight: 500;
+      display: none; margin-top: 8px; text-align: center;
+    }
+    body.dark .add-success { background:#0A150A;border-color:#1E3A1F;color:#5BA85E; }
+    .add-success.visible { display: block; animation: aiFadeIn 0.2s ease; }
+    .ai-note {
+      background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 9px 12px; font-size: 12px; color: var(--text-3);
+      margin-top: 10px; line-height: 1.5;
+    }
+
+    /* Rekomendasi AI */
+    .smart-btn-row { display: flex; gap: 8px; }
+    .smart-btn-row .btn-ai-action { flex: 1; margin-bottom: 0; font-weight: 600; }
+    .btn-ai-secondary {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 11px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 600;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-ai-secondary:hover { background: var(--border); color: var(--text); }
+    .rekom-result {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: none; margin-bottom: 10px;
+      animation: aiFadeIn 0.2s ease;
+    }
+    .rekom-result.visible { display: block; }
+    .rekom-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .rekom-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .rekom-item:first-child { padding-top: 0; }
+    .rekom-title { font-size: 13.5px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.3; }
+    .rekom-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .rekom-reason { font-size: 11.5px; color: var(--text-3); margin-top: 4px; line-height: 1.4; font-style: italic; }
+    .btn-confirm-rekom {
+      width: 100%; padding: 11px;
+      background: var(--accent); color: var(--accent-fg);
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity 0.15s; display: none;
+    }
+    .btn-confirm-rekom.visible { display: block; }
+    .btn-confirm-rekom:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<header class="top-bar">
+  <div>
+    <div class="top-bar-title">Daily OS</div>
+    <div class="top-bar-sub" id="topDate"></div>
+  </div>
+  <button class="icon-btn" id="themeToggle" title="Toggle Theme">
+    <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    <svg class="icon-moon hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  </button>
+</header>
+
+<!-- Views -->
+<div id="viewHabit" class="view active">
+  <!-- XP Banner -->
+  <div class="xp-card">
+    <div class="xp-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div class="xp-label">Consistency XP · Lvl <span id="xpLevel">1</span></div>
+      <div class="xp-value"><span id="xpTotal">0</span> <span style="font-size:13px;font-weight:400;color:var(--text-3)">pts</span></div>
+    </div>
+    <div style="width:80px;">
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xpBar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section Header -->
+  <div class="section-header">
+    <span class="section-title">Habits</span>
+  </div>
+
+  <div id="habitList"></div>
+  <div id="habitEmpty" class="empty-state hidden">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>
+    <p>Belum ada habit. Tap + untuk mulai.</p>
+  </div>
+</div>
+
+<div id="viewTodo" class="view">
+  <div class="section-header">
+    <span class="section-title">To-Do</span>
+  </div>
+
+  <div id="todoUrgent"></div>
+  <div id="todoNormal"></div>
+  <div id="todoDone"></div>
+  <div id="todoEmpty" class="empty-state hidden">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    <p>Semua beres! Tap + untuk tambah task.</p>
+  </div>
+</div>
+
+<div id="viewStats" class="view">
+  <!-- HABIT STATS -->
+  <div class="section-title" style="margin-bottom:12px">Habit</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="statHabits">0</div>
+      <div class="stat-lbl">Total Habit</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statStreak">0</div>
+      <div class="stat-lbl">Streak Hari</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statToday">0%</div>
+      <div class="stat-lbl">Hari Ini</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="statAvg">0%</div>
+      <div class="stat-lbl">Rata-rata 7H</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <h3>Konsistensi</h3>
+      <select class="range-select" id="chartRange">
+        <option value="7">7 Hari</option>
+        <option value="30">30 Hari</option>
+        <option value="90">3 Bulan</option>
+      </select>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+
+  <div class="calendar-card">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" id="prevMonth">←</button>
+      <div style="text-align:center">
+        <div class="cal-month" id="calMonth">Maret 2026</div>
+        <div class="cal-sub" id="calSub">0 aktivitas</div>
+      </div>
+      <button class="cal-nav-btn" id="nextMonth">→</button>
+    </div>
+    <div class="cal-weekdays">
+      <span>M</span><span>S</span><span>S</span><span>R</span><span>K</span><span>J</span><span>S</span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-detail hidden" id="calDetail">
+      <h4 id="calDetailDate"></h4>
+      <ul id="calDetailList"></ul>
+    </div>
+  </div>
+
+  <!-- TODO STATS -->
+  <div class="section-title" style="margin-bottom:12px;margin-top:20px">To-Do</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-val" id="tdStatTotal">0</div>
+      <div class="stat-lbl">Total Task</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="tdStatDone">0</div>
+      <div class="stat-lbl">Selesai</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="tdStatRate">0%</div>
+      <div class="stat-lbl">Completion</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="tdStatOverdue" style="color:var(--urgent)">0</div>
+      <div class="stat-lbl">Overdue</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <h3>Penyelesaian Task</h3>
+    </div>
+    <div id="todoStatBreakdown"></div>
+  </div>
+</div>
+
+<div id="viewSettings" class="view">
+
+  <div class="section-title" style="margin-bottom:12px">Notifikasi</div>
+  <div class="settings-group">
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Izin Notifikasi</strong>
+        <p id="notifStatusText">Belum diaktifkan</p>
+      </div>
+      <button class="btn-sm" id="btnNotifPermission">Aktifkan</button>
+    </div>
+    <div class="setting-row" id="notifHabitRow">
+      <div class="setting-info">
+        <strong>Pengingat Habit</strong>
+        <p>Notif harian untuk cek habit</p>
+      </div>
+      <input type="time" id="notifHabitTime" class="form-input" style="width:90px;padding:6px 8px;font-size:13px" value="07:00">
+    </div>
+    <div class="setting-row" id="notifTodoRow">
+      <div class="setting-info">
+        <strong>Pengingat To-Do</strong>
+        <p>Notif harian untuk cek task</p>
+      </div>
+      <input type="time" id="notifTodoTime" class="form-input" style="width:90px;padding:6px 8px;font-size:13px" value="15:00">
+    </div>
+    <div class="setting-row" id="notifSaveRow">
+      <div class="setting-info">
+        <strong></strong>
+        <p>Simpan perubahan jadwal</p>
+      </div>
+      <button class="btn-sm" id="btnNotifSave">Simpan</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:12px">Data Habit</div>
+  <div class="settings-group">
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Backup Data</strong>
+        <p>Simpan ke file JSON</p>
+      </div>
+      <button class="btn-sm" id="btnExport">Download</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Restore Data</strong>
+        <p>Upload dari file backup</p>
+      </div>
+      <input type="file" id="fileImport" accept=".json" class="hidden">
+      <button class="btn-sm" id="btnImport">Upload</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Ekspor CSV</strong>
+        <p>Statistik ke spreadsheet</p>
+      </div>
+      <button class="btn-sm" id="btnExportCSV">Ekspor</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-bottom:12px">Danger Zone</div>
+  <div class="settings-group">
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Reset Aplikasi</strong>
+        <p>Hapus semua data permanen</p>
+      </div>
+      <button class="btn-sm danger" id="btnReset">Hapus Semua</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI View -->
+<div id="viewAi" class="view">
+
+  <!-- AI COACH -->
+  <div class="ai-section-label">AI Coach — Briefing Harian</div>
+  <div class="ai-coach-card" id="aiHabitPreview">
+    <div style="font-size:12px;color:var(--text-3);text-align:center;padding:10px 0">Belum ada habit. Tambah habit dulu di tab Habit.</div>
+  </div>
+
+  <div class="ai-response-card visible" id="coachCard">
+    <div class="ai-resp-header">
+      <div class="ai-resp-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+      <span class="ai-resp-label">AI COACH</span>
+      <button id="btnRefreshCoach" onclick="getAICoach()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-3);font-size:11px;font-family:'DM Mono',monospace;display:none;padding:2px 6px;border-radius:4px;" title="Refresh briefing">↺ refresh</button>
+    </div>
+    <div class="ai-resp-text" id="coachText">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <div style="height:1px;background:var(--border);margin:16px 0"></div>
+
+  <!-- SMART TODO -->
+  <div class="ai-section-label">Smart To-Do — Input Natural</div>
+  <div class="smart-todo-wrap">
+    <span class="smart-input-label">Ketik todo dalam bahasa natural</span>
+    <textarea class="smart-textarea" id="smartInput" placeholder="Contoh: besok presentasi ke klien jam 10, persiapkan slide dulu..."></textarea>
+    <div class="smart-btn-row">
+      <button class="btn-ai-action" id="btnSmartParse" onclick="parseSmartTodo()" style="margin-bottom:0">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Parse dengan AI
+      </button>
+      <button class="btn-ai-secondary" id="btnRekom" onclick="getAIRecommendations()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Rekomendasi AI
+      </button>
+    </div>
+  </div>
+
+  <div class="rekom-result" id="rekomResult">
+    <div class="ai-resp-header">
+      <div class="ai-resp-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      </div>
+      <span class="ai-resp-label">REKOMENDASI TASK</span>
+    </div>
+    <div id="rekomFields"></div>
+  </div>
+  <button class="btn-confirm-rekom" id="btnConfirmRekom" onclick="confirmAddRekom()">+ Tambahkan Rekomendasi ke To-Do</button>
+  <div class="add-success" id="rekomSuccess">✓ Task berhasil ditambahkan!</div>
+
+  <div style="height:1px;background:var(--border);margin:16px 0"></div>
+
+  <div class="parsed-result" id="parsedResult">
+    <div class="ai-resp-header">
+      <div class="ai-resp-avatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <span class="ai-resp-label">HASIL PARSE</span>
+    </div>
+    <div id="parsedFields"></div>
+  </div>
+
+  <button class="btn-confirm-add" id="btnConfirmAdd" onclick="confirmAddTodo()">
+    + Tambahkan ke To-Do
+  </button>
+  <div class="add-success" id="addSuccess">✓ Task berhasil ditambahkan!</div>
+
+  <div class="ai-note">
+    💡 AI membaca teks natural dan otomatis menentukan judul, deadline, priority, dan subtask. Pastikan Worker AI sudah aktif.
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="navHabit" onclick="switchView('habit')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+    Habit
+  </button>
+  <button class="nav-item" id="navTodo" onclick="switchView('todo')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    To-Do
+  </button>
+  <button class="nav-item" id="navStats" onclick="switchView('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    Statistik
+  </button>
+  <button class="nav-item" id="navAi" onclick="switchView('ai')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    AI
+  </button>
+  <button class="nav-item" id="navSettings" onclick="switchView('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Setting
+  </button>
+</nav>
+
+<!-- Habit Modal -->
+<div class="modal-overlay" id="habitModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header-bar">
+      <button class="modal-close" id="closeHabitModal">Batal</button>
+      <h3 id="habitModalTitle">Habit Baru</h3>
+      <button class="modal-save" id="saveHabitBtn">Simpan</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nama Habit</label>
+        <input type="text" id="habitName" class="form-input" placeholder="Contoh: Olahraga Pagi" autocomplete="off">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select id="habitCategorySelect" class="form-input" onchange="handleCategoryChange(this.value)" style="cursor:pointer">
+            <option value="General" selected>General</option>
+            <option value="Kesehatan">Kesehatan</option>
+            <option value="Olahraga">Olahraga / Fisik</option>
+            <option value="Produktivitas">Produktivitas</option>
+            <option value="Karir & Bisnis">Karir & Bisnis</option>
+            <option value="Belajar">Belajar</option>
+            <option value="Kreativitas">Kreativitas</option>
+            <option value="Sosial">Sosial</option>
+            <option value="Keuangan">Keuangan</option>
+            <option value="Spiritual">Spiritual</option>
+            <option value="__other__">Lainnya...</option>
+          </select>
+          <input type="text" id="habitCategoryCustom" class="form-input" placeholder="Tulis kategori..." autocomplete="off" style="display:none;margin-top:6px">
+          <input type="hidden" id="habitCategory" value="General">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Warna</label>
+          <div class="color-picker" id="colorPicker">
+            <div class="color-dot" data-color="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #ddd"></div>
+            <div class="color-dot" data-color="#C0392B" style="background:#C0392B"></div>
+            <div class="color-dot" data-color="#2C7A7B" style="background:#2C7A7B"></div>
+            <div class="color-dot" data-color="#7C6F4A" style="background:#7C6F4A"></div>
+            <div class="color-dot" data-color="#6B4FBB" style="background:#6B4FBB"></div>
+            <div class="color-dot" data-color="#3B82F6" style="background:#3B82F6"></div>
+            <div class="color-dot" data-color="#F59E0B" style="background:#F59E0B"></div>
+            <div class="color-dot active" data-color="#22C55E" style="background:#22C55E"></div>
+          </div>
+          <input type="hidden" id="habitColor" value="#1A1917">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Icon</label>
+        <div class="icon-picker" id="iconPicker">
+          <button type="button" class="icon-opt active" data-icon="star" title="Default">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="dumbbell" title="Olahraga">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 9.5h3v5H3zM18 9.5h3v5h-3z"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="book" title="Baca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="briefcase" title="Kerja">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="film" title="Hiburan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="apple" title="Makan/Diet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20.94c1.5 0 4-1.73 4-6.94 0-4-3-7-4-7s-4 3-4 7c0 5.21 2.5 6.94 4 6.94z"/><path d="M12 7c0 0 1-4 4-4"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="moon" title="Tidur">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="feather" title="Menulis">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="dollar" title="Keuangan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="gamepad" title="Gaming">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="walk" title="Jalan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l-2 5h3l1 5M15 8l2 5h-3l-1 5M9 8l3 2 3-2"/></svg>
+          </button>
+          <button type="button" class="icon-opt" data-icon="heart" title="Kesehatan">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          </button>
+        </div>
+        <input type="hidden" id="habitIcon" value="star">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jadwal Habit</label>
+        <p class="hint">Pilih hari aktif — kosong = setiap hari</p>
+        <div class="day-picker" id="dayPicker">
+          <button type="button" class="day-btn" data-day="1">Sen</button>
+          <button type="button" class="day-btn" data-day="2">Sel</button>
+          <button type="button" class="day-btn" data-day="3">Rab</button>
+          <button type="button" class="day-btn" data-day="4">Kam</button>
+          <button type="button" class="day-btn" data-day="5">Jum</button>
+          <button type="button" class="day-btn" data-day="6">Sab</button>
+          <button type="button" class="day-btn" data-day="0">Min</button>
+        </div>
+        <div class="day-presets">
+          <button type="button" class="day-preset" onclick="setDayPreset('all')">Setiap Hari</button>
+          <button type="button" class="day-preset" onclick="setDayPreset('weekday')">Senin–Jumat</button>
+          <button type="button" class="day-preset" onclick="setDayPreset('mwf')">Sen, Rab, Jum</button>
+          <button type="button" class="day-preset" onclick="setDayPreset('weekend')">Akhir Pekan</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Checklist Detail</label>
+        <p class="hint">Opsional — tambah sub-aktivitas</p>
+        <div id="subTaskList"></div>
+        <button class="btn-add-sub" id="addSubTask">+ Tambah Checklist</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Todo Modal -->
+<div class="modal-overlay" id="todoModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header-bar">
+      <button class="modal-close" id="closeTodoModal">Batal</button>
+      <h3 id="todoModalTitle">Task Baru</h3>
+      <button class="modal-save" id="saveTodoBtn">Simpan</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nama Task</label>
+        <input type="text" id="todoTitle" class="form-input" placeholder="Contoh: Kirim proposal ke klien" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prioritas</label>
+        <div class="priority-toggle">
+          <button class="priority-btn active-urgent" id="prioUrgent" onclick="setPriority('urgent')">Hari Ini</button>
+          <button class="priority-btn" id="prioSoon" onclick="setPriority('soon')">Minggu Ini</button>
+          <button class="priority-btn" id="prioNormal" onclick="setPriority('normal')">Nanti</button>
+        </div>
+        <input type="hidden" id="todoPriority" value="urgent">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deadline <span style="font-weight:400;color:var(--text-3)">(opsional)</span></label>
+        <input type="date" id="todoDeadline" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subtasks <span style="font-weight:400;color:var(--text-3)">(opsional)</span></label>
+        <div id="todoSubList"></div>
+        <button type="button" class="btn-add-sub" id="addTodoSub">+ Tambah Subtask</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert -->
+<div class="alert-overlay" id="alertOverlay">
+  <div class="alert-box">
+    <div class="alert-icon" id="alertIcon"></div>
+    <div class="alert-title" id="alertTitle"></div>
+    <div class="alert-msg" id="alertMsg"></div>
+    <div class="alert-btns">
+      <button class="alert-btn hidden" id="alertCancel">Batal</button>
+      <button class="alert-btn primary" id="alertConfirm">OK</button>
+    </div>
+  </div>
+</div>
+<script src="/shared/ecosystem-db.js"></script>
+<script>
+// ===== DATA =====
+let habits = [];
+let todos = [];
+let totalPoints = 0;
+let chartRangeDays = 7;
+let currentCalView = { year: new Date().getFullYear(), month: new Date().getMonth() };
+let editHabitIdx = null;
+let trendChart = null;
+let currentView = 'habit';
+
+const ICONS = {
+  success: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`,
+  warning: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+  error: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+  info: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+};
+
+// ===== ALERT =====
+function showAlert(msg, type='info', title='') {
+  return new Promise(resolve => {
+    const o = document.getElementById('alertOverlay');
+    document.getElementById('alertIcon').innerHTML = ICONS[type] || ICONS.info;
+    document.getElementById('alertIcon').className = `alert-icon ${type}`;
+    document.getElementById('alertTitle').textContent = title || type;
+    document.getElementById('alertMsg').textContent = msg;
+    document.getElementById('alertCancel').classList.add('hidden');
+    document.getElementById('alertConfirm').textContent = 'OK';
+    o.classList.add('open');
+    document.getElementById('alertConfirm').onclick = () => { o.classList.remove('open'); resolve(true); };
+  });
+}
+function showConfirm(msg, type='warning', title='Konfirmasi') {
+  return new Promise(resolve => {
+    const o = document.getElementById('alertOverlay');
+    document.getElementById('alertIcon').innerHTML = ICONS[type] || ICONS.warning;
+    document.getElementById('alertIcon').className = `alert-icon ${type}`;
+    document.getElementById('alertTitle').textContent = title;
+    document.getElementById('alertMsg').textContent = msg;
+    document.getElementById('alertCancel').classList.remove('hidden');
+    document.getElementById('alertConfirm').textContent = 'Ya, Lanjutkan';
+    o.classList.add('open');
+    const close = (v) => { o.classList.remove('open'); resolve(v); };
+    document.getElementById('alertConfirm').onclick = () => close(true);
+    document.getElementById('alertCancel').onclick = () => close(false);
+  });
+}
+
+// ===== INDEXEDDB STORAGE =====
+function idbSet(storeName, key, value) {
+  if (storeName === 'habits') return EcosystemDB.habits.rawSet(key, value);
+  if (storeName === 'todos')  return EcosystemDB.todos.rawSet(key, value);
+  return Promise.reject(new Error('Unknown store: ' + storeName));
+}
+function idbGet(storeName, key) {
+  if (storeName === 'habits') return EcosystemDB.habits.rawGet(key);
+  if (storeName === 'todos')  return EcosystemDB.todos.rawGet(key);
+  return Promise.reject(new Error('Unknown store: ' + storeName));
+}
+function idbDelete(storeName, key) {
+  if (storeName === 'habits') return EcosystemDB.habits.rawDelete(key);
+  if (storeName === 'todos')  return EcosystemDB.todos.rawDelete(key);
+  return Promise.reject(new Error('Unknown store: ' + storeName));
+}
+
+// Migrasi otomatis dari localStorage ke IndexedDB
+async function migrateFromLocalStorage() {
+  const lsHabits = localStorage.getItem('dailyos_habits');
+  const lsTodos  = localStorage.getItem('dailyos_todos');
+  let migrated = false;
+
+  if (lsHabits) {
+    try {
+      const parsed = JSON.parse(lsHabits);
+      await idbSet('habits', 'dailyos_habits', parsed);
+      localStorage.removeItem('dailyos_habits');
+      migrated = true;
+      console.log('[DailyOS] Migrated habits from localStorage → IndexedDB');
+    } catch(e) { console.warn('[DailyOS] Migration habits failed:', e); }
+  }
+
+  if (lsTodos) {
+    try {
+      const parsed = JSON.parse(lsTodos);
+      await idbSet('todos', 'dailyos_todos', parsed);
+      localStorage.removeItem('dailyos_todos');
+      migrated = true;
+      console.log('[DailyOS] Migrated todos from localStorage → IndexedDB');
+    } catch(e) { console.warn('[DailyOS] Migration todos failed:', e); }
+  }
+
+  if (migrated) console.log('[DailyOS] Migration complete.');
+}
+
+function save() {
+  // Habits & todos → IndexedDB (async, fire-and-forget)
+  idbSet('habits', 'dailyos_habits', habits).catch(e => console.error('[DailyOS] save habits failed:', e));
+  idbSet('todos',  'dailyos_todos',  todos).catch(e => console.error('[DailyOS] save todos failed:', e));
+  // XP tetap di localStorage (state ringan)
+  localStorage.setItem('dailyos_xp', totalPoints.toString());
+}
+
+async function load() {
+  // Jalankan migrasi dulu sebelum baca IndexedDB
+  await migrateFromLocalStorage();
+
+  const h = await idbGet('habits', 'dailyos_habits');
+  const t = await idbGet('todos',  'dailyos_todos');
+  if (h) habits = h;
+  if (t) todos  = t;
+  // Selalu recalculate dari history, jangan percaya angka tersimpan
+  totalPoints = recalculateXP();
+}
+
+// Hitung ulang XP dari seluruh history habit
+function recalculateXP() {
+  let total = 0;
+  habits.forEach(h => {
+    Object.values(h.history || {}).forEach(log => {
+      total += Array.isArray(log) ? log.length * 10 : 0;
+    });
+  });
+  return total;
+}
+
+// ===== DAILY SNAPSHOT (untuk integrasi Kronik) =====
+function getDailySnapshot() {
+  const today = getToday();
+
+  // Habits yang completed hari ini
+  const completedHabits = [];
+  habits.forEach(h => {
+    if (h.archived) return;
+    const log = h.history?.[today] || [];
+    if (log.length === 0) return;
+    log.forEach(entry => {
+      completedHabits.push({
+        name:        h.name,
+        category:    h.category || 'General',
+        completedAt: typeof entry === 'object' && entry.completedAt
+                       ? entry.completedAt
+                       : today + 'T00:00:00.000Z'
+      });
+    });
+  });
+
+  // Todos yang done hari ini (berdasarkan completedAt)
+  const doneTodos = todos
+    .filter(t => t.done && t.completedAt && t.completedAt.startsWith(today))
+    .map(t => ({ title: t.title, priority: t.priority || 'normal' }));
+
+  // XP hari ini: hitung dari habit log hari ini saja
+  let todayXP = 0;
+  habits.forEach(h => {
+    todayXP += ((h.history?.[today] || []).length) * 10;
+  });
+
+  return {
+    date:     today,
+    habits:   completedHabits,
+    todos:    doneTodos,
+    totalXP:  todayXP
+  };
+}
+
+// ===== DATE =====
+function getToday() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
+}
+function isOverdue(dateStr) {
+  if (!dateStr) return false;
+  return dateStr < getToday();
+}
+
+// ===== TOP DATE =====
+function updateTopDate() {
+  const now = new Date();
+  document.getElementById('topDate').textContent = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+}
+
+// ===== VIEW SWITCH =====
+function switchView(v) {
+  currentView = v;
+  ['habit','todo','stats','settings','ai'].forEach(name => {
+    const view = document.getElementById('view'+cap(name));
+    const nav = document.getElementById('nav'+cap(name));
+    if (view) view.classList.remove('active');
+    if (nav) nav.classList.remove('active');
+  });
+  document.getElementById('view'+cap(v)).classList.add('active');
+  document.getElementById('nav'+cap(v)).classList.add('active');
+
+  const fab = document.getElementById('fabBtn');
+  if (v === 'habit' || v === 'todo') fab.classList.remove('hidden');
+  else fab.classList.add('hidden');
+
+  if (v === 'stats') { updateStats(); updateTodoStats(); renderCalendar(); setTimeout(renderChart, 100); }
+  if (v === 'ai') {
+    // Reset semua preview agar tidak tersisa dari sesi sebelumnya
+    document.getElementById('rekomResult').classList.remove('visible');
+    document.getElementById('btnConfirmRekom').classList.remove('visible');
+    document.getElementById('rekomSuccess').classList.remove('visible');
+    document.getElementById('parsedResult').classList.remove('visible');
+    document.getElementById('btnConfirmAdd').classList.remove('visible');
+    document.getElementById('addSuccess').classList.remove('visible');
+    parsedRekomData = null;
+    parsedTodoData = null;
+    // Re-sync dari IndexedDB supaya perubahan prioritas dll terbaca fresh
+    load().then(() => { renderAIHabitPreview(); getAICoach(); });
+  }
+}
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ===== XP =====
+function updateXP() {
+  const level = Math.floor(totalPoints / 100) + 1;
+  const progress = totalPoints % 100;
+  document.getElementById('xpTotal').textContent = totalPoints;
+  document.getElementById('xpLevel').textContent = level;
+  document.getElementById('xpBar').style.width = progress + '%';
+}
+
+// ===== RENDER HABITS =====
+function renderHabits() {
+  const list = document.getElementById('habitList');
+  const empty = document.getElementById('habitEmpty');
+  list.innerHTML = '';
+  updateXP();
+
+  const visibleHabits = habits
+    .map((h, i) => ({ h, i }))
+    .filter(({ h }) => !h.archived);
+
+  if (visibleHabits.length === 0) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  const today = getToday();
+  const todayDow = new Date(today + 'T00:00:00').getDay(); // 0=Minggu..6=Sabtu
+
+  const DAY_NAMES = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+
+  visibleHabits.forEach(({ h, i }) => {
+    if (!h.history) h.history = {};
+    const todayLog = h.history[today] || [];
+    const isCollapsed = h.collapsed === true;
+    const subTasks = h.subTasks || [];
+
+    // Cek apakah hari ini jadwal habit ini
+    const activeDays = h.activeDays || [];
+    const isScheduledToday = activeDays.length === 0 || activeDays.includes(todayDow);
+
+    // Badge hari
+    const dayBadgesHtml = activeDays.length > 0
+      ? `<div class="habit-days">${activeDays.map(d => `<span class="habit-day-chip">${DAY_NAMES[d]}</span>`).join('')}</div>`
+      : '';
+
+    let subHtml = '';
+    if (subTasks.length === 0) {
+      const done = todayLog.some(e => (typeof e === 'string' ? e : e.id) === 'main');
+      subHtml = `<div class="subtask-row">
+        <div class="checkbox ${done?'checked':''}${!isScheduledToday?' disabled':''}" onclick="${isScheduledToday?`toggleCheck(${i},'main',this)`:''}"></div>
+        <span class="subtask-text ${done?'done':''}">Selesaikan Habit Ini</span>
+      </div>`;
+    } else {
+      subTasks.forEach(sub => {
+        const done = todayLog.some(e => (typeof e === 'string' ? e : e.id) === sub.id);
+        subHtml += `<div class="subtask-row">
+          <div class="checkbox ${done?'checked':''}${!isScheduledToday?' disabled':''}" onclick="${isScheduledToday?`toggleCheck(${i},'${sub.id}',this)`:''}"></div>
+          <span class="subtask-text ${done?'done':''}">${sub.text}</span>
+        </div>`;
+      });
+    }
+
+    const chevronDown = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`;
+    const chevronUp = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>`;
+
+    const card = document.createElement('div');
+    card.className = 'habit-card' + (!isScheduledToday ? ' off-schedule' : '');
+    card.setAttribute('data-idx', i);
+    card.innerHTML = `
+      <div class="habit-card-header">
+        <div class="drag-handle" title="Geser untuk reorder">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="19" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div class="habit-icon${isDarkColor(h.color)?' dark-invert':''}${isLightColor(h.color)?' light-color':''}" style="background:${h.color}">${getHabitIcon(h.icon)}</div>
+        <div style="flex:1">
+          <div class="habit-name">${h.name}</div>
+          <div class="habit-cat">${h.category}</div>
+          ${dayBadgesHtml}
+          ${!isScheduledToday ? '<div style="font-size:10px;color:var(--text-3);margin-top:2px;font-family:\'DM Mono\',monospace">Tidak dijadwalkan hari ini</div>' : ''}
+        </div>
+        <div class="habit-actions">
+          <button class="card-btn" onclick="toggleCollapse(${i})" id="collapseBtn${i}">${isCollapsed ? chevronDown : chevronUp}</button>
+          <div class="dropdown-wrapper">
+          <button class="card-btn" onclick="toggleMenu(event,${i})">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+            </button>
+            <div class="dropdown-menu hidden" id="menu${i}">
+              <button class="dropdown-item" onclick="editHabit(${i})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </button>
+              <button class="dropdown-item danger" onclick="deleteHabit(${i})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="habit-subtasks ${isCollapsed?'collapsed':''}" id="subs${i}">${subHtml}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+window.toggleCheck = function(idx, subId, el) {
+  const h = habits[idx];
+  const today = getToday();
+  if (!h.history[today]) h.history[today] = [];
+  const log = h.history[today];
+
+  // Cari entry — support format lama (string) dan baru (object)
+  const pos = log.findIndex(entry => (typeof entry === 'string' ? entry : entry.id) === subId);
+
+  if (pos > -1) {
+    log.splice(pos, 1);
+    totalPoints = Math.max(0, totalPoints - 10);
+    el.classList.remove('checked');
+    const txt = el.nextElementSibling;
+    if (txt) txt.classList.remove('done');
+    if (log.length === 0) delete h.history[today];
+  } else {
+    // Simpan snapshot teks saat ini bersama ID
+    let snapText = subId;
+    if (subId === 'main') {
+      snapText = h.name;
+    } else {
+      const sub = (h.subTasks || []).find(s => s.id === subId);
+      if (sub) snapText = sub.text;
+    }
+    log.push({ id: subId, text: snapText, completedAt: new Date().toISOString() });
+    totalPoints += 10;
+    el.classList.add('checked');
+    const txt = el.nextElementSibling;
+    if (txt) txt.classList.add('done');
+
+    // ── EVENT: habitCompleted ──
+    const _habitDetail = {
+      habitName:     h.name,
+      habitCategory: h.category || 'General',
+      habitColor:    h.color || '#1A1917',
+      completedAt:   new Date().toISOString(),
+      isMainTask:    subId === 'main'
+    };
+    window.dispatchEvent(new CustomEvent('habitCompleted', { detail: _habitDetail }));
+
+    // ── BROADCASTCHANNEL: notify Kronik & other tabs ──
+    try {
+      const bc = new BroadcastChannel('dailyos_events');
+      bc.postMessage({ type: 'habitCompleted', ..._habitDetail });
+      bc.close();
+    } catch(e) { /* BroadcastChannel tidak tersedia di env ini */ }
+  }
+  save(); updateXP();
+};
+
+window.toggleCollapse = function(idx) {
+  habits[idx].collapsed = !habits[idx].collapsed;
+  save();
+  const subs = document.getElementById('subs' + idx);
+  const btn = document.getElementById('collapseBtn' + idx);
+  const isNowCollapsed = habits[idx].collapsed;
+  if (subs) subs.classList.toggle('collapsed', isNowCollapsed);
+  if (btn) btn.innerHTML = isNowCollapsed
+    ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`
+    : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>`;
+};
+
+window.toggleMenu = function(e, idx) {
+  e.stopPropagation();
+  // Tutup semua menu lain + hapus menu-open dari semua card
+  document.querySelectorAll('.dropdown-menu').forEach((m, i) => {
+    if (i !== idx) m.classList.add('hidden');
+  });
+  document.querySelectorAll('.habit-card.menu-open').forEach(c => c.classList.remove('menu-open'));
+
+  const menu = document.getElementById('menu' + idx);
+  if (!menu) return;
+  const isNowOpen = menu.classList.toggle('hidden') === false;
+  // classList.toggle('hidden') returns true if class was ADDED (menu closed)
+  // jadi kalau hidden di-remove (menu dibuka), naikkan z-index card-nya
+  const card = menu.closest('.habit-card');
+  if (card) {
+    const menuHidden = menu.classList.contains('hidden');
+    card.classList.toggle('menu-open', !menuHidden);
+  }
+};
+
+// ===== CATEGORY DROPDOWN HELPERS =====
+const CATEGORY_PRESETS = ['General','Kesehatan','Olahraga','Produktivitas','Karir & Bisnis','Belajar','Kreativitas','Sosial','Keuangan','Spiritual'];
+
+function handleCategoryChange(val) {
+  const customInput = document.getElementById('habitCategoryCustom');
+  const hiddenInput = document.getElementById('habitCategory');
+  if (val === '__other__') {
+    customInput.style.display = '';
+    customInput.focus();
+    customInput.oninput = () => { hiddenInput.value = customInput.value.trim() || 'General'; };
+    hiddenInput.value = '';
+  } else {
+    customInput.style.display = 'none';
+    hiddenInput.value = val;
+  }
+}
+
+function setCategoryValue(category) {
+  const select = document.getElementById('habitCategorySelect');
+  const customInput = document.getElementById('habitCategoryCustom');
+  const hiddenInput = document.getElementById('habitCategory');
+  hiddenInput.value = category;
+  if (CATEGORY_PRESETS.includes(category)) {
+    select.value = category;
+    customInput.style.display = 'none';
+  } else {
+    select.value = '__other__';
+    customInput.style.display = '';
+    customInput.value = category;
+  }
+}
+
+window.deleteHabit = async function(idx) {
+  const ok = await showConfirm('Habit ini akan dihapus. Data XP dan history tetap tersimpan.', 'error', 'Hapus Habit?');
+  if (ok) {
+    // Arsipkan habit — tandai archived:true agar tidak muncul di UI
+    // tapi history-nya tetap ada sehingga XP & kalender tidak berubah
+    habits[idx].archived = true;
+    totalPoints = recalculateXP();
+    save();
+    renderHabits();
+    showAlert('Habit berhasil dihapus.', 'success', 'Terhapus');
+  }
+};
+
+window.editHabit = function(idx) {
+  editHabitIdx = idx;
+  const h = habits[idx];
+  document.getElementById('habitModalTitle').textContent = 'Edit Habit';
+  document.getElementById('habitName').value = h.name;
+  setCategoryValue(h.category || 'General');
+  document.getElementById('habitColor').value = h.color;
+  document.querySelectorAll('.color-dot').forEach(d => {
+    d.classList.toggle('active', d.dataset.color === h.color);
+  });
+  setIconPickerValue(h.icon || 'star');
+  // Restore hari aktif
+  document.querySelectorAll('.day-btn').forEach(b => {
+    b.classList.toggle('active', (h.activeDays || []).includes(parseInt(b.dataset.day)));
+  });
+  const sl = document.getElementById('subTaskList');
+  sl.innerHTML = '';
+  if (h.subTasks && h.subTasks.length > 0) {
+    h.subTasks.forEach(sub => addSubRow(sub.text, sub.id));
+  } else {
+    addSubRow();
+  }
+  openModal('habitModal');
+  document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+};
+
+// ===== HABIT MODAL =====
+function openHabitModal() {
+  editHabitIdx = null;
+  document.getElementById('habitModalTitle').textContent = 'Habit Baru';
+  document.getElementById('habitName').value = '';
+  setCategoryValue('General');
+  document.getElementById('habitColor').value = '#22C55E';
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === '#22C55E'));
+  setIconPickerValue('star');
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
+  const sl = document.getElementById('subTaskList');
+  sl.innerHTML = '';
+  addSubRow();
+  openModal('habitModal');
+}
+
+function addSubRow(text='', id=null) {
+  const sl = document.getElementById('subTaskList');
+  const div = document.createElement('div');
+  div.className = 'sub-input-row';
+  div.dataset.id = id || '';
+  div.innerHTML = `<input type="text" class="form-input sub-name" placeholder="Nama aktivitas" value="${text}" autocomplete="off">
+    <button class="sub-remove" onclick="this.parentElement.remove()">✕</button>`;
+  sl.appendChild(div);
+}
+
+function saveHabit() {
+  const name = document.getElementById('habitName').value.trim();
+  if (!name) { showAlert('Nama habit tidak boleh kosong!', 'warning', 'Perhatian'); return; }
+  const category = document.getElementById('habitCategory').value || 'General';
+  const color = document.getElementById('habitColor').value || '#22C55E';
+  const icon = document.getElementById('habitIcon').value || 'star';
+  const subTasks = [];
+  document.querySelectorAll('.sub-input-row').forEach((row, i) => {
+    const val = row.querySelector('.sub-name').value.trim();
+    if (val) subTasks.push({ id: row.dataset.id || `sub_${Date.now()}_${i}`, text: val });
+  });
+
+  // Ambil hari yang dipilih
+  const activeDays = [];
+  document.querySelectorAll('.day-btn.active').forEach(btn => {
+    activeDays.push(parseInt(btn.dataset.day));
+  });
+  // Kosong = setiap hari (tidak ada filter)
+
+  if (editHabitIdx !== null) {
+    habits[editHabitIdx] = { ...habits[editHabitIdx], name, category, color, icon, subTasks, activeDays };
+  } else {
+    habits.push({ name, category, color, icon, subTasks, history: {}, collapsed: false, activeDays, archived: false });
+  }
+  save(); closeModal('habitModal'); renderHabits();
+}
+
+// ===== TO-DO =====
+function renderTodos() {
+  const urgent = document.getElementById('todoUrgent');
+  const normal = document.getElementById('todoNormal');
+  const done = document.getElementById('todoDone');
+  const empty = document.getElementById('todoEmpty');
+  urgent.innerHTML = '';
+  normal.innerHTML = '';
+  done.innerHTML = '';
+
+  const active = todos.filter(t => !t.done);
+  const completed = todos.filter(t => t.done);
+
+  if (todos.length === 0) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  const urgentActive = active.filter(t => t.priority === 'urgent');
+  const soonActive   = active.filter(t => t.priority === 'soon');
+  const normalActive = active.filter(t => t.priority === 'normal' || !t.priority);
+
+  if (urgentActive.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.className = 'todo-section-label urgent';
+    lbl.textContent = 'Hari Ini';
+    urgent.appendChild(lbl);
+    urgentActive.forEach(t => urgent.appendChild(makeTodoCard(t)));
+  }
+
+  if (soonActive.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.className = 'todo-section-label soon';
+    lbl.textContent = 'Minggu Ini';
+    urgent.appendChild(lbl);
+    soonActive.forEach(t => urgent.appendChild(makeTodoCard(t)));
+  }
+
+  if (normalActive.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.className = 'todo-section-label normal';
+    lbl.textContent = 'Nanti';
+    normal.appendChild(lbl);
+    normalActive.forEach(t => normal.appendChild(makeTodoCard(t)));
+  }
+
+  if (completed.length > 0) {
+    const lbl = document.createElement('div');
+    lbl.className = 'todo-section-label done-lbl';
+    lbl.style.marginTop = '16px';
+
+    const itemsWrap = document.createElement('div');
+    // Ingat state open/close — default open kalau belum pernah ditutup
+    const doneIsOpen = localStorage.getItem('dailyos_done_open') !== 'false';
+    itemsWrap.className = 'done-items' + (doneIsOpen ? ' open' : '');
+
+    lbl.innerHTML = `
+      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0"></span>
+      Selesai (${completed.length})
+      <svg class="done-chevron ${doneIsOpen ? 'open' : ''}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    `;
+
+    completed.forEach(t => itemsWrap.appendChild(makeTodoCard(t)));
+
+    lbl.onclick = () => {
+      const isOpen = itemsWrap.classList.toggle('open');
+      lbl.querySelector('.done-chevron').classList.toggle('open', isOpen);
+      localStorage.setItem('dailyos_done_open', isOpen ? 'true' : 'false');
+    };
+
+    done.appendChild(lbl);
+    done.appendChild(itemsWrap);
+  }
+}
+
+function makeTodoCard(t) {
+  const card = document.createElement('div');
+  card.className = 'todo-card' + (t.done ? ' done-card' : '');
+
+  const overdue = !t.done && isOverdue(t.deadline);
+  const deadlineHtml = t.deadline
+    ? `<span class="todo-deadline ${overdue ? 'overdue' : ''}">${overdue ? '! ' : ''}${formatDate(t.deadline)}</span>`
+    : '';
+
+  // Render subtasks kalau ada
+  const hasSubs = Array.isArray(t.subtasks) && t.subtasks.length > 0;
+  const subsHtml = hasSubs
+    ? `<div class="todo-subtasks">${t.subtasks.map(s =>
+        `<div class="todo-sub-row">
+          <div class="todo-sub-check ${s.done?'checked':''}" onclick="toggleTodoSub('${t.id}','${s.id}',this)"></div>
+          <span class="todo-sub-text ${s.done?'done':''}">${s.text}</span>
+        </div>`
+      ).join('')}</div>`
+    : '';
+
+  card.setAttribute('data-id', t.id);
+  card.innerHTML = `
+    <div class="drag-handle todo-drag-handle" style="flex-shrink:0;align-self:flex-start;margin-top:2px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="5" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="19" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="19" r="1.2" fill="currentColor" stroke="none"/></svg>
+    </div>
+    <div class="todo-checkbox ${t.done?'checked':''}" onclick="toggleTodo('${t.id}',this)" style="flex-shrink:0;align-self:flex-start;margin-top:1px"></div>
+    <div class="todo-info" style="flex:1;min-width:0">
+      <div class="todo-title ${t.done?'done':''}">${t.title}</div>
+      <div class="todo-meta">
+        <span class="badge badge-${t.priority || 'normal'}">${t.priority === 'urgent' ? 'HARI INI' : t.priority === 'soon' ? 'MINGGU INI' : 'NANTI'}</span>
+        ${deadlineHtml}
+      </div>
+      ${subsHtml}
+    </div>
+    <button class="todo-edit" onclick="editTodo('${t.id}')" style="flex-shrink:0;align-self:flex-start">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+    <button class="todo-del" onclick="deleteTodo('${t.id}')" style="flex-shrink:0;align-self:flex-start">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+    </button>
+  `;
+  return card;
+}
+
+window.toggleTodoSub = function(todoId, subId, el) {
+  const t = todos.find(x => x.id === todoId);
+  if (!t || !Array.isArray(t.subtasks)) return;
+  const sub = t.subtasks.find(s => s.id === subId);
+  if (!sub) return;
+  sub.done = !sub.done;
+  el.classList.toggle('checked', sub.done);
+  const txt = el.nextElementSibling;
+  if (txt) txt.classList.toggle('done', sub.done);
+  save();
+};
+
+window.toggleTodo = function(id, el) {
+  const t = todos.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done) {
+    t.completedAt = new Date().toISOString();
+  } else {
+    delete t.completedAt;
+  }
+  save(); renderTodos();
+};
+
+window.deleteTodo = async function(id) {
+  const ok = await showConfirm('Hapus task ini?', 'error', 'Hapus Task');
+  if (ok) { todos = todos.filter(x => x.id !== id); save(); renderTodos(); }
+};
+
+let editTodoId = null;
+
+window.editTodo = function(id) {
+  const t = todos.find(x => x.id === id);
+  if (!t) return;
+  editTodoId = id;
+  document.getElementById('todoModalTitle').textContent = 'Edit Task';
+  document.getElementById('todoTitle').value = t.title;
+  document.getElementById('todoDeadline').value = t.deadline || '';
+  setPriority(t.priority || 'urgent');
+  // Load subtasks ke modal
+  const subList = document.getElementById('todoSubList');
+  subList.innerHTML = '';
+  (t.subtasks || []).forEach(s => addTodoSubRow(s.text, s.done));
+  openModal('todoModal');
+};
+
+function saveTodo() {
+  const title = document.getElementById('todoTitle').value.trim();
+  if (!title) { showAlert('Nama task tidak boleh kosong!', 'warning', 'Perhatian'); return; }
+  const priority = document.getElementById('todoPriority').value;
+  const deadline = document.getElementById('todoDeadline').value;
+
+  // Baca subtasks dari modal
+  const subInputs = document.querySelectorAll('#todoSubList .todo-modal-sub-input');
+  const subtasks = Array.from(subInputs)
+    .map(inp => inp.value.trim())
+    .filter(v => v !== '');
+
+  if (editTodoId) {
+    // Mode edit — pertahankan id & done state subtask yang sudah ada
+    const t = todos.find(x => x.id === editTodoId);
+    if (t) {
+      t.title = title; t.priority = priority; t.deadline = deadline;
+      // Merge: cocokan teks, kalau ada yang baru buat id baru
+      const oldSubs = t.subtasks || [];
+      t.subtasks = subtasks.map((text, i) => {
+        const existing = oldSubs.find(s => s.text === text);
+        return existing || { id: `sub_${Date.now()}_${i}`, text, done: false };
+      });
+    }
+    editTodoId = null;
+  } else {
+    // Mode tambah baru
+    todos.unshift({
+      id: `todo_${Date.now()}`,
+      title, priority, deadline, done: false,
+      subtasks: subtasks.map((text, i) => ({ id: `sub_${Date.now()}_${i}`, text, done: false }))
+    });
+  }
+  save(); closeModal('todoModal'); renderTodos();
+}
+
+window.setPriority = function(p) {
+  document.getElementById('todoPriority').value = p;
+  document.getElementById('prioUrgent').className = 'priority-btn' + (p === 'urgent' ? ' active-urgent' : '');
+  document.getElementById('prioSoon').className   = 'priority-btn' + (p === 'soon'   ? ' active-soon'   : '');
+  document.getElementById('prioNormal').className = 'priority-btn' + (p === 'normal' ? ' active-normal' : '');
+};
+
+function addTodoSubRow(text = '', done = false) {
+  const subList = document.getElementById('todoSubList');
+  const row = document.createElement('div');
+  row.className = 'sub-input-row';
+  row.innerHTML = `
+    <input type="text" class="form-input todo-modal-sub-input" placeholder="Subtask..." value="${text.replace(/"/g, '&quot;')}" autocomplete="off">
+    <button type="button" class="sub-remove" onclick="this.closest('.sub-input-row').remove()">×</button>
+  `;
+  subList.appendChild(row);
+  const input = row.querySelector('input');
+  input.focus();
+}
+
+// ===== TODO STATS =====
+function updateTodoStats() {
+  const total = todos.length;
+  const done = todos.filter(t => t.done).length;
+  const active = todos.filter(t => !t.done);
+  const overdue = active.filter(t => isOverdue(t.deadline)).length;
+  const rate = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  document.getElementById('tdStatTotal').textContent = total;
+  document.getElementById('tdStatDone').textContent = done;
+  document.getElementById('tdStatRate').textContent = rate + '%';
+  document.getElementById('tdStatOverdue').textContent = overdue;
+
+  // Breakdown by priority
+  const breakdown = [
+    { label: 'Hari Ini (Urgent)', key: 'urgent', color: 'var(--urgent)' },
+    { label: 'Minggu Ini (Soon)', key: 'soon', color: 'var(--soon)' },
+    { label: 'Nanti (Normal)', key: 'normal', color: 'var(--normal)' },
+  ];
+
+  const el = document.getElementById('todoStatBreakdown');
+  if (!el) return;
+
+  if (total === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;font-size:13px;color:var(--text-3)">Belum ada task</div>';
+    return;
+  }
+
+  el.innerHTML = breakdown.map(b => {
+    const bTotal = todos.filter(t => (t.priority || 'normal') === b.key).length;
+    const bDone = todos.filter(t => (t.priority || 'normal') === b.key && t.done).length;
+    const pct = bTotal === 0 ? 0 : Math.round((bDone / bTotal) * 100);
+    return `<div class="todo-breakdown-row">
+      <span class="tbd-label">${b.label}</span>
+      <div class="tbd-bar-wrap"><div class="tbd-bar" style="width:${pct}%;background:${b.color}"></div></div>
+      <span class="tbd-count">${bDone}/${bTotal}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===== MIGRASI DATA LAMA =====
+// Konversi history format lama (string[]) ke format baru ({id,text}[])
+function migrateHistory() {
+  let changed = false;
+  habits.forEach(h => {
+    if (!h.history) return;
+    Object.keys(h.history).forEach(ds => {
+      const log = h.history[ds];
+      if (!Array.isArray(log)) return;
+      const needsMigration = log.some(e => typeof e === 'string');
+      if (!needsMigration) return;
+
+      h.history[ds] = log.map(entry => {
+        if (typeof entry !== 'string') return entry; // sudah format baru
+        const id = entry;
+        let text = id;
+        if (id === 'main') {
+          text = h.name;
+        } else {
+          const sub = (h.subTasks || []).find(s => s.id === id);
+          text = sub ? sub.text : id;
+        }
+        return { id, text };
+      });
+      changed = true;
+    });
+  });
+  if (changed) save();
+}
+
+
+let dragSrc = null;
+let dragType = null; // 'habit' | 'todo'
+let autoScrollRAF = null;
+
+function initDragDrop() {
+  document.getElementById('habitList').addEventListener('touchstart', onDragStart, { passive: false });
+  document.getElementById('habitList').addEventListener('mousedown', onDragStart);
+}
+
+function onDragStart(e) {
+  const handle = e.target.closest('.drag-handle');
+  if (!handle) return;
+  const card = handle.closest('.habit-card, .todo-card');
+  if (!card) return;
+
+  dragSrc = card;
+  dragType = card.classList.contains('habit-card') ? 'habit' : 'todo';
+  card.classList.add('dragging');
+
+  const isTouchEvent = e.type === 'touchstart';
+  const moveEv = isTouchEvent ? 'touchmove' : 'mousemove';
+  const endEv = isTouchEvent ? 'touchend' : 'mouseup';
+
+  let lastOver = null;
+  // Inisialisasi currentY dari posisi jari asli — bukan 0!
+  const initTouch = isTouchEvent ? e.touches[0] : e;
+  let currentY = initTouch.clientY;
+  let hasMoved = false;
+
+  // ── Auto-scroll: jalankan loop RAF selama drag ──
+  const SCROLL_ZONE = 80;  // px dari tepi layar mulai scroll
+  const SCROLL_SPEED = 8;  // px per frame
+
+  function autoScroll() {
+    // Jangan scroll kalau jari belum bergerak
+    if (hasMoved) {
+      const vh = window.innerHeight;
+      if (currentY < SCROLL_ZONE) {
+        const speed = SCROLL_SPEED * (1 - currentY / SCROLL_ZONE);
+        window.scrollBy(0, -speed);
+      } else if (currentY > vh - SCROLL_ZONE) {
+        const speed = SCROLL_SPEED * ((currentY - (vh - SCROLL_ZONE)) / SCROLL_ZONE);
+        window.scrollBy(0, speed);
+      }
+    }
+    autoScrollRAF = requestAnimationFrame(autoScroll);
+  }
+  autoScrollRAF = requestAnimationFrame(autoScroll);
+
+  function onMove(ev) {
+    ev.preventDefault();
+    const touch = isTouchEvent ? ev.touches[0] : ev;
+    currentY = touch.clientY;
+    hasMoved = true;
+
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!el) return;
+    const target = el.closest('.habit-card, .todo-card');
+    if (target && target !== dragSrc) {
+      if (lastOver && lastOver !== target) lastOver.classList.remove('drag-over');
+      target.classList.add('drag-over');
+      lastOver = target;
+    } else if (lastOver) {
+      lastOver.classList.remove('drag-over');
+      lastOver = null;
+    }
+  }
+
+  function onEnd(ev) {
+    // Stop auto-scroll
+    if (autoScrollRAF) { cancelAnimationFrame(autoScrollRAF); autoScrollRAF = null; }
+
+    card.classList.remove('dragging');
+    if (lastOver) {
+      lastOver.classList.remove('drag-over');
+      if (dragType === 'habit') reorderHabits(dragSrc, lastOver);
+      else reorderTodos(dragSrc, lastOver);
+    }
+    dragSrc = null;
+    document.removeEventListener(moveEv, onMove);
+    document.removeEventListener(endEv, onEnd);
+  }
+
+  document.addEventListener(moveEv, onMove, { passive: false });
+  document.addEventListener(endEv, onEnd);
+}
+
+function reorderHabits(srcCard, targetCard) {
+  const list = document.getElementById('habitList');
+  const cards = Array.from(list.querySelectorAll('.habit-card'));
+  const srcIdx = cards.indexOf(srcCard);
+  const tgtIdx = cards.indexOf(targetCard);
+  if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
+  const moved = habits.splice(srcIdx, 1)[0];
+  habits.splice(tgtIdx, 0, moved);
+  save();
+  renderHabits();
+}
+
+function reorderTodos(srcCard, targetCard) {
+  const srcId = srcCard.dataset.id;
+  const tgtId = targetCard.dataset.id;
+  if (!srcId || !tgtId || srcId === tgtId) return;
+  const srcIdx = todos.findIndex(t => t.id === srcId);
+  const tgtIdx = todos.findIndex(t => t.id === tgtId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+  const moved = todos.splice(srcIdx, 1)[0];
+  todos.splice(tgtIdx, 0, moved);
+  save();
+  renderTodos();
+}
+
+// Delegasi drag untuk todo (dirender ulang tiap kali)
+document.addEventListener('touchstart', (e) => {
+  const handle = e.target.closest('.todo-drag-handle');
+  if (!handle) return;
+  onDragStart.call(null, e);
+}, { passive: false });
+document.addEventListener('mousedown', (e) => {
+  const handle = e.target.closest('.todo-drag-handle');
+  if (!handle) return;
+  onDragStart.call(null, e);
+});
+
+
+function initDayPicker() {
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+}
+
+window.setDayPreset = function(preset) {
+  const presets = {
+    all: [],
+    weekday: [1,2,3,4,5],
+    mwf: [1,3,5],
+    weekend: [0,6]
+  };
+  const days = presets[preset] || [];
+  document.querySelectorAll('.day-btn').forEach(btn => {
+    const d = parseInt(btn.dataset.day);
+    btn.classList.toggle('active', days.includes(d));
+  });
+};
+
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ===== STATS =====
+// ===== HABIT ICONS =====
+const HABIT_ICONS = {
+  star:      `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+  dumbbell:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 9.5h3v5H3zM18 9.5h3v5h-3z"/></svg>`,
+  book:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
+  briefcase: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>`,
+  film:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>`,
+  apple:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20.94c1.5 0 4-1.73 4-6.94 0-4-3-7-4-7s-4 3-4 7c0 5.21 2.5 6.94 4 6.94z"/><path d="M12 7c0 0 1-4 4-4"/></svg>`,
+  moon:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`,
+  feather:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>`,
+  dollar:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>`,
+  gamepad:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>`,
+  walk:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l-2 5h3l1 5M15 8l2 5h-3l-1 5M9 8l3 2 3-2"/></svg>`,
+  heart:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+};
+
+function getHabitIcon(key) {
+  return HABIT_ICONS[key] || HABIT_ICONS['star'];
+}
+
+function initIconPicker() {
+  document.querySelectorAll('.icon-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.icon-opt').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('habitIcon').value = btn.dataset.icon;
+    });
+  });
+}
+
+function setIconPickerValue(iconKey) {
+  document.querySelectorAll('.icon-opt').forEach(b => {
+    b.classList.toggle('active', b.dataset.icon === iconKey);
+  });
+  document.getElementById('habitIcon').value = iconKey || 'star';
+}
+
+// Helper: cek apakah warna terlalu gelap atau terlalu terang
+function isDarkColor(hex) {
+  if (!hex || hex.length < 6) return false;
+  const c = hex.replace('#','');
+  const r = parseInt(c.substr(0,2),16);
+  const g = parseInt(c.substr(2,2),16);
+  const b = parseInt(c.substr(4,2),16);
+  const lum = (0.299*r + 0.587*g + 0.114*b);
+  return lum < 80; // gelap kalau luminance < 80
+}
+
+function isLightColor(hex) {
+  if (!hex || hex.length < 6) return false;
+  const c = hex.replace('#','');
+  const r = parseInt(c.substr(0,2),16);
+  const g = parseInt(c.substr(2,2),16);
+  const b = parseInt(c.substr(4,2),16);
+  const lum = (0.299*r + 0.587*g + 0.114*b);
+  return lum > 200; // terang kalau luminance > 200
+}
+
+// Helper: cek apakah habit dijadwalkan di tanggal tertentu
+function isHabitScheduled(h, dateStr) {
+  const activeDays = h.activeDays || [];
+  if (activeDays.length === 0) return true; // setiap hari
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  return activeDays.includes(dow);
+}
+
+function updateStats() {
+  const today = getToday();
+  const activeHabits = habits.filter(h => !h.archived);
+
+  let done = 0, total = 0;
+  activeHabits.forEach(h => {
+    if (!isHabitScheduled(h, today)) return;
+    const tc = (h.subTasks && h.subTasks.length) ? h.subTasks.length : 1;
+    total += tc;
+    done += (h.history?.[today] || []).length;
+  });
+  const pct = total === 0 ? 0 : Math.round((done/total)*100);
+  document.getElementById('statHabits').textContent = activeHabits.length;
+  document.getElementById('statToday').textContent = pct + '%';
+
+  // 7-day avg — hanya hitung habit yang dijadwalkan di hari tsb
+  let tw = 0, tw2 = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    activeHabits.forEach(h => {
+      if (!isHabitScheduled(h, ds)) return;
+      tw += (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+      tw2 += (h.history[ds] || []).length;
+    });
+  }
+  document.getElementById('statAvg').textContent = tw === 0 ? '0%' : Math.round((tw2/tw)*100) + '%';
+
+  // streak — hari dihitung kalau semua habit yang dijadwalkan hari itu ada aktivitas
+  let streak = 0;
+  let sd = new Date(today + 'T00:00:00');
+  for (let i = 0; i < 3650; i++) {
+    const ds = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+    const scheduledToday = activeHabits.filter(h => isHabitScheduled(h, ds));
+    const hasActivity = scheduledToday.length > 0 && scheduledToday.some(h => h.history[ds] && h.history[ds].length > 0);
+    if (hasActivity) {
+      streak++;
+    } else if (ds === today) {
+      // hari ini belum dikerjakan, streak lanjut cek kemarin
+    } else if (scheduledToday.length === 0) {
+      // tidak ada habit yang dijadwalkan hari ini, skip (jangan putus streak)
+    } else {
+      break;
+    }
+    sd.setDate(sd.getDate() - 1);
+  }
+  document.getElementById('statStreak').textContent = streak;
+}
+
+function renderChart() {
+  const canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const isDark = document.body.classList.contains('dark');
+  const today = getToday();
+  const activeHabits = habits.filter(h => !h.archived);
+  const labels = [], dataPoints = [];
+  for (let i = chartRangeDays - 1; i >= 0; i--) {
+    const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const lbl = chartRangeDays <= 30
+      ? d.toLocaleDateString('id-ID', { weekday:'short', day:'numeric' })
+      : d.toLocaleDateString('id-ID', { day:'numeric', month:'short' });
+    labels.push(lbl);
+    let dt = 0, dd = 0;
+    activeHabits.forEach(h => {
+      if (!isHabitScheduled(h, ds)) return; // skip jika bukan jadwalnya
+      dt += (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+      dd += (h.history[ds] || []).length;
+    });
+    dataPoints.push(dt === 0 ? 0 : Math.round((dd/dt)*100));
+  }
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: dataPoints,
+        borderColor: isDark ? '#A8A7A2' : '#1A1917',
+        backgroundColor: isDark ? 'rgba(168,167,162,0.08)' : 'rgba(26,25,23,0.06)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 2,
+        borderWidth: 1.5,
+        clip: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { left: 4, right: 4, top: 6, bottom: 0 } },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: isDark ? '#6B6A65' : '#A8A7A2', font: { size: 10 } } },
+        y: { display: false, min: 0, max: 100 }
+      }
+    }
+  });
+}
+
+function renderCalendar() {
+  const { year, month } = currentCalView;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  document.getElementById('calMonth').textContent = new Date(year, month).toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = getToday();
+  let totalAct = 0;
+  const activeHabits = habits.filter(h => !h.archived);
+
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    if (ds === today) el.classList.add('today');
+
+    // Angka tanggal
+    const dayNum = document.createElement('span');
+    dayNum.textContent = day;
+    el.appendChild(dayNum);
+
+    // Kumpulkan habit yang aktif hari ini
+    let acts = [];
+    let activeHabitsToday = [];
+    activeHabits.forEach(h => {
+      if (h.history[ds] && h.history[ds].length > 0) {
+        el.classList.add('has-data');
+        totalAct += h.history[ds].length;
+        activeHabitsToday.push(h.color);
+        h.history[ds].forEach(entry => {
+          // Support format lama (string) dan baru (object {id, text})
+          const id = typeof entry === 'string' ? entry : entry.id;
+          const snapText = typeof entry === 'object' && entry.text ? entry.text : null;
+
+          if (id === 'main') {
+            acts.push(snapText || h.name);
+          } else {
+            // Pakai snapshot text kalau ada, fallback ke subtask saat ini
+            const fallback = h.subTasks?.find(s => s.id === id);
+            acts.push(`${h.name} — ${snapText || (fallback ? fallback.text : id)}`);
+          }
+        });
+      }
+    });
+
+    // Buat titik indikator (max 3 titik)
+    if (activeHabitsToday.length > 0) {
+      const dotsWrap = document.createElement('div');
+      dotsWrap.style.cssText = 'display:flex;gap:2px;align-items:center;justify-content:center;';
+      const maxDots = Math.min(activeHabitsToday.length, 3);
+      for (let d = 0; d < maxDots; d++) {
+        const dot = document.createElement('div');
+        dot.className = 'cal-dot';
+        // Kalau hari ini (bg gelap), titik putih; lainnya pakai warna habit
+        if (ds !== today) dot.style.background = activeHabitsToday[d];
+        dotsWrap.appendChild(dot);
+      }
+      el.appendChild(dotsWrap);
+    }
+
+    el.onclick = () => showCalDetail(ds, acts, day);
+    grid.appendChild(el);
+  }
+
+  document.getElementById('calSub').textContent = totalAct === 0 ? 'Tidak ada aktivitas' : `${totalAct} aktivitas`;
+}
+
+function showCalDetail(ds, items, day) {
+  const d = document.getElementById('calDetail');
+  const date = new Date(ds + 'T00:00:00');
+  document.getElementById('calDetailDate').textContent = date.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  const list = document.getElementById('calDetailList');
+  list.innerHTML = '';
+  if (items.length === 0) {
+    list.innerHTML = '<li style="color:var(--text-3);font-style:italic">Tidak ada aktivitas</li>';
+  } else {
+    items.forEach(txt => {
+      const li = document.createElement('li');
+      li.textContent = txt;
+      list.appendChild(li);
+    });
+  }
+
+  // Tombol clear — hanya tampil kalau ada data
+  let clearBtn = document.getElementById('calClearBtn');
+  if (!clearBtn) {
+    clearBtn = document.createElement('button');
+    clearBtn.id = 'calClearBtn';
+    clearBtn.className = 'btn-sm danger';
+    clearBtn.style.cssText = 'margin-top:12px;width:100%;font-size:12px;';
+    d.appendChild(clearBtn);
+  }
+
+  if (items.length > 0) {
+    clearBtn.textContent = 'Hapus Data Hari Ini';
+    clearBtn.onclick = () => clearDayHistory(ds);
+    clearBtn.style.display = 'block';
+  } else {
+    clearBtn.style.display = 'none';
+  }
+
+  d.classList.remove('hidden');
+}
+
+// ===== CLEAR HISTORY PER TANGGAL =====
+window.clearDayHistory = async function(ds) {
+  const date = new Date(ds + 'T00:00:00');
+  const label = date.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  const ok = await showConfirm(
+    `Semua data aktivitas pada ${label} akan dihapus permanen.`,
+    'error',
+    'Hapus Data Hari Ini?'
+  );
+  if (!ok) return;
+
+  let removed = 0;
+  habits.forEach(h => {
+    if (h.history && h.history[ds]) {
+      removed += h.history[ds].length;
+      delete h.history[ds];
+    }
+  });
+
+  save();
+  if (currentView === 'stats') { updateStats(); renderCalendar(); }
+
+  document.getElementById('calDetail').classList.add('hidden');
+
+  showAlert(
+    removed > 0
+      ? `${removed} aktivitas pada ${label} berhasil dihapus.`
+      : `Tidak ada data di tanggal tersebut.`,
+    'success',
+    'Selesai'
+  );
+};
+
+// ===== SETTINGS =====
+function exportData() {
+  let coachMemory = null;
+  try {
+    const raw = localStorage.getItem('dailyos_coach_memory');
+    if (raw) coachMemory = JSON.parse(raw);
+  } catch {}
+
+  const data = {
+    version: 2,
+    habits,
+    todos,
+    totalPoints,
+    coachMemory: coachMemory || undefined,
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `backup-dailyos-${getToday()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showAlert('Backup berhasil didownload.', 'success', 'Berhasil');
+}
+
+function exportCSV() {
+  const activeHabits = habits.filter(h => !h.archived);
+  if (activeHabits.length === 0) { showAlert('Belum ada data habit.', 'warning', 'Kosong'); return; }
+  let csv = 'Tanggal,Habit,Selesai,Total,Persentase\n';
+  const allDates = new Set();
+  activeHabits.forEach(h => Object.keys(h.history || {}).forEach(d => allDates.add(d)));
+  Array.from(allDates).sort().forEach(ds => {
+    activeHabits.forEach(h => {
+      const tc = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+      const done = (h.history[ds] || []).length;
+      csv += `"${ds}","${h.name}","${done}","${tc}","${Math.round((done/tc)*100)}%"\n`;
+    });
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `stats-dailyos-${getToday()}.csv`;
+  a.click();
+  showAlert('CSV berhasil didownload.', 'success', 'Berhasil');
+}
+
+async function resetAll() {
+  const ok = await showConfirm('Semua data habits, to-do, dan XP akan dihapus permanen. Tindakan ini tidak dapat dibatalkan!', 'error', 'Reset Total?');
+  if (ok) {
+    habits = []; todos = []; totalPoints = 0;
+    // Hapus dari IndexedDB
+    await idbDelete('habits', 'dailyos_habits').catch(() => {});
+    await idbDelete('todos',  'dailyos_todos').catch(() => {});
+    // Hanya hapus data, bukan setting theme & notifikasi
+    localStorage.removeItem('dailyos_habits');
+    localStorage.removeItem('dailyos_todos');
+    localStorage.removeItem('dailyos_xp');
+    localStorage.removeItem('dailyos_coach_memory');
+    localStorage.removeItem('dailyos_memory_date');
+    renderHabits(); renderTodos(); updateXP();
+    switchView('habit');
+    setTimeout(() => showAlert('Semua data telah direset.', 'success', 'Selesai'), 300);
+  }
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async () => {
+  await load();
+  migrateHistory(); // konversi data lama ke format baru
+  updateTopDate();
+  renderHabits();
+  renderTodos();
+
+  // Theme toggle
+  function applyTheme(isDark) {
+    document.body.classList.toggle('dark', isDark);
+    document.querySelector('.icon-sun').classList.toggle('hidden', isDark);
+    document.querySelector('.icon-moon').classList.toggle('hidden', !isDark);
+  }
+  const savedTheme = localStorage.getItem('dailyos_theme');
+  applyTheme(savedTheme === 'dark');
+
+  document.getElementById('themeToggle').onclick = () => {
+    const isDark = !document.body.classList.contains('dark');
+    applyTheme(isDark);
+    localStorage.setItem('dailyos_theme', isDark ? 'dark' : 'light');
+    if (currentView === 'stats') setTimeout(renderChart, 50);
+  };
+
+  document.getElementById('fabBtn').onclick = () => {
+    if (currentView === 'habit') openHabitModal();
+    else if (currentView === 'todo') {
+      editTodoId = null;
+      document.getElementById('todoModalTitle').textContent = 'Task Baru';
+      document.getElementById('todoTitle').value = '';
+      document.getElementById('todoDeadline').value = '';
+      document.getElementById('todoSubList').innerHTML = '';
+      setPriority('urgent');
+      openModal('todoModal');
+    }
+  };
+
+  // Habit Modal
+  document.getElementById('closeHabitModal').onclick = () => closeModal('habitModal');
+  document.getElementById('saveHabitBtn').onclick = saveHabit;
+  document.getElementById('addSubTask').onclick = () => addSubRow();
+
+  // Day picker
+  initDayPicker();
+  initIconPicker();
+
+  // Drag & drop
+  initDragDrop();
+
+  // Color picker
+  document.querySelectorAll('.color-dot').forEach(dot => {
+    dot.onclick = () => {
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+      dot.classList.add('active');
+      document.getElementById('habitColor').value = dot.dataset.color;
+    };
+  });
+
+  // Todo Modal
+  document.getElementById('closeTodoModal').onclick = () => closeModal('todoModal');
+  document.getElementById('saveTodoBtn').onclick = saveTodo;
+  document.getElementById('addTodoSub').onclick = () => addTodoSubRow();
+
+  // Close modal on overlay click
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.onclick = (e) => { if (e.target === o) closeModal(o.id); };
+  });
+
+  // Chart range
+  document.getElementById('chartRange').onchange = (e) => {
+    chartRangeDays = parseInt(e.target.value);
+    renderChart();
+  };
+
+  // Calendar nav
+  document.getElementById('prevMonth').onclick = () => {
+    currentCalView.month--;
+    if (currentCalView.month < 0) { currentCalView.month = 11; currentCalView.year--; }
+    renderCalendar();
+    document.getElementById('calDetail').classList.add('hidden');
+  };
+  document.getElementById('nextMonth').onclick = () => {
+    currentCalView.month++;
+    if (currentCalView.month > 11) { currentCalView.month = 0; currentCalView.year++; }
+    renderCalendar();
+    document.getElementById('calDetail').classList.add('hidden');
+  };
+
+  // Settings
+  document.getElementById('btnExport').onclick = exportData;
+  document.getElementById('btnExportCSV').onclick = exportCSV;
+  document.getElementById('btnImport').onclick = () => document.getElementById('fileImport').click();
+  document.getElementById('fileImport').onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const ok = await showConfirm('Data saat ini akan ditimpa. Lanjutkan?', 'warning', 'Restore Data');
+    if (!ok) { e.target.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+
+        // Validasi — minimal harus punya field habits
+        if (!data || !Array.isArray(data.habits)) {
+          throw new Error('Format tidak dikenali — pastikan file backup dari Daily OS.');
+        }
+
+        // Restore habits
+        habits = data.habits.map(h => ({
+          name: h.name || '',
+          category: h.category || 'General',
+          color: h.color || '#1A1917',
+          icon: h.icon || 'star',
+          activeDays: Array.isArray(h.activeDays) ? h.activeDays : [],
+          subTasks: Array.isArray(h.subTasks) ? h.subTasks : [],
+          history: h.history || {},
+          collapsed: h.collapsed || false,
+          archived: !!h.archived
+        }));
+
+        // Restore todos — aman kalau tidak ada (backup lama)
+        todos = Array.isArray(data.todos) ? data.todos : [];
+
+        // Restore XP
+        totalPoints = typeof data.totalPoints === 'number' ? data.totalPoints : 0;
+
+        // Restore coach memory kalau ada
+        if (data.coachMemory && typeof data.coachMemory === 'object') {
+          localStorage.setItem('dailyos_coach_memory', JSON.stringify(data.coachMemory));
+          if (data.coachMemory.lastUpdated) {
+            localStorage.setItem('dailyos_memory_date', data.coachMemory.lastUpdated);
+          }
+        }
+
+        save();
+        renderHabits();
+        renderTodos();
+        updateXP();
+        showAlert(`Berhasil direstore!\n${habits.length} habit, ${todos.length} task.`, 'success', 'Berhasil');
+      } catch (err) {
+        showAlert(`Gagal: ${err.message}`, 'error', 'Restore Gagal');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  };
+  document.getElementById('btnReset').onclick = resetAll;
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown-wrapper')) {
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.add('hidden'));
+    }
+    const calDetail = document.getElementById('calDetail');
+    if (calDetail && !calDetail.classList.contains('hidden') &&
+        !e.target.closest('.cal-detail') && !e.target.classList.contains('cal-day')) {
+      calDetail.classList.add('hidden');
+    }
+  });
+});
+
+// ===== PWA: SERVICE WORKER REGISTRATION =====
+let swReg = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      swReg = await navigator.serviceWorker.register('./sw.js');
+      console.log('[SW] Registered:', swReg.scope);
+      updateNotifUI();
+    } catch (err) {
+      console.warn('[SW] Registration failed:', err);
+    }
+  });
+}
+
+// ===== AI FEATURES =====
+const WORKER_URL = 'https://dailyos-ai.mywisnu238.workers.dev';
+
+// Render habit preview di panel AI
+function renderAIHabitPreview() {
+  const el = document.getElementById('aiHabitPreview');
+  if (!el) return;
+
+  const visibleHabits = habits.filter(h => !h.archived);
+  if (visibleHabits.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-3);text-align:center;padding:10px 0">Belum ada habit. Tambah habit dulu di tab Habit.</div>';
+    return;
+  }
+
+  const today = getToday();
+  let html = '';
+  visibleHabits.forEach(h => {
+    const scheduled = isHabitScheduled(h, today);
+    const log = h.history?.[today] || [];
+    const total = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+    const done = log.length;
+    const isDone = done >= total;
+    const isProgress = done > 0 && done < total;
+    // Hitung streak
+    let streak = 0;
+    let sd = new Date(today + 'T00:00:00');
+    for (let i = 0; i < 365; i++) {
+      const ds = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+      if (h.history?.[ds] && h.history[ds].length > 0) { streak++; sd.setDate(sd.getDate()-1); }
+      else if (ds === today) { sd.setDate(sd.getDate()-1); }
+      else if (!isHabitScheduled(h, ds)) { sd.setDate(sd.getDate()-1); }
+      else break;
+    }
+    const badge = !scheduled ? '—' : (isDone ? '✓ Done' : (isProgress ? `${done}/${total}` : 'Belum'));
+    const badgeClass = !scheduled ? 'hp-miss' : (isDone ? 'hp-done' : 'hp-miss');
+
+    html += `<div class="habit-preview-row" style="${!scheduled?'opacity:0.4':''}">
+      <div class="hp-dot" style="background:${h.color}"></div>
+      <div style="flex:1">
+        <div class="hp-name">${h.name}</div>
+        <div class="hp-streak">${streak > 0 ? '🔥 ' + streak + ' hari' : '—'}${!scheduled?' · tidak dijadwalkan hari ini':''}${isProgress ? ` · progres ${done}/${total}` : ''}</div>
+      </div>
+      <span class="hp-badge ${badgeClass}">${badge}</span>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ===== IDEKU INTEGRATION =====
+// Baca ide berstatus "Proses" dari IndexedDB IdeKu (ideku_db)
+async function readIdekuIdeas() {
+  return EcosystemDB.getIdeasInProgress();
+}
+
+async function callWorker(payload) {
+  const resp = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error('Worker error ' + resp.status);
+  const data = await resp.json();
+  return data.text || '';
+}
+
+// ===== COACH MEMORY SYSTEM =====
+
+function getHabitStats30Days() {
+  const today = getToday();
+  const result = [];
+
+  habits.forEach(h => {
+    if (h.archived) return; // skip archived
+    const scheduledDays = [];
+    const completedDays = [];
+    const skipDays = [];
+
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today + 'T00:00:00');
+      d.setDate(d.getDate() - i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const scheduled = isHabitScheduled(h, ds);
+      if (!scheduled) continue;
+
+      scheduledDays.push(ds);
+      const log = h.history?.[ds] || [];
+      const total = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+      if (log.length >= total) completedDays.push(ds);
+      else if (ds !== today) skipDays.push(ds); // hari ini belum tentu skip
+    }
+
+    const rate = scheduledDays.length > 0
+      ? Math.round((completedDays.length / scheduledDays.length) * 100)
+      : 0;
+
+    // Hitung streak saat ini
+    let streak = 0;
+    let sd = new Date(today + 'T00:00:00');
+    for (let i = 0; i < 365; i++) {
+      const ds = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+      if (h.history?.[ds] && h.history[ds].length > 0) { streak++; sd.setDate(sd.getDate()-1); }
+      else if (ds === today) { sd.setDate(sd.getDate()-1); }
+      else if (!isHabitScheduled(h, ds)) { sd.setDate(sd.getDate()-1); } // skip hari tidak terjadwal
+      else break;
+    }
+
+    // Deteksi hari lemah (hari dalam seminggu yang sering skip)
+    const skipByDay = [0,0,0,0,0,0,0];
+    const schedByDay = [0,0,0,0,0,0,0];
+    scheduledDays.forEach(ds => { schedByDay[new Date(ds+'T00:00:00').getDay()]++; });
+    skipDays.forEach(ds => { skipByDay[new Date(ds+'T00:00:00').getDay()]++; });
+    const dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const weakDays = schedByDay
+      .map((total, i) => total >= 3 ? { day: dayNames[i], rate: Math.round((skipByDay[i]/total)*100) } : null)
+      .filter(x => x && x.rate >= 50)
+      .map(x => x.day);
+
+    result.push({
+      name: h.name,
+      category: h.category || 'General',
+      scheduledCount: scheduledDays.length,
+      completedCount: completedDays.length,
+      skipCount: skipDays.length,
+      completionRate: rate,
+      currentStreak: streak,
+      weakDays: weakDays.length > 0 ? weakDays : null
+    });
+  });
+
+  return result;
+}
+
+async function generateCoachMemory() {
+  if (habits.length === 0) return;
+
+  const stats = getHabitStats30Days();
+  const today = getToday();
+  const todayLabel = new Date(today + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const statsText = stats.map(h =>
+    `- ${h.name} (${h.category}): completion ${h.completionRate}%, streak ${h.currentStreak} hari, skip ${h.skipCount}x dari ${h.scheduledCount} jadwal${h.weakDays ? ', lemah di: '+h.weakDays.join('/') : ''}`
+  ).join('\n');
+
+  const prompt = `Analisis data habit 30 hari terakhir user ini dan buat catatan mentor yang berguna.
+
+Tanggal analisis: ${todayLabel}
+
+DATA HABIT:
+${statsText}
+
+Return HANYA JSON valid tanpa penjelasan, tanpa backtick, tanpa markdown. Format:
+{
+  "patterns": "deskripsi pola konsistensi secara keseluruhan, habit mana yang kuat dan lemah",
+  "weakSpots": "habit atau hari spesifik yang sering di-skip, pola yang perlu diperhatikan",
+  "strengths": "apa yang sudah berjalan baik, streak atau konsistensi yang patut diapresiasi",
+  "coachInsight": "insight untuk coach: cara terbaik mendekati user ini, apakah perlu di-push keras atau didukung, pola avoidance yang terdeteksi",
+  "confidence": "high | medium | low (low kalau data kurang dari 7 hari)"
+}`;
+
+  try {
+    const raw = await callWorker({
+      prompt,
+      system: 'Kamu adalah analis data perilaku. Return HANYA JSON valid tanpa teks lain, tanpa backtick, tanpa markdown.',
+      max_tokens: 500
+    });
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // Validasi field wajib ada
+    if (!parsed.patterns || !parsed.coachInsight) throw new Error('Field tidak lengkap');
+
+    parsed.lastUpdated = today;
+    parsed.habitCount = habits.length;
+
+    localStorage.setItem('dailyos_coach_memory', JSON.stringify(parsed));
+    localStorage.setItem('dailyos_memory_date', today);
+    console.log('[CoachMemory] Generated:', parsed);
+  } catch (err) {
+    console.warn('[CoachMemory] Gagal generate memory:', err);
+    // Biarkan memory lama tetap dipakai, jangan overwrite
+  }
+}
+
+async function checkAndRefreshMemory() {
+  const lastDate = localStorage.getItem('dailyos_memory_date');
+  const today = getToday();
+
+  if (!lastDate) {
+    // Belum ada memory sama sekali — generate sekarang tapi jangan block briefing
+    generateCoachMemory(); // fire and forget
+    return null;
+  }
+
+  const d1 = new Date(lastDate + 'T00:00:00');
+  const d2 = new Date(today + 'T00:00:00');
+  const daysSince = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+
+  if (daysSince >= 3) {
+    generateCoachMemory(); // refresh background, jangan block
+  }
+
+  // Return memory yang ada (meski mungkin agak lama)
+  try {
+    const raw = localStorage.getItem('dailyos_coach_memory');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+// AI COACH
+async function getAICoach() {
+  const refreshBtn = document.getElementById('btnRefreshCoach');
+  const textEl = document.getElementById('coachText');
+
+  // Tampilkan loading
+  if (refreshBtn) refreshBtn.style.display = 'none';
+  textEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+  const today = getToday();
+  const visibleHabits = habits.filter(h => !h.archived);
+  const activeTodos = todos.filter(t => !t.done);
+  const scheduledHabits = visibleHabits.filter(h => isHabitScheduled(h, today));
+
+  // Skip API kalau tidak ada data sama sekali
+  if (visibleHabits.length === 0 && todos.length === 0) {
+    textEl.textContent = 'Belum ada habit atau to-do. Tambahkan dulu di tab Habit atau To-Do ya!';
+    if (refreshBtn) refreshBtn.style.display = 'block';
+    return;
+  }
+
+  const todayLabel = new Date(today + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Cek & refresh memory (background, tidak block)
+  const memory = await checkAndRefreshMemory();
+
+  // Ambil ide "Proses" dari IdeKu (graceful fallback kalau tidak ada)
+  const idekuIdeas = await readIdekuIdeas();
+
+  // Siapkan ringkasan habit (hanya yang dijadwalkan hari ini)
+  const habitSummary = scheduledHabits.map(h => {
+    const log = h.history?.[today] || [];
+    const total = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+    const done = log.length;
+    const progressState = done >= total ? 'SELESAI' : (done > 0 ? `PROGRES ${done}/${total}` : `BELUM 0/${total}`);
+    const progressPercent = total === 0 ? 0 : Math.round((done / total) * 100);
+    let streak = 0;
+    let sd = new Date(today + 'T00:00:00');
+    for (let i = 0; i < 365; i++) {
+      const ds = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+      if (h.history?.[ds] && h.history[ds].length > 0) { streak++; sd.setDate(sd.getDate()-1); }
+      else if (ds === today) { sd.setDate(sd.getDate()-1); }
+      else if (!isHabitScheduled(h, ds)) { sd.setDate(sd.getDate()-1); }
+      else break;
+    }
+    return `- ${h.name} | Streak: ${streak} hari | Progress: ${progressState} (${progressPercent}%)`;
+  }).join('\n');
+
+  const todoSummary = activeTodos.length > 0
+    ? activeTodos.map(t => `- [${t.priority.toUpperCase()}] ${t.title}${t.deadline?' (deadline: '+formatDate(t.deadline)+')':''}`).join('\n')
+    : '(tidak ada task aktif)';
+
+  // Susun memory section kalau ada
+  const memorySection = memory ? `
+--- CATATAN MENTOR (pola 30 hari terakhir) ---
+Pola umum: ${memory.patterns}
+Titik lemah: ${memory.weakSpots || '-'}
+Yang sudah kuat: ${memory.strengths || '-'}
+Insight: ${memory.coachInsight}
+----------------------------------------------` : '';
+
+  // Susun IdeKu section kalau ada ide yang sedang diproses
+  const idekuSection = idekuIdeas.length > 0 ? `
+
+IDE YANG SEDANG DIKERJAKAN USER (dari IdeKu):
+${idekuIdeas.map(i => `- ${i.title}${i.category ? ' ['+i.category+']' : ''}${i.notes ? ': '+i.notes : ''}`).join('\n')}
+(Gunakan ini sebagai konteks untuk rekomendasi yang lebih relevan dengan proyek/ide user.)` : '';
+
+  const prompt = `Hari ini ${todayLabel}.
+
+HABIT TERJADWAL HARI INI:
+${habitSummary || '(tidak ada habit dijadwalkan hari ini)'}
+
+TO-DO AKTIF:
+${todoSummary}
+${memorySection}${idekuSection}
+
+Tulis briefing harian — maksimal 2-3 paragraf pendek, padat, dan langsung ke intinya. Gaya: pesan WhatsApp dari mentor yang kenal kamu baik, bukan pidato motivasi. Kalau ada yang sudah selesai, sebut spesifik dan lanjut. Kalau ada yang belum dan kamu punya data polanya, tantang langsung — jangan basa-basi atau filosofis. Pilih 1-2 hal paling penting untuk disorot, jangan bahas semuanya. Jangan pakai bullet point. Jangan mulai dengan sapaan klise seperti "Hei!", "Wah!", "Oke,", atau "Jadi,".`;
+
+  const system = `Kamu adalah mentor produktivitas yang sudah kenal user ini. Bicara seperti teman yang jujur — singkat, langsung, kadang nyelekit kalau perlu. Bahasa Indonesia kasual, boleh campur English kalau natural. Hindari kalimat motivasi klise seperti "aku percaya kamu bisa", "mari kita", "komitmen yang kuat". Jangan terdengar seperti bot.`;
+
+  try {
+    const text = await callWorker({ prompt, system, max_tokens: 600 });
+    textEl.textContent = text;
+  } catch(err) {
+    textEl.textContent = 'Gagal menghubungi AI Worker. Pastikan Worker sudah aktif dan GROQ_API_KEY sudah diset.';
+  }
+
+  // Tampilkan tombol refresh setelah selesai
+  if (refreshBtn) refreshBtn.style.display = 'block';
+}
+
+// REKOMENDASI TO-DO
+let parsedRekomData = null;
+
+function renderRekomPreview() {
+  const rekomResult = document.getElementById('rekomResult');
+  const rekomFields = document.getElementById('rekomFields');
+  const confirmBtn = document.getElementById('btnConfirmRekom');
+
+  if (!parsedRekomData || parsedRekomData.length === 0) {
+    rekomResult.classList.remove('visible');
+    confirmBtn.classList.remove('visible');
+    rekomFields.innerHTML = '<div style="font-size:13px;color:var(--text-2)">Tidak ada rekomendasi yang dipakai.</div>';
+    return;
+  }
+
+  const priClass = { urgent:'pv-urgent', soon:'pv-soon', normal:'pv-normal' };
+  const priLabel = { urgent:'🔴 Hari Ini', soon:'🟡 Minggu Ini', normal:'🟢 Nanti' };
+
+  let html = `<div style="font-size:11px;font-weight:600;color:var(--text-3);font-family:'DM Mono',monospace;margin-bottom:10px;letter-spacing:0.5px">${parsedRekomData.length} TASK DIREKOMENDASIKAN</div>`;
+
+  parsedRekomData.forEach((t, i) => {
+    const pc = priClass[t.priority] || '';
+    const pl = priLabel[t.priority] || t.priority;
+    const dl = t.deadline ? `<span style="font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;margin-left:6px">${t.deadline}</span>` : '';
+    html += `
+      <div class="rekom-item" style="position:relative;padding-right:28px">
+        <button type="button" aria-label="Hapus rekomendasi" onclick="removeRekomItem(${i})" style="position:absolute;right:0;top:8px;width:22px;height:22px;border:none;background:var(--surface2);border-radius:6px;color:var(--text-3);cursor:pointer;font-size:16px;line-height:1">×</button>
+        <div class="rekom-title">${t.judul}</div>
+        <div class="rekom-meta">
+          <span class="parsed-val ${pc}" style="font-size:12px">${pl}</span>
+          ${dl}
+        </div>
+        ${t.alasan ? `<div class="rekom-reason">↳ ${t.alasan}</div>` : ''}
+      </div>`;
+  });
+
+  rekomFields.innerHTML = html;
+  rekomResult.classList.add('visible');
+  confirmBtn.textContent = `+ Tambahkan ${parsedRekomData.length} Task ke To-Do`;
+  confirmBtn.classList.add('visible');
+}
+
+window.removeRekomItem = function(idx) {
+  if (!Array.isArray(parsedRekomData)) return;
+  parsedRekomData.splice(idx, 1);
+  renderRekomPreview();
+};
+
+async function getAIRecommendations() {
+  const btn = document.getElementById('btnRekom');
+  const rekomResult = document.getElementById('rekomResult');
+  const rekomFields = document.getElementById('rekomFields');
+  const confirmBtn = document.getElementById('btnConfirmRekom');
+  const successEl = document.getElementById('rekomSuccess');
+
+  // Reset state
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  rekomResult.classList.remove('visible');
+  confirmBtn.classList.remove('visible');
+  successEl.classList.remove('visible');
+  parsedRekomData = null;
+
+  const today = getToday();
+  const todayLabel = new Date(today + 'T00:00:00').toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // Ambil memory kalau ada
+  let memory = null;
+  try {
+    const raw = localStorage.getItem('dailyos_coach_memory');
+    if (raw) memory = JSON.parse(raw);
+  } catch {}
+
+  // Ambil ide "Proses" dari IdeKu (graceful fallback)
+  const idekuIdeas = await readIdekuIdeas();
+
+  const visibleHabits = habits.filter(h => !h.archived);
+  const scheduledTodayHabits = visibleHabits.filter(h => isHabitScheduled(h, today));
+
+  // Rangkuman habit gaps hari ini
+  const habitGapSummary = scheduledTodayHabits.map(h => {
+    const log = h.history?.[today] || [];
+    const total = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+    const done = log.length;
+    if (done >= total) return `- ${h.name}: selesai`;
+    if (done > 0) return `- ${h.name}: progres ${done}/${total} (lanjutkan dulu sebelum bikin task baru)`;
+    return `- ${h.name}: belum dimulai`;
+  }).join('\n');
+
+  // Ambil konteks to-do selesai (30 terakhir)
+  const doneTodos = todos
+    .filter(t => t.done)
+    .slice(0, 30)
+    .map(t => `- [${t.priority.toUpperCase()}] ${t.title}`)
+    .join('\n');
+
+  // To-do aktif saat ini
+  const activeTodos = todos
+    .filter(t => !t.done)
+    .map(t => `- [${t.priority.toUpperCase()}] ${t.title}${t.deadline ? ' (deadline: '+formatDate(t.deadline)+')' : ''}`)
+    .join('\n');
+
+  const memorySection = memory ? `
+POLA KEBIASAAN USER (dari analisis 30 hari):
+${memory.patterns}
+Titik lemah: ${memory.weakSpots || '-'}
+Insight: ${memory.coachInsight}` : '';
+
+  const idekuSection = idekuIdeas.length > 0 ? `
+
+IDE YANG SEDANG DIKERJAKAN USER (dari IdeKu — gunakan sebagai konteks rekomendasi yang lebih relevan):
+${idekuIdeas.map(i => `- ${i.title}${i.category ? ' ['+i.category+']' : ''}${i.notes ? ': '+i.notes : ''}`).join('\n')}` : '';
+
+  const prompt = `Kamu adalah AI yang membantu user merekomendasikan task to-do yang relevan dan actionable.
+
+Tanggal hari ini: ${todayLabel}
+
+PRIORITAS KONTEKS:
+1) Habit gaps dan progres habit hari ini
+2) IdeKu
+3) To-do aktif / selesai sebagai konteks, bukan sumber utama
+
+HABIT YANG SUDAH ADA (jangan direkomendasikan sebagai to-do rutin):
+${visibleHabits.map(h => `- ${h.name} (${h.category})`).join('\n') || '(tidak ada)'}
+
+HABIT GAP HARI INI:
+${habitGapSummary || '(tidak ada habit hari ini)'}
+
+TO-DO YANG SUDAH SELESAI (konteks pekerjaan terakhir):
+${doneTodos || '(belum ada)'}
+
+TO-DO YANG MASIH AKTIF (jangan direkomendasikan lagi):
+${activeTodos || '(tidak ada)'}
+${memorySection}${idekuSection}
+
+Tugas kamu: rekomendasikan task to-do yang BARU, SPESIFIK, dan ONE-OFF — bukan kegiatan rutin yang sudah ada di habit.
+
+Fokus pada:
+- Follow-up logis dari to-do yang baru selesai
+- Task konkret yang mendukung goal jangka panjang dari to-do aktif
+- Task yang muncul dari habit gap atau dari ide di IdeKu
+
+JANGAN rekomendasikan:
+- Apapun yang namanya mirip atau sama dengan habit yang sudah ada
+- Task yang sudah ada di to-do aktif
+- Task generik yang tidak spesifik ke konteks user ini
+
+Buat maksimal 5 rekomendasi yang paling relevan. Kalau yang benar-benar cocok hanya 1-2, cukup segitu. Kalau tidak ada yang cocok, return array kosong [].
+
+Return HANYA JSON array tanpa penjelasan, tanpa backtick, tanpa markdown:
+[
+  {
+    "judul": "string max 60 karakter, spesifik dan actionable",
+    "deadline": "YYYY-MM-DD atau null",
+    "priority": "urgent | soon | normal",
+    "alasan": "1 kalimat singkat kenapa task ini relevan sekarang"
+  }
+]`;
+
+  try {
+    const raw = await callWorker({
+      prompt,
+      system: 'Kamu adalah AI task recommender. Return HANYA JSON array valid tanpa teks lain, tanpa backtick, tanpa markdown.',
+      max_tokens: 800
+    });
+
+    const clean = raw.replace(/```json|```/g, '').trim();
+    let parsed = JSON.parse(clean);
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    parsedRekomData = parsed.slice(0, 5);
+
+    renderRekomPreview();
+
+  } catch(err) {
+    rekomFields.innerHTML = `<div style="font-size:13px;color:var(--text-2)">Gagal mendapatkan rekomendasi. Coba lagi atau pastikan Worker aktif.</div>`;
+    rekomResult.classList.add('visible');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Rekomendasi AI`;
+}
+
+function confirmAddRekom() {
+  if (!parsedRekomData || parsedRekomData.length === 0) return;
+
+  parsedRekomData.forEach((t, i) => {
+    let deadlineISO = t.deadline || '';
+    if (deadlineISO && !/^\d{4}-\d{2}-\d{2}$/.test(deadlineISO)) {
+      try {
+        const d = new Date(deadlineISO);
+        if (!isNaN(d)) deadlineISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        else deadlineISO = '';
+      } catch { deadlineISO = ''; }
+    }
+    todos.unshift({
+      id: `todo_rekom_${Date.now()}_${i}`,
+      title: t.judul,
+      priority: t.priority || 'normal',
+      deadline: deadlineISO,
+      done: false
+    });
+  });
+
+  save();
+  renderTodos();
+
+  const count = parsedRekomData.length;
+  document.getElementById('btnConfirmRekom').classList.remove('visible');
+  document.getElementById('rekomSuccess').textContent = `✓ ${count} task berhasil ditambahkan!`;
+  document.getElementById('rekomSuccess').classList.add('visible');
+  document.getElementById('rekomResult').classList.remove('visible');
+  parsedRekomData = null;
+  setTimeout(() => document.getElementById('rekomSuccess').classList.remove('visible'), 3000);
+}
+
+// SMART TODO
+let parsedTodoData = null; // sekarang array of tasks
+
+async function parseSmartTodo() {
+  const input = document.getElementById('smartInput').value.trim();
+  if (!input) { document.getElementById('smartInput').focus(); return; }
+
+  const btn = document.getElementById('btnSmartParse');
+  const result = document.getElementById('parsedResult');
+  const addBtn = document.getElementById('btnConfirmAdd');
+  const success = document.getElementById('addSuccess');
+
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  result.classList.remove('visible');
+  addBtn.classList.remove('visible');
+  success.classList.remove('visible');
+  parsedTodoData = null;
+
+  const todayLabel = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  const prompt = `Ekstrak SEMUA task/todo dari teks berikut. Bisa 1 task, bisa banyak — tergantung isi teks.
+Return HANYA JSON array tanpa penjelasan, tanpa backtick, tanpa markdown.
+
+Hari ini: ${todayLabel}
+Teks: "${input}"
+
+Format — array of objects:
+[
+  {
+    "judul": "string max 60 karakter",
+    "deadline": "YYYY-MM-DD atau null",
+    "priority": "urgent | soon | normal",
+    "subtasks": ["string"] atau []
+  }
+]
+
+Aturan judul:
+- Judul HARUS mencakup detail spesifik dari teks: durasi (15 menit, 1 jam), target (5 lembar, 10 kali), atau konteks penting lainnya
+- Contoh BENAR: "Latihan Reading English 15 Menit", "Baca Buku Psychology 5 Lembar", "Push Up 20 Kali"
+- Contoh SALAH: "Latihan Reading", "Baca Buku", "Push Up" — terlalu umum, detail hilang
+- Jangan potong informasi penting hanya untuk mempersingkat judul
+
+Aturan priority:
+- urgent = hari ini / besok / sekarang
+- soon = 2–7 hari ke depan / minggu ini
+- normal = lebih dari seminggu / tidak ada urgensi
+
+Subtasks: max 3, isi hanya jika ada langkah persiapan jelas di teks.
+Deadline: format YYYY-MM-DD, atau null jika tidak disebutkan.
+Pisahkan setiap task/keinginan yang berbeda menjadi objek terpisah.`;
+
+  try {
+    const raw = await callWorker({
+      prompt,
+      system: 'Kamu adalah parser JSON. Return HANYA JSON array valid tanpa teks lain, tanpa backtick, tanpa markdown.'
+    });
+    const clean = raw.replace(/```json|```/g,'').trim();
+    let parsed = JSON.parse(clean);
+
+    // Normalkan: jika AI return object tunggal, bungkus jadi array
+    if (!Array.isArray(parsed)) parsed = [parsed];
+    parsedTodoData = parsed;
+
+    // Render preview semua task
+    const priClass = { urgent:'pv-urgent', soon:'pv-soon', normal:'pv-normal' };
+    const priLabel = { urgent:'🔴 Hari Ini', soon:'🟡 Minggu Ini', normal:'🟢 Nanti' };
+
+    let html = `<div style="font-size:11px;font-weight:600;color:#2C5F2E;font-family:'DM Mono',monospace;margin-bottom:10px;letter-spacing:0.5px">${parsed.length} TASK DITEMUKAN</div>`;
+
+    parsed.forEach((t, i) => {
+      const subsHtml = t.subtasks?.length > 0
+        ? `<div class="subtask-dots" style="margin-top:4px">${t.subtasks.map(s=>`<div class="subtask-dot-item">${s}</div>`).join('')}</div>`
+        : '';
+      const pc = priClass[t.priority] || '';
+      const pl = priLabel[t.priority] || t.priority;
+      const dl = t.deadline ? `<span style="font-size:11px;color:var(--text-3);font-family:'DM Mono',monospace;margin-left:8px">${t.deadline}</span>` : '';
+
+      html += `
+        <div style="padding:10px 0;${i < parsed.length-1 ? 'border-bottom:1px solid #C8E0C9' : ''}">
+          <div style="font-size:13.5px;font-weight:500;color:var(--text);margin-bottom:4px">${t.judul}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="parsed-val ${pc}" style="font-size:12px">${pl}</span>
+            ${dl}
+          </div>
+          ${subsHtml}
+        </div>`;
+    });
+
+    document.getElementById('parsedFields').innerHTML = html;
+    result.classList.add('visible');
+    addBtn.textContent = `+ Tambahkan ${parsed.length} Task ke To-Do`;
+    addBtn.classList.add('visible');
+
+  } catch(err) {
+    document.getElementById('parsedFields').innerHTML = `<div style="font-size:13px;color:var(--text-2)">Gagal parse. Coba tulis ulang, atau cek koneksi Worker.</div>`;
+    result.classList.add('visible');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> Parse dengan AI`;
+}
+
+function confirmAddTodo() {
+  if (!parsedTodoData || parsedTodoData.length === 0) return;
+
+  parsedTodoData.forEach((t, i) => {
+    let deadlineISO = t.deadline || '';
+    // Validasi format YYYY-MM-DD
+    if (deadlineISO && !/^\d{4}-\d{2}-\d{2}$/.test(deadlineISO)) {
+      try {
+        const d = new Date(deadlineISO);
+        if (!isNaN(d)) deadlineISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        else deadlineISO = '';
+      } catch { deadlineISO = ''; }
+    }
+    todos.unshift({
+      id: `todo_${Date.now()}_${i}`,
+      title: t.judul,
+      priority: t.priority || 'normal',
+      deadline: deadlineISO,
+      done: false,
+      // Simpan subtasks dari hasil parse AI (array of string → convert ke format {id, text})
+      subtasks: Array.isArray(t.subtasks) && t.subtasks.length > 0
+        ? t.subtasks.map((s, si) => ({ id: `sub_${Date.now()}_${i}_${si}`, text: s, done: false }))
+        : []
+    });
+  });
+
+  save();
+  renderTodos();
+
+  const count = parsedTodoData.length;
+  document.getElementById('btnConfirmAdd').classList.remove('visible');
+  document.getElementById('addSuccess').textContent = `✓ ${count} task berhasil ditambahkan!`;
+  document.getElementById('addSuccess').classList.add('visible');
+  document.getElementById('smartInput').value = '';
+  document.getElementById('parsedResult').classList.remove('visible');
+  parsedTodoData = null;
+  setTimeout(() => document.getElementById('addSuccess').classList.remove('visible'), 3000);
+}
+
+
+function updateNotifUI() {
+  const statusEl = document.getElementById('notifStatusText');
+  const permBtn = document.getElementById('btnNotifPermission');
+  if (!statusEl || !permBtn) return;
+
+  // Guard: Notification API tidak tersedia (file://, HTTP, atau browser lama)
+  if (!('Notification' in window)) {
+    statusEl.textContent = 'Tidak didukung di browser ini';
+    permBtn.textContent = 'Tidak Tersedia';
+    permBtn.disabled = true;
+    return;
+  }
+
+  const perm = Notification.permission;
+  if (perm === 'granted') {
+    statusEl.textContent = 'Aktif ✓';
+    permBtn.textContent = 'Aktif';
+    permBtn.disabled = true;
+    const habitTime = localStorage.getItem('notif_habit_time') || '07:00';
+    const todoTime  = localStorage.getItem('notif_todo_time')  || '15:00';
+    document.getElementById('notifHabitTime').value = habitTime;
+    document.getElementById('notifTodoTime').value  = todoTime;
+    scheduleAllNotifications();
+  } else if (perm === 'denied') {
+    statusEl.textContent = 'Ditolak — aktifkan manual di pengaturan browser';
+    permBtn.textContent = 'Ditolak';
+    permBtn.disabled = true;
+  } else {
+    statusEl.textContent = 'Belum diaktifkan';
+    permBtn.textContent = 'Aktifkan';
+    permBtn.disabled = false;
+  }
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    return showAlert('Browser kamu tidak mendukung notifikasi.', 'warning', 'Tidak Didukung');
+  }
+  const result = await Notification.requestPermission();
+  updateNotifUI();
+  if (result === 'granted') {
+    showAlert('Notifikasi berhasil diaktifkan!', 'success', 'Berhasil');
+    scheduleAllNotifications();
+  } else {
+    showAlert('Izin notifikasi ditolak.', 'warning', 'Ditolak');
+  }
+}
+
+function getMsUntilTime(timeStr) {
+  // Hitung ms sampai jam berikutnya (hari ini atau besok)
+  const [h, m] = timeStr.split(':').map(Number);
+  const now = new Date();
+  const target = new Date();
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1); // besok
+  return target.getTime() - now.getTime();
+}
+
+function scheduleAllNotifications() {
+  if (!swReg || !('Notification' in window) || Notification.permission !== 'granted') return;
+
+  const habitTime = localStorage.getItem('notif_habit_time') || '07:00';
+  const todoTime  = localStorage.getItem('notif_todo_time')  || '15:00';
+
+  // Kirim ke SW untuk dijadwalkan
+  navigator.serviceWorker.ready.then(reg => {
+    reg.active.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      title: 'Daily OS — Habit',
+      body: 'Jangan lupa cek dan kerjakan habit hari ini! 💪',
+      delay: getMsUntilTime(habitTime),
+      tag: 'habit-reminder'
+    });
+    reg.active.postMessage({
+      type: 'SCHEDULE_NOTIFICATION',
+      title: 'Daily OS — To-Do',
+      body: 'Ada task yang perlu dikerjakan hari ini? 📋',
+      delay: getMsUntilTime(todoTime),
+      tag: 'todo-reminder'
+    });
+  });
+}
+
+function saveNotifSettings() {
+  const habitTime = document.getElementById('notifHabitTime').value;
+  const todoTime  = document.getElementById('notifTodoTime').value;
+  localStorage.setItem('notif_habit_time', habitTime);
+  localStorage.setItem('notif_todo_time', todoTime);
+  scheduleAllNotifications();
+  showAlert('Jadwal notifikasi disimpan!', 'success', 'Tersimpan');
+}
+
+// Bind notif buttons setelah DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+  const permBtn  = document.getElementById('btnNotifPermission');
+  const saveBtn  = document.getElementById('btnNotifSave');
+  if (permBtn) permBtn.onclick = requestNotifPermission;
+  if (saveBtn) saveBtn.onclick = saveNotifSettings;
+  try { updateNotifUI(); } catch(e) {}
+
+  // Update theme-color meta ikut dark mode
+  const observer = new MutationObserver(() => {
+    const isDark = document.body.classList.contains('dark');
+    document.getElementById('themeColorMeta').content = isDark ? '#0F0F0F' : '#1A1917';
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+});
+</script>
+</body>
+</html>

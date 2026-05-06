@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#0c0c0e"/>
+  <!-- Outer square frame -->
+  <rect x="122" y="122" width="268" height="268" rx="48" fill="none" stroke="#f0f0f2" stroke-width="26" stroke-linejoin="round"/>
+  <!-- Arrow → (horizontal line) -->
+  <line x1="180" y1="256" x2="332" y2="256" stroke="#f0f0f2" stroke-width="26" stroke-linecap="round"/>
+  <!-- Arrow head -->
+  <polyline points="278,202 332,256 278,310" fill="none" stroke="#f0f0f2" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

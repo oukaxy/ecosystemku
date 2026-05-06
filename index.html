@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EcosystemKu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #f5f4f2;
+      --bg-card:     #ffffff;
+      --bg-card-2:   #eeede9;
+      --text:        #0f0e0c;
+      --text-2:      #6b6a67;
+      --text-3:      #b0afa9;
+      --border:      rgba(0,0,0,0.07);
+      --shadow:      0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,0.08);
+      --radius:      16px;
+      --radius-sm:   10px;
+      --accent:      #0f0e0c;
+      --accent-soft: rgba(15,14,12,0.06);
+      --green:       #22c55e;
+      --amber:       #f59e0b;
+      --red:         #ef4444;
+      --blue:        #3b82f6;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:          #0f0e0c;
+        --bg-card:     #1a1917;
+        --bg-card-2:   #232220;
+        --text:        #f0efe9;
+        --text-2:      #9a9994;
+        --text-3:      #4a4945;
+        --border:      rgba(255,255,255,0.06);
+        --shadow:      0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+        --shadow-lg:   0 8px 32px rgba(0,0,0,0.4);
+        --accent:      #f0efe9;
+        --accent-soft: rgba(240,239,233,0.06);
+      }
+    }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+      overflow-x: hidden;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px 32px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .header {
+      padding: 56px 0 24px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .greeting-time {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+
+    .greeting-main {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .greeting-main em {
+      font-style: italic;
+      color: var(--text-2);
+    }
+
+    .header-date {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+    .icon-btn:hover  { background: var(--bg-card-2); }
+
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .sheet-overlay.active { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+      z-index: 101;
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sheet.active { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--text-3);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+      opacity: 0.4;
+    }
+
+    .sheet-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .sheet-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s ease;
+    }
+    .sheet-item:last-child { border-bottom: none; }
+    .sheet-item:active { opacity: 0.6; }
+
+    .sheet-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--bg-card-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sheet-item-title { font-size: 14px; font-weight: 500; color: var(--text); }
+    .sheet-item-sub   { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .sheet-item.danger .sheet-item-title { color: var(--red); }
+    .sheet-item.danger .sheet-item-icon  { background: rgba(239,68,68,0.1); }
+
+    /* ── Section label ────────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+      margin-top: 28px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    /* ── Snapshot grid ────────────────────────────────────────── */
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .snap-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      cursor: default;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .snap-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+
+    .snap-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .snap-icon {
+      font-size: 18px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .snap-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      line-height: 1;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .snap-value.small {
+      font-size: 18px;
+    }
+
+    .snap-label {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 400;
+    }
+
+    .snap-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .snap-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-top: 6px;
+    }
+
+    .snap-tag.good  { background: rgba(34,197,94,0.12);  color: var(--green); }
+    .snap-tag.warn  { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .snap-tag.info  { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+    /* Journal status card */
+    .journal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      margin-top: 8px;
+    }
+
+    .journal-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+    .journal-card-left { display: flex; align-items: center; gap: 10px; }
+    .journal-card-icon { font-size: 20px; }
+    .journal-card-text {}
+    .journal-card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+    .journal-card-sub   { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+    .journal-card-arrow { font-size: 16px; color: var(--text-3); }
+
+    /* ── PWA Grid ─────────────────────────────────────────────── */
+    .pwa-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .pwa-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pwa-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pwa-item:hover .pwa-icon-wrap {
+      transform: scale(1.06);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pwa-item:active .pwa-icon-wrap {
+      transform: scale(0.96);
+    }
+
+    .pwa-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .pwa-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 16px;
+      height: 16px;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    .pwa-soon {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .pwa-icon-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 18px;
+    }
+
+    .pwa-soon .pwa-icon-wrap::after {
+      content: 'Soon';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-align: center;
+      padding: 3px 0;
+    }
+
+    /* ── Backup Section ───────────────────────────────────────── */
+    .backup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .backup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .backup-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .backup-last {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .backup-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card-2);
+      color: var(--text-2);
+      position: relative;
+    }
+
+    .btn-coming-soon {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--text-3);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    /* ── Loading skeleton ─────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      height: 20px;
+    }
+
+    /* ── Animations ───────────────────────────────────────────── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Stagger delays ───────────────────────────────────────── */
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    .delay-8 { animation-delay: 0.40s; }
+    .delay-9 { animation-delay: 0.45s; }
+    .delay-10 { animation-delay: 0.50s; }
+    .delay-11 { animation-delay: 0.55s; }
+    .delay-12 { animation-delay: 0.60s; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-top">
+      <div>
+        <div class="greeting-time" id="greeting-time">Selamat pagi</div>
+        <div class="greeting-main" id="greeting-main">Hai <em id="user-name"></em></div>
+        <div class="header-date" id="header-date"></div>
+      </div>
+      <div class="header-actions">
+        <div class="icon-btn" onclick="openSheet()" title="Pengaturan">⚙️</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- BOTTOM SHEET -->
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Pengaturan</div>
+
+    <div class="sheet-item" onclick="refreshApp()">
+      <div class="sheet-item-icon">🔄</div>
+      <div>
+        <div class="sheet-item-title">Refresh & Clear Cache</div>
+        <div class="sheet-item-sub">Hapus cache SW, cocok setelah deploy baru</div>
+      </div>
+    </div>
+
+    <div class="sheet-item" onclick="reloadData()">
+      <div class="sheet-item-icon">📡</div>
+      <div>
+        <div class="sheet-item-title">Muat ulang data</div>
+        <div class="sheet-item-sub">Refresh snapshot tanpa clear cache</div>
+      </div>
+    </div>
+
+    <div class="sheet-item danger" onclick="confirmClearData()">
+      <div class="sheet-item-icon">🗑️</div>
+      <div>
+        <div class="sheet-item-title">Hapus semua data lokal</div>
+        <div class="sheet-item-sub">Hapus ecosystem_db — tidak bisa dikembalikan</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY SNAPSHOT -->
+  <div class="section-label delay-1">Hari ini</div>
+
+  <div class="snapshot-grid">
+    <!-- Habit -->
+    <div class="snap-card delay-2" id="card-habit">
+      <span class="snap-icon">🔥</span>
+      <div class="snap-value" id="val-habit">—</div>
+      <div class="snap-label">Habit selesai</div>
+      <div class="snap-sub" id="sub-habit">memuat...</div>
+    </div>
+
+    <!-- Todo -->
+    <div class="snap-card delay-3" id="card-todo">
+      <span class="snap-icon">✅</span>
+      <div class="snap-value" id="val-todo">—</div>
+      <div class="snap-label">Todo pending</div>
+      <div class="snap-sub" id="sub-todo">memuat...</div>
+    </div>
+
+    <!-- Ide -->
+    <div class="snap-card delay-4" id="card-ide">
+      <span class="snap-icon">💡</span>
+      <div class="snap-value" id="val-ide">—</div>
+      <div class="snap-label">Ide in progress</div>
+      <div class="snap-sub" id="sub-ide">memuat...</div>
+    </div>
+
+    <!-- Streak -->
+    <div class="snap-card delay-5" id="card-streak">
+      <span class="snap-icon">⚡</span>
+      <div class="snap-value" id="val-streak">—</div>
+      <div class="snap-label">Hari streak</div>
+      <div class="snap-sub" id="sub-streak">memuat...</div>
+    </div>
+
+    <!-- Saldo -->
+    <div class="snap-card delay-6" id="card-saldo">
+      <span class="snap-icon">💰</span>
+      <div class="snap-value small" id="val-saldo">—</div>
+      <div class="snap-label">Total saldo</div>
+      <div class="snap-sub" id="sub-saldo">memuat...</div>
+    </div>
+
+    <!-- Pengeluaran -->
+    <div class="snap-card delay-7" id="card-keluar">
+      <span class="snap-icon">📤</span>
+      <div class="snap-value small" id="val-keluar">—</div>
+      <div class="snap-label">Keluar hari ini</div>
+      <div class="snap-sub" id="sub-keluar">memuat...</div>
+    </div>
+  </div>
+
+  <!-- Jurnal status -->
+  <a class="journal-card delay-8" id="journal-card" href="/kronik/">
+    <div class="journal-card-left">
+      <span class="journal-card-icon">📓</span>
+      <div class="journal-card-text">
+        <div class="journal-card-title" id="journal-title">Jurnal hari ini</div>
+        <div class="journal-card-sub" id="journal-sub">memuat...</div>
+      </div>
+    </div>
+    <span class="journal-card-arrow">›</span>
+  </a>
+
+  <!-- PWA SHORTCUTS -->
+  <div class="section-label delay-9">Aplikasi</div>
+
+  <div class="pwa-grid">
+    <a class="pwa-item delay-9"  href="/daily-os/">
+      <div class="pwa-icon-wrap">
+        <img src="/daily-os/icon.svg" alt="Daily OS" />
+        <span class="pwa-badge" id="badge-todo" style="display:none"></span>
+      </div>
+      <span class="pwa-name">Daily OS</span>
+    </a>
+    <a class="pwa-item delay-10" href="/ide-ku/">
+      <div class="pwa-icon-wrap">
+        <img src="/ide-ku/icon-192.png" alt="IdeKu" />
+        <span class="pwa-badge" id="badge-ide" style="display:none"></span>
+      </div>
+      <span class="pwa-name">IdeKu</span>
+    </a>
+    <a class="pwa-item delay-10" href="/kronik/">
+      <div class="pwa-icon-wrap">
+        <img src="/kronik/icons/icon-192.png" alt="Kronik" />
+      </div>
+      <span class="pwa-name">Kronik</span>
+    </a>
+    <a class="pwa-item delay-11" href="/cucimoney/">
+      <div class="pwa-icon-wrap">
+        <img src="/cucimoney/icon-192.png" alt="CuciMoney+" />
+      </div>
+      <span class="pwa-name">CuciMoney+</span>
+    </a>
+    <a class="pwa-item delay-11" href="/linkku/">
+      <div class="pwa-icon-wrap">
+        <img src="/linkku/icon-192.svg" alt="LinkKu" />
+      </div>
+      <span class="pwa-name">LinkKu</span>
+    </a>
+    <a class="pwa-item delay-12" href="/vault/">
+      <div class="pwa-icon-wrap">
+        <img src="/vault/icon-192.png" alt="Vault" />
+      </div>
+      <span class="pwa-name">Vault</span>
+    </a>
+    <div class="pwa-item pwa-soon delay-12">
+      <div class="pwa-icon-wrap">🤖</div>
+      <span class="pwa-name">Assistant</span>
+    </div>
+  </div>
+
+  <!-- BACKUP -->
+  <div class="section-label delay-12">Backup data</div>
+
+  <div class="backup-card delay-12">
+    <div class="backup-header">
+      <span class="backup-title">Export semua data</span>
+      <span class="backup-last" id="backup-last">Belum pernah backup</span>
+    </div>
+    <div class="backup-btns">
+      <button class="btn btn-primary" id="btn-export" onclick="exportZip()">
+        📦 Download ZIP
+      </button>
+      <button class="btn btn-secondary" disabled>
+        ☁️ Cloud <span class="btn-coming-soon">Soon</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="/shared/ecosystem-db.js"></script>
+<script>
+// ── Helpers ──────────────────────────────────────────────────
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function formatRupiah(n) {
+  if (n === null || n === undefined) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000_000_000).toFixed(1) + 'M';
+  if (abs >= 1_000_000)     return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000_000).toFixed(1) + 'jt';
+  if (abs >= 1_000)         return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000).toFixed(0) + 'rb';
+  return (n < 0 ? '-' : '') + 'Rp ' + abs;
+}
+
+function greetingWord() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Selamat pagi';
+  if (h < 15) return 'Selamat siang';
+  if (h < 18) return 'Selamat sore';
+  return 'Selamat malam';
+}
+
+function formatDate(d = new Date()) {
+  return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ── Header ────────────────────────────────────────────────────
+function initHeader(name) {
+  document.getElementById('greeting-time').textContent = greetingWord();
+  const nameEl = document.getElementById('user-name');
+  if (name) {
+    nameEl.textContent = name;
+    document.getElementById('greeting-main').innerHTML = 'Hai, <em>' + name + '</em>';
+  } else {
+    document.getElementById('greeting-main').textContent = 'Hai 👋';
+  }
+  document.getElementById('header-date').textContent = formatDate();
+}
+
+// ── Load data dari EcosystemDB ────────────────────────────────
+async function loadSnapshot() {
+  try {
+    await EcosystemDB.open();
+
+    // 1. Profil dari Kronik
+    const profileName = await EcosystemDB.kv.kronik.get('profile_name');
+    initHeader(profileName);
+
+    // 2. Habits & Todos (Daily OS)
+    const habits = await EcosystemDB.habits.getAll();
+    const todos  = await EcosystemDB.todos.getAll();
+    const today  = todayStr();
+
+    // Hitung habit selesai hari ini
+    let habitDone = 0, habitTotal = 0;
+    if (Array.isArray(habits)) {
+      habits.filter(h => !h.archived).forEach(h => {
+        const log = h.history?.[today];
+        habitTotal++;
+        if (Array.isArray(log) && log.length > 0) habitDone++;
+        else if (log === true) habitDone++;
+      });
+    }
+    document.getElementById('val-habit').textContent = habitDone + '/' + habitTotal;
+    document.getElementById('sub-habit').textContent = habitTotal > 0
+      ? (habitDone === habitTotal ? '✓ semua selesai' : habitTotal - habitDone + ' lagi')
+      : 'belum ada habit';
+    if (habitDone > 0) {
+      const tag = document.createElement('span');
+      tag.className = 'snap-tag ' + (habitDone === habitTotal ? 'good' : 'warn');
+      tag.textContent = habitDone === habitTotal ? 'Semua done!' : 'On track';
+      document.getElementById('card-habit').appendChild(tag);
+    }
+
+    // Hitung todo pending
+    let todoPending = 0, todoTotal = 0;
+    if (Array.isArray(todos)) {
+      todos.forEach(t => {
+        todoTotal++;
+        if (!t.done && !t.completed) todoPending++;
+      });
+    }
+    document.getElementById('val-todo').textContent = todoPending;
+    document.getElementById('sub-todo').textContent = todoTotal > 0
+      ? todoTotal - todoPending + ' selesai'
+      : 'belum ada todo';
+    const badgeTodo = document.getElementById('badge-todo');
+    if (todoPending > 0) {
+      badgeTodo.textContent = todoPending > 9 ? '9+' : todoPending;
+      badgeTodo.style.display = 'flex';
+    }
+
+    // Hitung streak (hari berturut-turut ada habit selesai)
+    let streak = 0;
+    if (Array.isArray(habits) && habits.length > 0) {
+      const d = new Date();
+      while (true) {
+        const key = d.toISOString().split('T')[0];
+        const anyDone = habits.some(h => {
+          const log = h.history?.[key];
+          return Array.isArray(log) ? log.length > 0 : log === true;
+        });
+        if (!anyDone) break;
+        streak++;
+        d.setDate(d.getDate() - 1);
+        if (streak > 365) break;
+      }
+    }
+    document.getElementById('val-streak').textContent = streak;
+    document.getElementById('sub-streak').textContent = streak > 0
+      ? 'hari berturut-turut'
+      : 'mulai hari ini!';
+    if (streak >= 3) {
+      const tag = document.createElement('span');
+      tag.className = 'snap-tag good';
+      tag.textContent = '🔥 ' + streak + ' hari';
+      document.getElementById('card-streak').appendChild(tag);
+    }
+
+    // 3. Ide in progress (IdeKu)
+    const ideas = await EcosystemDB.ideas.getAll();
+    const ideProses = ideas.filter(i => i.status === 'Proses').length;
+    document.getElementById('val-ide').textContent = ideProses;
+    document.getElementById('sub-ide').textContent = ideas.length + ' total ide';
+    const badgeIde = document.getElementById('badge-ide');
+    if (ideProses > 0) {
+      badgeIde.textContent = ideProses > 9 ? '9+' : ideProses;
+      badgeIde.style.display = 'flex';
+    }
+
+    // 4. Keuangan (CuciMoney+)
+    const finDb      = await EcosystemDB.kv.finances.get('db');
+    const finBudgets = await EcosystemDB.kv.finances.get('budgets');
+
+    if (finDb && Array.isArray(finDb.accounts)) {
+      // Total saldo semua akun
+      const totalSaldo = finDb.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+      document.getElementById('val-saldo').textContent = formatRupiah(totalSaldo);
+      document.getElementById('sub-saldo').textContent = finDb.accounts.length + ' akun';
+
+      // Pengeluaran hari ini
+      // CuciMoney+ pakai direction:'out' bukan type:'expense'
+      const keluarHariIni = (finDb.transactions || [])
+        .filter(t => (t.direction === 'out' || t.type === 'expense') && t.date === today)
+        .reduce((s, t) => s + (t.amount || 0), 0);
+      document.getElementById('val-keluar').textContent = formatRupiah(keluarHariIni);
+      document.getElementById('sub-keluar').textContent = keluarHariIni > 0 ? 'hari ini' : 'belum ada pengeluaran';
+    } else {
+      document.getElementById('val-saldo').textContent = '—';
+      document.getElementById('sub-saldo').textContent = 'buka CuciMoney+';
+      document.getElementById('val-keluar').textContent = '—';
+      document.getElementById('sub-keluar').textContent = 'buka CuciMoney+';
+    }
+
+    // 5. Jurnal (Kronik)
+    const entries = await EcosystemDB.journal.getAll();
+    const todayEntry = entries.find(e => e.date === today);
+    if (todayEntry) {
+      document.getElementById('journal-title').textContent = todayEntry.title || 'Jurnal hari ini';
+      document.getElementById('journal-sub').textContent   = '✓ Sudah nulis hari ini';
+    } else {
+      const latest = entries.sort((a, b) => b.date.localeCompare(a.date))[0];
+      document.getElementById('journal-title').textContent = 'Belum nulis jurnal hari ini';
+      document.getElementById('journal-sub').textContent   = latest
+        ? 'Terakhir: ' + new Date(latest.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+        : 'Tulis jurnal pertamamu →';
+    }
+
+  } catch (e) {
+    console.warn('[EcosystemKu] Error loading snapshot:', e);
+    initHeader(null);
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) el.textContent = '—';
+      const sub = document.getElementById('sub-' + k);
+      if (sub) sub.textContent = 'tidak tersedia';
+    });
+  }
+}
+
+// ── Request backup dari iframe app ───────────────────────────
+function requestBackupFromApp(url) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+
+    // Timeout keseluruhan 15 detik
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout: ' + url));
+    }, 15000);
+
+    function onMessage(e) {
+      const allowed = ['https://pwa-ecosystemku.vercel.app','http://localhost','http://127.0.0.1'];
+      if (!allowed.some(o => e.origin.startsWith(o))) return;
+
+      // Tunggu sinyal READY dari app, baru kirim request
+      if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, '*');
+        return;
+      }
+
+      if (!e.data || e.data.type !== 'BACKUP_RESPONSE') return;
+      cleanup();
+      if (e.data.error) reject(new Error(e.data.error));
+      else resolve({ app: e.data.app, data: e.data.data });
+    }
+
+    function cleanup() {
+      clearTimeout(timeout);
+      window.removeEventListener('message', onMessage);
+      if (iframe.parentNode) iframe.remove();
+    }
+
+    // Fallback: kalau READY tidak datang, coba kirim setelah 3 detik
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        try { iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, '*'); } catch(e) {}
+      }, 3000);
+    });
+
+    window.addEventListener('message', onMessage);
+    document.body.appendChild(iframe);
+  });
+}
+
+// ── Backup ZIP (JSZip) ────────────────────────────────────────
+async function exportZip() {
+  const btn = document.getElementById('btn-export');
+  btn.textContent = '⏳ Menyiapkan...';
+  btn.disabled = true;
+
+  try {
+    await EcosystemDB.open();
+
+    const zip  = new JSZip();
+    const date = todayStr();
+    const meta = { exportedAt: new Date().toISOString(), version: 1 };
+
+    // ── Daily OS ──────────────────────────────────────────────
+    const habits = await EcosystemDB.habits.getAll();
+    const todos  = await EcosystemDB.todos.getAll();
+    zip.file(`daily-os-${date}.json`, JSON.stringify({
+      ...meta, habits, todos
+    }, null, 2));
+
+    // ── IdeKu ─────────────────────────────────────────────────
+    const ideas = await EcosystemDB.ideas.getAll();
+    zip.file(`ideku-${date}.json`, JSON.stringify({
+      ...meta, ideas
+    }, null, 2));
+
+    // ── Kronik ────────────────────────────────────────────────
+    const entries = await EcosystemDB.journal.getAll();
+    zip.file(`jurnal-${date}.json`, JSON.stringify({
+      ...meta, entries
+    }, null, 2));
+
+    // ── CuciMoney+ ────────────────────────────────────────────
+    const finDb            = await EcosystemDB.kv.finances.get('db');
+    const finBudgets       = await EcosystemDB.kv.finances.get('budgets');
+    const finMasterBudgets = await EcosystemDB.kv.finances.get('masterBudgets');
+    zip.file(`cucimoney-${date}.json`, JSON.stringify({
+      ...meta,
+      db:            finDb            ?? {},
+      budgets:       finBudgets       ?? [],
+      masterBudgets: finMasterBudgets ?? [],
+    }, null, 2));
+
+    // ── LinkKu (sebagian encrypted) ──────────────────────────────
+    btn.textContent = '⏳ Mengambil data LinkKu...';
+    try {
+      const linkkuBackup = await requestBackupFromApp('/linkku/');
+      zip.file(`linkku-${date}.json`, JSON.stringify(linkkuBackup.data, null, 2));
+    } catch(e) {
+      console.warn('[Backup] LinkKu tidak tersedia:', e.message);
+      zip.file(`linkku-${date}.error.txt`, 'LinkKu tidak tersedia: ' + e.message);
+    }
+
+    // ── Vault (encrypted) ────────────────────────────────────────
+    btn.textContent = '⏳ Mengambil data Vault...';
+    try {
+      const vaultBackup = await requestBackupFromApp('/vault/');
+      zip.file(`vault-${date}.json`, JSON.stringify(vaultBackup.data, null, 2));
+    } catch(e) {
+      console.warn('[Backup] Vault tidak tersedia:', e.message);
+      zip.file(`vault-${date}.error.txt`, 'Vault tidak tersedia: ' + e.message);
+    }
+
+    // ── Generate & download ───────────────────────────────────
+    btn.textContent = '⏳ Membuat ZIP...';
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `ecosystemku-backup-${date}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Simpan waktu backup terakhir
+    localStorage.setItem('ecosystemku_last_backup', new Date().toISOString());
+    document.getElementById('backup-last').textContent = 'Baru saja';
+
+  } catch(e) {
+    alert('Gagal export: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '📦 Download ZIP';
+    btn.disabled = false;
+  }
+}
+
+// ── Last backup info ──────────────────────────────────────────
+function initBackupInfo() {
+  const last = localStorage.getItem('ecosystemku_last_backup');
+  if (!last) return;
+  const diff = Math.floor((Date.now() - new Date(last)) / 86400000);
+  const el   = document.getElementById('backup-last');
+  if (diff === 0) el.textContent = 'Backup hari ini';
+  else if (diff === 1) el.textContent = 'Kemarin';
+  else el.textContent = diff + ' hari lalu';
+
+  if (diff >= 7) {
+    el.style.color = 'var(--amber)';
+  }
+}
+
+// ── Bottom Sheet ─────────────────────────────────────────────
+function openSheet() {
+  document.getElementById('sheet-overlay').classList.add('active');
+  document.getElementById('sheet').classList.add('active');
+}
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('active');
+  document.getElementById('sheet').classList.remove('active');
+}
+
+// ── Refresh & Clear Cache ─────────────────────────────────────
+async function refreshApp() {
+  closeSheet();
+  const btn = document.querySelector('.sheet-item');
+  try {
+    // Unregister semua Service Worker
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    // Hapus semua cache
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    // Hard reload
+    location.reload(true);
+  } catch(e) {
+    alert('Gagal clear cache: ' + e.message);
+  }
+}
+
+// ── Reload data snapshot ──────────────────────────────────────
+function reloadData() {
+  closeSheet();
+  loadSnapshot();
+}
+
+// ── Hapus semua data lokal ────────────────────────────────────
+async function confirmClearData() {
+  closeSheet();
+  const ok = confirm('⚠️ Yakin mau hapus semua data ecosystem_db?\nData yang belum di-backup akan hilang permanen.');
+  if (!ok) return;
+  try {
+    await EcosystemDB.open();
+    await EcosystemDB.clear('ideas');
+    await EcosystemDB.clear('habits');
+    await EcosystemDB.clear('todos');
+    await EcosystemDB.clear('journal_entries');
+    await EcosystemDB.clear('kv');
+    alert('Data berhasil dihapus.');
+    loadSnapshot();
+  } catch(e) {
+    alert('Gagal hapus data: ' + e.message);
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+initBackupInfo();
+loadSnapshot();
+</script>
+</body>
+</html>

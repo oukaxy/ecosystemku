@@ -1,0 +1,2955 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d0c0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kronik">
+<title>Kronik — Jurnal & Legenda</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<link rel="manifest" href="./manifest.json">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── ROOT VARS ──────────────────────────────────────────────────────────── */
+:root {
+  /* RPG / dark gold vars */
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-dim: #7a5f28;
+  --rpg-bg: #0d0c0a;
+  --rpg-parchment: #1a1710;
+  --rpg-parchment2: #211f18;
+  --rpg-text: #d4c89a;
+  --rpg-text-dim: #7a7055;
+  --red: #c94c4c;
+  --blue: #4c7ec9;
+  --green: #5aaa6a;
+  --purple: #9c6ec9;
+  --orange: #c97c4c;
+
+  /* Journal / parchment vars */
+  --ink: #3a2510;
+  --ink-mid: rgba(80,50,20,0.55);
+  --ink-light: rgba(80,50,20,0.35);
+  --j-gold: #c8a050;
+  --j-gold-dim: rgba(200,160,80,0.45);
+  --rule: rgba(160,120,70,0.18);
+  --margin-line: rgba(210,120,120,0.22);
+  --paper-light: #f6edda;
+  --paper-dark: #efe3c6;
+
+  /* Active tab */
+  --active-tab: journal;
+}
+
+/* ── BASE ──────────────────────────────────────────────────────────────── */
+html, body {
+  height: 100%; width: 100%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  font-family: 'Lora', Georgia, serif;
+  transition: background 0.6s ease, color 0.6s ease;
+}
+
+body.tab-journal {
+  background: radial-gradient(ellipse at 50% 0%, #1c1008 0%, #080503 100%);
+  color: var(--ink);
+}
+
+body.tab-profile {
+  background: var(--rpg-bg);
+  color: var(--rpg-text);
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(76,126,201,0.04) 0%, transparent 60%);
+}
+
+/* Grain overlay */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ── BOTTOM NAV ─────────────────────────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 60px;
+  display: flex; align-items: stretch;
+  z-index: 1000;
+  transition: background 0.6s ease, border-color 0.6s ease;
+}
+
+body.tab-journal .bottom-nav {
+  background: rgba(20,12,4,0.92);
+  border-top: 1px solid rgba(200,160,80,0.15);
+  backdrop-filter: blur(8px);
+}
+
+body.tab-profile .bottom-nav {
+  background: rgba(13,12,10,0.95);
+  border-top: 1px solid rgba(201,168,76,0.15);
+  backdrop-filter: blur(8px);
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px;
+  cursor: pointer;
+  background: none; border: none;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.nav-tab::after {
+  content: '';
+  position: absolute; bottom: 0; left: 25%; right: 25%;
+  height: 2px;
+  background: transparent;
+  transition: background 0.3s, left 0.3s, right 0.3s;
+}
+
+.nav-tab.active::after {
+  background: var(--j-gold);
+  left: 15%; right: 15%;
+}
+
+.nav-icon {
+  font-size: 18px; line-height: 1;
+  transition: transform 0.25s;
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.nav-label {
+  font-family: 'Cinzel', serif;
+  font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+  opacity: 0.3;
+  transition: opacity 0.25s;
+}
+
+.nav-tab.active .nav-icon { opacity: 1; filter: none; transform: translateY(-1px); }
+.nav-tab.active .nav-label { opacity: 0.8; color: var(--j-gold); }
+
+body.tab-journal .nav-tab[data-tab="journal"].active .nav-icon { filter: none; }
+body.tab-profile .nav-tab[data-tab="profile"].active .nav-icon { filter: none; }
+body.tab-profile .nav-tab[data-tab="profile"].active .nav-label { color: var(--gold); }
+body.tab-profile .nav-tab[data-tab="profile"].active::after { background: var(--gold); }
+
+/* ── TAB PANELS ─────────────────────────────────────────────────────────── */
+.tab-panel {
+  position: fixed; inset: 0;
+  bottom: 60px;
+  overflow: hidden;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.tab-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   JOURNAL PANEL
+═══════════════════════════════════════════════════════════════════════ */
+#panel-journal {
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* ── Ambient glow ── */
+.ambient {
+  position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; height: 60%; pointer-events: none;
+  background: radial-gradient(ellipse at 50% 0%, rgba(200,150,60,0.08) 0%, transparent 70%);
+  transition: opacity 0.6s;
+  z-index: 0;
+}
+
+/* inner screens within journal panel */
+.j-screen {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.45s ease;
+}
+.j-screen.hidden { opacity: 0; pointer-events: none; }
+
+#cover-screen { flex-direction: column; gap: 20px; }
+
+/* Book wrap */
+.book-wrap {
+  position: relative;
+  width: min(310px, 86vw);
+  height: min(390px, calc(100vh - 130px));
+  filter: drop-shadow(0 30px 60px rgba(0,0,0,0.85));
+  z-index: 2;
+}
+
+/* Spine */
+.book-spine-fixed {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 22px; z-index: 10;
+  background: linear-gradient(to right, #120701, #3d200a, #261205);
+  border-radius: 6px 0 0 6px; border-right: 1px solid #5a3010;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.15s ease;
+}
+.book-spine-fixed.anim-hidden { opacity: 0; }
+
+/* Cover panel */
+.book-cover-panel {
+  position: absolute; left: 22px; top: 0;
+  width: calc(100% - 22px); height: 100%;
+  transform-style: preserve-3d;
+  transform-origin: left center;
+  transform: rotateY(0deg);
+  transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  z-index: 5; perspective: 1400px;
+}
+.book-cover-panel.opening { transform: rotateY(-174deg); }
+
+.book-cover-face {
+  position: absolute; inset: 0;
+  background: linear-gradient(155deg, #3d2008 0%, #2a1405 55%, #1a0d03 100%);
+  border-radius: 0 8px 8px 0; border: 1px solid #5a3010; border-left: none;
+  overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+}
+.book-cover-face::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+}
+
+.book-cover-inner {
+  position: absolute; inset: 0;
+  background: linear-gradient(155deg, #2a1405 0%, #1a0d03 100%);
+  border-radius: 0 8px 8px 0; border: 1px solid #5a3010; border-left: none;
+  overflow: hidden; display: none; z-index: 2;
+}
+.book-cover-inner.show { display: block; }
+
+.book-pages {
+  position: absolute; right: 0; top: 3px; bottom: 3px; width: 12px; z-index: 4;
+  border-radius: 0 6px 6px 0;
+  background: linear-gradient(to right, #c8b48a, #ede0c4 25%, #f5ead4 55%, #e8d8b8 100%);
+  box-shadow: inset -1px 0 3px rgba(0,0,0,0.08), inset 1px 0 4px rgba(0,0,0,0.12);
+  overflow: hidden; transition: opacity 0.2s ease;
+}
+.book-pages::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2.5px, rgba(180,150,100,0.12) 2.5px, rgba(180,150,100,0.12) 3px);
+}
+
+/* Spread */
+.book-spread {
+  position: absolute; left: 0; top: 0; right: 12px; bottom: 0;
+  display: flex; z-index: 2; border-radius: 6px; overflow: hidden;
+}
+
+.spread-cover-strip {
+  width: 22px;
+  background: linear-gradient(160deg, #3a1e07 0%, #221003 100%);
+  flex-shrink: 0; position: relative;
+}
+.spread-cover-strip::after {
+  content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 10px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.4));
+}
+
+.spread-paper {
+  flex: 1;
+  background: linear-gradient(to bottom right, var(--paper-light), var(--paper-dark));
+  position: relative; overflow: hidden; display: flex; flex-direction: column;
+  border-radius: 0 6px 6px 0;
+}
+.spread-paper::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(transparent, transparent 28px, var(--rule) 28px, var(--rule) 29px);
+  background-position: 0 56px;
+}
+.spread-paper::after {
+  content: ''; position: absolute; left: 36px; top: 0; bottom: 0; width: 1px;
+  background: var(--margin-line);
+}
+
+.spread-binding-shadow {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 18px;
+  background: linear-gradient(to right, rgba(0,0,0,0.18), transparent); z-index: 2;
+}
+.spread-content {
+  position: relative; z-index: 3;
+  padding: 16px 16px 0 46px;
+  flex: 1; overflow: hidden; display: flex; flex-direction: column;
+}
+
+.spread-topbar {
+  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
+}
+.btn-settings {
+  background: none; border: none; cursor: pointer;
+  font-size: 18px; color: var(--ink-light);
+  padding: 0 0 0 8px; line-height: 1; transition: color 0.2s; flex-shrink: 0;
+}
+.btn-settings:hover, .btn-settings.active { color: var(--ink); }
+
+.settings-panel {
+  display: none; flex-shrink: 0;
+  background: rgba(245,237,218,0.95);
+  border: 1px solid rgba(160,120,70,0.2); border-radius: 6px;
+  margin-bottom: 10px; overflow: hidden;
+}
+.settings-panel.open { display: block; }
+
+.settings-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; background: none; border: none;
+  padding: 9px 12px; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 11px; color: var(--ink); text-align: left;
+  transition: background 0.15s;
+}
+.settings-item:hover { background: rgba(160,100,40,0.08); }
+.settings-item-danger { color: rgba(160,50,30,0.7); }
+.settings-item-danger:hover { background: rgba(160,50,30,0.08); }
+.settings-icon { font-size: 13px; width: 16px; text-align: center; flex-shrink: 0; }
+.settings-divider { height: 1px; background: rgba(160,120,70,0.15); margin: 2px 0; }
+
+/* Select mode */
+.toc-item.selectable { cursor: pointer; }
+.toc-checkbox {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1px solid rgba(160,120,70,0.4);
+  background: transparent; flex-shrink: 0;
+  display: none; align-items: center; justify-content: center;
+  font-size: 10px; color: #7a5030; margin-right: 4px;
+}
+.select-mode .toc-checkbox { display: flex; }
+.toc-item.selected .toc-checkbox { background: rgba(140,80,30,0.15); border-color: rgba(140,80,30,0.5); }
+.toc-item.selected .toc-checkbox::after { content: '✓'; }
+
+.spread-header { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; color: var(--ink); letter-spacing: 1px; margin-bottom: 4px; }
+.spread-header-sub { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-light); }
+.spread-divider { width: 100%; height: 1px; background: linear-gradient(to right, rgba(150,100,50,0.3), transparent); margin: 10px 0; flex-shrink: 0; }
+
+.toc-list { list-style: none; flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.toc-list::-webkit-scrollbar { display: none; }
+.toc-item { display: flex; align-items: baseline; padding: 6px 0; border-bottom: 1px dotted rgba(160,120,70,0.2); cursor: pointer; transition: background 0.15s; }
+.toc-item:hover { background: rgba(160,100,40,0.06); }
+.toc-item:last-child { border-bottom: none; }
+.toc-num { font-size: 9px; color: var(--ink-light); min-width: 20px; font-style: italic; flex-shrink: 0; }
+.toc-date { font-family: 'Playfair Display', serif; font-size: 11px; font-style: italic; color: var(--ink); flex-shrink: 0; min-width: 80px; }
+.toc-dots { flex: 1; border-bottom: 1px dotted rgba(160,120,70,0.3); margin: 0 5px; position: relative; top: -3px; }
+.toc-preview { font-size: 9px; color: var(--ink-light); font-style: italic; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.toc-empty { font-size: 11px; font-style: italic; color: var(--ink-light); text-align: center; padding: 20px 0; line-height: 1.8; }
+
+.spread-open-btn {
+  margin: 0 12px 14px 40px; position: relative; z-index: 3;
+  background: rgba(140,80,30,0.1); border: 1px solid rgba(160,100,40,0.25);
+  border-radius: 4px; padding: 8px 12px;
+  font-family: 'Lora', serif; font-size: 11px; font-style: italic;
+  color: #7a5030; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.spread-open-btn:hover { background: rgba(140,80,30,0.2); }
+
+.spread-back-btn {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(180,130,60,0.22); font-family: 'Lora', serif;
+  background: none; border: none; cursor: pointer; transition: color 0.2s;
+  z-index: 2;
+}
+.spread-back-btn:hover { color: rgba(180,130,60,0.55); }
+
+.cover-tagline { font-size: 11px; color: rgba(180,130,60,0.2); letter-spacing: 4px; text-transform: uppercase; font-family: 'Lora', serif; z-index: 2; }
+@keyframes pulse { 0%,100%{opacity:0.28} 50%{opacity:0.65} }
+
+.emboss-outer { position: absolute; inset: 12px; border: 1px solid rgba(180,120,50,0.2); border-radius: 6px; }
+.emboss-inner { position: absolute; inset: 19px; border: 1px solid rgba(180,120,50,0.09); border-radius: 4px; }
+.cover-ornament { font-size: 15px; color: var(--j-gold-dim); letter-spacing: 8px; position: relative; z-index: 1; }
+.cover-title-wrap { text-align: center; padding: 0 28px; position: relative; z-index: 1; }
+.cover-title { font-family: 'Playfair Display', serif; font-size: 27px; font-weight: 700; color: var(--j-gold); letter-spacing: 1px; line-height: 1.3; text-shadow: 0 0 40px rgba(200,160,60,0.25); }
+.cover-divider { width: 56px; height: 1px; background: linear-gradient(to right, transparent, rgba(200,150,60,0.45), transparent); margin: 12px auto; }
+.cover-subtitle { font-family: 'Lora', serif; font-size: 12px; font-style: italic; color: rgba(200,160,80,0.4); letter-spacing: 2px; }
+.cover-hint { position: absolute; bottom: 22px; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: rgba(180,130,60,0.28); font-family: 'Lora', serif; animation: pulse 2.5s ease-in-out infinite; z-index: 1; }
+.spine-text { writing-mode: vertical-rl; transform: rotate(180deg); font-family: 'Playfair Display', serif; font-size: 9px; letter-spacing: 3px; color: rgba(200,160,80,0.3); text-transform: uppercase; }
+
+/* Fullscreen journal */
+#journal-screen { align-items: stretch; justify-content: stretch; overflow: hidden; }
+
+.page-viewport { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.journal-page {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom right, var(--paper-light), var(--paper-dark));
+  overflow-y: auto; overflow-x: hidden;
+  box-shadow: inset 4px 0 16px rgba(0,0,0,0.07);
+  will-change: transform;
+}
+.journal-page::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(transparent, transparent 31px, var(--rule) 31px, var(--rule) 32px);
+  background-position: 0 100px; z-index: 0;
+}
+
+.page-margin { position: fixed; left: 52px; top: 0; bottom: 60px; width: 1px; background: var(--margin-line); pointer-events: none; z-index: 1; }
+.page-binding { position: fixed; left: 0; top: 0; bottom: 60px; width: 22px; background: linear-gradient(to right, rgba(0,0,0,0.16), transparent); pointer-events: none; z-index: 2; }
+
+.page-inner { position: relative; z-index: 3; padding: 0 24px 100px 62px; min-height: 100%; }
+
+.page-topbar { display: flex; align-items: center; justify-content: space-between; height: 36px; gap: 8px; padding-top: 16px; }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.btn-back-spread {
+  background: transparent; border: none; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--ink-light); padding: 4px 0; transition: color 0.2s; white-space: nowrap;
+}
+.btn-back-spread:hover { color: var(--ink); }
+
+.btn-delete-inline {
+  background: transparent; border: none; cursor: pointer;
+  font-family: 'Lora', serif; font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: rgba(160,70,50,0.3); padding: 4px 0;
+  transition: color 0.2s; white-space: nowrap;
+}
+.btn-delete-inline:hover { color: rgba(160,50,30,0.7); }
+
+.page-indicator { font-size: 10px; letter-spacing: 2px; color: var(--ink-light); white-space: nowrap; }
+
+.btn-new-inline {
+  background: rgba(140,80,30,0.08); border: 1px solid rgba(160,100,40,0.2);
+  border-radius: 50%; width: 24px; height: 24px;
+  color: #8b5a2b; font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.btn-new-inline:hover { background: rgba(140,80,30,0.2); }
+
+textarea {
+  width: 100%; min-height: 65vh; background: transparent; border: none; outline: none; resize: none;
+  font-family: 'Lora', serif; font-size: 15px; line-height: 32px;
+  color: var(--ink); letter-spacing: 0.3px; caret-color: #8b3a1a;
+  user-select: text; display: block; padding: 0; margin: 0;
+}
+textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
+
+.page-header-fields { display: flex; flex-direction: column; border-bottom: 1px solid rgba(150,100,50,0.18); margin-bottom: 0; }
+.entry-date-input {
+  background: transparent; border: none; outline: none;
+  font-family: 'Playfair Display', serif; font-size: 11px; font-style: italic;
+  color: rgba(92,61,30,0.55); letter-spacing: 1px;
+  width: 100%; padding: 0; height: 32px; line-height: 32px;
+  user-select: text;
+}
+.entry-title-input {
+  background: transparent; border: none; outline: none;
+  font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700;
+  color: var(--ink); width: 100%; padding: 0; height: 32px; line-height: 32px;
+  user-select: text;
+}
+.entry-title-input::placeholder { color: rgba(100,70,40,0.22); font-weight: 400; font-style: italic; }
+
+.save-dot { position: fixed; top: 20px; right: 50px; z-index: 10; width: 5px; height: 5px; border-radius: 50%; background: rgba(140,100,40,0.4); opacity: 0; transition: opacity 0.3s; }
+.save-dot.show { opacity: 1; }
+
+.page-num-fixed { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%); font-size: 11px; font-style: italic; color: rgba(120,80,40,0.28); z-index: 10; pointer-events: none; }
+.swipe-hint { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%); font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: rgba(120,80,40,0.18); pointer-events: none; z-index: 10; transition: opacity 0.5s; }
+
+.corner-fold { position: fixed; bottom: 60px; right: 0; width: 36px; height: 36px; cursor: pointer; z-index: 20; transition: width 0.3s cubic-bezier(0.34,1.56,0.64,1), height 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.corner-fold::before { content: ''; position: absolute; bottom: 0; right: 0; border-style: solid; border-width: 0 0 36px 36px; border-color: transparent transparent #b8955a transparent; transition: border-width 0.3s cubic-bezier(0.34,1.56,0.64,1); filter: drop-shadow(-2px -2px 4px rgba(0,0,0,0.12)); }
+.corner-fold:hover { width: 52px; height: 52px; }
+.corner-fold:hover::before { border-width: 0 0 52px 52px; border-color: transparent transparent #a07840 transparent; }
+
+@keyframes slideInRight  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes slideOutLeft  { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes slideInLeft   { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes slideOutRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+.flip-out-forward  { animation: slideOutLeft  0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+.flip-in-forward   { animation: slideInRight  0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+.flip-out-backward { animation: slideOutRight 0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+.flip-in-backward  { animation: slideInLeft   0.35s cubic-bezier(0.4,0,0.2,1) forwards; }
+@keyframes fadeInPage { from{opacity:0;transform:scale(0.94) translateY(14px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes fadeOutPage { from{opacity:1} to{opacity:0} }
+.fade-in { animation: fadeInPage 0.5s ease forwards; }
+.fade-out { animation: fadeOutPage 0.4s ease forwards; }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RPG PROFILE PANEL
+═══════════════════════════════════════════════════════════════════════ */
+#panel-profile {
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: var(--rpg-bg);
+  font-family: 'Crimson Pro', Georgia, serif;
+  color: var(--rpg-text);
+}
+
+.profile-wrapper { width: 100%; max-width: 500px; margin: 0 auto; padding: 24px 16px 16px; }
+
+.upload-zone {
+  border: 1px dashed var(--gold-dim); padding: 40px 24px; text-align: center;
+  cursor: pointer; transition: all 0.2s; background: var(--rpg-parchment); position: relative;
+}
+.upload-zone:hover { border-color: var(--gold); background: var(--rpg-parchment2); }
+.upload-zone.drag { border-color: var(--gold); box-shadow: 0 0 20px rgba(201,168,76,0.1); }
+.upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.upload-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.6; }
+.upload-title { font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 3px; color: var(--gold); margin-bottom: 6px; }
+.upload-sub { font-size: 12px; color: var(--rpg-text-dim); font-style: italic; }
+
+.rpg-card {
+  width: 100%; background: var(--rpg-parchment); border: 1px solid var(--gold-dim);
+  position: relative; animation: fadeInCard 0.8s ease;
+  box-shadow: 0 0 60px rgba(201,168,76,0.08), 0 0 120px rgba(0,0,0,0.6); display: none;
+}
+.rpg-card.visible { display: block; }
+.rpg-card::before { content: ''; position: absolute; inset: 4px; border: 1px solid rgba(201,168,76,0.12); pointer-events: none; z-index: 0; }
+
+.corner { position: absolute; width: 20px; height: 20px; border-color: var(--gold); border-style: solid; }
+.corner-tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.corner-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.corner-br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.rpg-header { text-align: center; padding: 28px 28px 18px; border-bottom: 1px solid rgba(201,168,76,0.2); }
+.class-badge { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 4px; color: var(--gold-dim); text-transform: uppercase; margin-bottom: 8px; }
+.avatar-ring { width: 88px; height: 88px; border-radius: 50%; margin: 8px auto; position: relative; }
+.avatar-ring::before { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: conic-gradient(var(--gold), var(--gold-dim), var(--gold), var(--gold-dim), var(--gold)); animation: spin 8s linear infinite; }
+.avatar-inner { position: absolute; inset: 3px; border-radius: 50%; background: var(--rpg-parchment2); display: flex; align-items: center; justify-content: center; font-size: 34px; z-index: 1; }
+.char-name { font-family: 'Cinzel', serif; font-size: 20px; font-weight: 700; color: var(--gold-light); margin-top: 8px; letter-spacing: 1px; }
+.char-title { font-size: 12px; color: var(--rpg-text-dim); font-style: italic; margin-top: 2px; }
+.level-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
+.level-badge { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; color: var(--gold); background: rgba(201,168,76,0.1); border: 1px solid var(--gold-dim); padding: 3px 12px; white-space: nowrap; }
+.exp-bar-wrap { flex: 1; max-width: 160px; }
+.exp-label { font-size: 9px; letter-spacing: 2px; color: var(--rpg-text-dim); text-transform: uppercase; margin-bottom: 3px; display: flex; justify-content: space-between; }
+.exp-track { height: 4px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.exp-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); transition: width 1.2s ease; position: relative; }
+.exp-fill::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 6px; background: var(--gold-light); filter: blur(2px); }
+
+.rpg-body { padding: 18px 24px; }
+.section-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 4px; color: var(--gold-dim); text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: rgba(201,168,76,0.15); }
+
+.vitals { margin-bottom: 20px; }
+.vital-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.vital-label { font-size: 9px; letter-spacing: 2px; color: var(--rpg-text-dim); text-transform: uppercase; width: 32px; flex-shrink: 0; }
+.vital-track { flex: 1; height: 8px; background: rgba(255,255,255,0.05); position: relative; }
+.vital-fill { height: 100%; transition: width 1s ease; position: relative; }
+.vital-fill::after { content: ''; position: absolute; right: -1px; top: -1px; bottom: -1px; width: 3px; filter: blur(2px); background: inherit; }
+.vital-num { font-family: 'Cinzel', serif; font-size: 11px; color: var(--rpg-text-dim); width: 36px; text-align: right; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.stat-item { background: var(--rpg-parchment2); border: 1px solid rgba(201,168,76,0.1); padding: 10px 12px; }
+.stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.stat-name { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--rpg-text-dim); }
+.stat-value { font-family: 'Cinzel', serif; font-size: 15px; font-weight: 600; }
+.stat-bar-track { height: 3px; background: rgba(255,255,255,0.05); }
+.stat-bar-fill { height: 100%; transition: width 1.4s ease; }
+.stat-icon { font-size: 15px; margin-bottom: 4px; display: block; }
+
+.habits-list { margin-bottom: 20px; }
+.habit-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(201,168,76,0.06); }
+.habit-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.habit-info { flex: 1; }
+.habit-name { font-size: 12px; color: var(--rpg-text); }
+.habit-meta { font-size: 10px; color: var(--rpg-text-dim); font-style: italic; }
+.habit-streak { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold-dim); white-space: nowrap; }
+
+.todos-summary { background: var(--rpg-parchment2); border: 1px solid rgba(201,168,76,0.1); border-left: 3px solid var(--gold-dim); padding: 10px 14px; margin-bottom: 20px; }
+.todos-title { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold); margin-bottom: 6px; }
+.todos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.todos-stat { text-align: center; }
+.todos-num { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold-light); }
+.todos-lbl { font-size: 9px; letter-spacing: 1px; color: var(--rpg-text-dim); text-transform: uppercase; }
+
+.traits { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.trait-tag { font-size: 10px; letter-spacing: 1px; padding: 3px 10px; border: 1px solid; }
+
+.rpg-footer { border-top: 1px solid rgba(201,168,76,0.15); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; }
+.footer-note { font-size: 10px; color: var(--rpg-text-dim); font-style: italic; }
+.reload-btn { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dim); background: none; border: 1px solid var(--gold-dim); padding: 4px 12px; cursor: pointer; transition: all 0.2s; }
+.reload-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+.info-badge { display: inline-block; font-size: 9px; letter-spacing: 1px; color: var(--rpg-text-dim); background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.12); padding: 2px 8px; margin-left: 6px; vertical-align: middle; }
+
+.sync-row { text-align: center; font-size: 10px; color: var(--rpg-text-dim); font-style: italic; padding: 6px 0 0; border-top: 1px solid rgba(201,168,76,0.08); margin-top: 4px; }
+
+.rpg-legend { margin-top: 16px; background: var(--rpg-parchment); border: 1px solid rgba(201,168,76,0.1); padding: 14px 18px; display: none; }
+.rpg-legend.visible { display: block; }
+.legend-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 3px; color: var(--gold-dim); text-transform: uppercase; margin-bottom: 10px; }
+.legend-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 11px; color: var(--rpg-text-dim); }
+.legend-icon { width: 16px; text-align: center; flex-shrink: 0; }
+
+@keyframes fadeInCard { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.rpg-toast {
+  position: fixed; bottom: 76px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--rpg-parchment2); border: 1px solid var(--gold-dim);
+  color: var(--gold); font-family: 'Cinzel', serif;
+  font-size: 10px; letter-spacing: 2px;
+  padding: 8px 20px; opacity: 0;
+  transition: all 0.3s; pointer-events: none; z-index: 500; white-space: nowrap;
+}
+.rpg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Settings divider */
+.settings-divider { height: 1px; background: rgba(160,120,70,0.15); margin: 2px 0; }
+/* Refresh Stat button on Profile */
+.refresh-stat-btn {
+  display: block; margin: 8px auto 0; width: calc(100% - 48px);
+  background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.2);
+  color: var(--gold-dim); font-family: 'Cinzel', serif;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 7px 12px; cursor: pointer; transition: all 0.2s; text-align: center;
+}
+.refresh-stat-btn:hover { background: rgba(201,168,76,0.14); color: var(--gold); border-color: var(--gold-dim); }
+/* ══════════════════════════════════════════════════════════════════
+   MOOD SYSTEM
+══════════════════════════════════════════════════════════════════ */
+
+/* TOC mood indicator — subtle left border */
+.toc-item[data-mood="Fokus"]       { border-left: 3px solid #1a3a5c; padding-left: 5px; }
+.toc-item[data-mood="Lelah"]       { border-left: 3px solid #3a3a3a; padding-left: 5px; }
+.toc-item[data-mood="Terinspirasi"]{ border-left: 3px solid #3a2254; padding-left: 5px; }
+.toc-item[data-mood="Berat"]       { border-left: 3px solid #1a1a1a; padding-left: 5px; }
+.toc-item[data-mood="Stabil"]      { border-left: 3px solid #1a3a22; padding-left: 5px; }
+.toc-item[data-mood="Semangat"]    { border-left: 3px solid #3a3010; padding-left: 5px; }
+.toc-item[data-mood="Kabur"]       { border-left: 3px solid #1e2a38; padding-left: 5px; }
+
+/* Mood badge in TOC */
+.toc-mood {
+  width: 16px; height: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.45; margin-left: 4px;
+}
+.toc-mood svg { width: 12px; height: 12px; }
+
+/* Mood button in page topbar */
+.btn-mood {
+  background: rgba(140,80,30,0.08); border: 1px solid rgba(160,100,40,0.2);
+  border-radius: 4px; padding: 3px 7px; height: 24px;
+  display: flex; align-items: center; gap: 5px;
+  cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+  font-family: 'Lora', serif; font-size: 10px; color: rgba(100,70,40,0.6);
+  letter-spacing: 0.5px;
+}
+.btn-mood:hover { background: rgba(140,80,30,0.18); color: rgba(100,70,40,0.9); }
+.btn-mood svg { width: 14px; height: 14px; opacity: 0.6; flex-shrink: 0; }
+.btn-mood.has-mood { color: rgba(80,50,25,0.85); border-color: rgba(160,100,40,0.4); }
+.btn-mood.has-mood svg { opacity: 0.85; }
+
+/* Mood picker overlay */
+.mood-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(10,8,4,0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.mood-overlay.open { opacity: 1; pointer-events: all; }
+
+.mood-sheet {
+  width: 100%; max-width: 480px;
+  background: linear-gradient(160deg, #2a1c0a, #1e1408);
+  border-top: 1px solid rgba(200,160,80,0.2);
+  border-left: 1px solid rgba(200,160,80,0.08);
+  border-right: 1px solid rgba(200,160,80,0.08);
+  border-radius: 14px 14px 0 0;
+  padding: 18px 20px 32px;
+  transform: translateY(20px);
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+.mood-overlay.open .mood-sheet { transform: translateY(0); }
+
+.mood-sheet-title {
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 4px;
+  color: rgba(200,160,80,0.5); text-transform: uppercase;
+  text-align: center; margin-bottom: 16px;
+}
+
+.mood-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 14px;
+}
+.mood-option {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 4px; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(200,160,80,0.1); border-radius: 8px;
+  cursor: pointer; transition: all 0.2s;
+}
+.mood-option:hover { background: rgba(200,160,80,0.08); border-color: rgba(200,160,80,0.25); }
+.mood-option.active { background: rgba(200,160,80,0.12); border-color: rgba(200,160,80,0.4); }
+.mood-option svg { width: 24px; height: 24px; opacity: 0.7; }
+.mood-option.active svg { opacity: 1; }
+.mood-label {
+  font-family: 'Lora', serif; font-size: 9px; color: rgba(200,160,80,0.55);
+  letter-spacing: 0.5px; text-align: center; line-height: 1.2;
+}
+.mood-option.active .mood-label { color: rgba(200,160,80,0.9); }
+
+/* AI detect section */
+.mood-ai-row {
+  display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+  border-top: 1px solid rgba(200,160,80,0.1); padding-top: 14px;
+}
+.btn-ai-detect {
+  flex: 1; background: rgba(200,160,80,0.08); border: 1px solid rgba(200,160,80,0.2);
+  border-radius: 6px; padding: 9px 12px; cursor: pointer; transition: all 0.2s;
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px;
+  color: rgba(200,160,80,0.6); text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-ai-detect:hover:not(:disabled) { background: rgba(200,160,80,0.15); color: rgba(200,160,80,0.9); }
+.btn-ai-detect:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-ai-detect .ai-spinner {
+  width: 12px; height: 12px; border: 1.5px solid rgba(200,160,80,0.3);
+  border-top-color: rgba(200,160,80,0.8); border-radius: 50%;
+  animation: spin 0.8s linear infinite; display: none;
+}
+.btn-ai-detect.loading .ai-spinner { display: block; }
+.btn-ai-detect.loading .ai-label { display: none; }
+
+.mood-ai-result {
+  font-size: 10px; font-style: italic; color: rgba(200,160,80,0.5);
+  text-align: center; min-height: 16px;
+}
+
+.btn-mood-clear {
+  background: none; border: none; cursor: pointer;
+  font-size: 10px; letter-spacing: 1px; color: rgba(160,80,60,0.4);
+  font-family: 'Lora', serif; padding: 0; transition: color 0.2s;
+}
+.btn-mood-clear:hover { color: rgba(160,80,60,0.8); }
+
+/* ══════════════════════════════════════════════════════════════════
+   EDIT PROFILE OVERLAY
+══════════════════════════════════════════════════════════════════ */
+.edit-profile-overlay {
+  position: fixed; inset: 0; z-index: 600;
+  background: rgba(5,4,2,0.75);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+  backdrop-filter: blur(4px);
+}
+.edit-profile-overlay.open { opacity: 1; pointer-events: all; }
+
+.edit-profile-panel {
+  width: 100%; max-width: 380px;
+  background: linear-gradient(160deg, #1c1608, #130f05);
+  border: 1px solid rgba(201,168,76,0.3);
+  box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(201,168,76,0.06);
+  padding: 24px 20px 20px;
+  position: relative;
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+}
+.edit-profile-overlay.open .edit-profile-panel { transform: translateY(0) scale(1); }
+
+.edit-profile-panel::before {
+  content: ''; position: absolute; inset: 4px;
+  border: 1px solid rgba(201,168,76,0.08); pointer-events: none;
+}
+
+.ep-title {
+  font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 4px;
+  color: var(--gold-dim); text-transform: uppercase; text-align: center;
+  margin-bottom: 18px;
+}
+
+.ep-label {
+  font-family: 'Cinzel', serif; font-size: 8px; letter-spacing: 3px;
+  color: var(--rpg-text-dim); text-transform: uppercase; margin-bottom: 7px; display: block;
+}
+
+.ep-name-input {
+  width: 100%; background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,168,76,0.2);
+  color: var(--rpg-text); font-family: 'Crimson Pro', Georgia, serif;
+  font-size: 15px; padding: 9px 12px; outline: none;
+  transition: border-color 0.2s; margin-bottom: 18px;
+  caret-color: var(--gold);
+}
+.ep-name-input:focus { border-color: rgba(201,168,76,0.5); }
+.ep-name-input::placeholder { color: var(--rpg-text-dim); font-style: italic; }
+
+.ep-avatar-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ep-avatar-opt {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(201,168,76,0.12);
+  cursor: pointer; transition: all 0.2s; position: relative;
+  padding: 8px;
+}
+.ep-avatar-opt:hover { background: rgba(201,168,76,0.08); border-color: rgba(201,168,76,0.3); }
+.ep-avatar-opt.selected {
+  background: rgba(201,168,76,0.1); border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(201,168,76,0.15);
+}
+.ep-avatar-opt svg { width: 40px; height: 40px; display: block; }
+.ep-avatar-name {
+  position: absolute; bottom: 3px; left: 0; right: 0;
+  font-family: 'Cinzel', serif; font-size: 6px; letter-spacing: 1px;
+  color: var(--rpg-text-dim); text-align: center; text-transform: uppercase;
+}
+.ep-avatar-opt.selected .ep-avatar-name { color: var(--gold-dim); }
+
+.ep-btn-row {
+  display: flex; gap: 10px;
+}
+.ep-btn {
+  flex: 1; padding: 10px 12px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px;
+  text-transform: uppercase; transition: all 0.2s; border: 1px solid;
+}
+.ep-btn-save {
+  background: rgba(201,168,76,0.15); border-color: var(--gold-dim);
+  color: var(--gold);
+}
+.ep-btn-save:hover { background: rgba(201,168,76,0.25); border-color: var(--gold); }
+.ep-btn-cancel {
+  background: transparent; border-color: rgba(201,168,76,0.15);
+  color: var(--rpg-text-dim);
+}
+.ep-btn-cancel:hover { border-color: rgba(201,168,76,0.3); color: var(--rpg-text); }
+
+/* Avatar ring — tap hint */
+.rpg-header { cursor: pointer; }
+.rpg-header:hover .avatar-ring::before { filter: brightness(1.3); }
+.ep-tap-hint {
+  font-size: 9px; letter-spacing: 2px; color: rgba(201,168,76,0.3);
+  font-family: 'Cinzel', serif; text-transform: uppercase;
+  text-align: center; margin-top: 4px; transition: color 0.2s;
+}
+.rpg-header:hover .ep-tap-hint { color: rgba(201,168,76,0.6); }
+
+</style>
+</head>
+
+<body class="tab-journal">
+
+<!-- ── AMBIENT (journal) ── -->
+<div class="ambient" id="ambient"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     JOURNAL PANEL
+═══════════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-journal">
+
+  <!-- Phase 1 & 2: Cover + Spread -->
+  <div class="j-screen" id="cover-screen">
+    <div class="book-wrap" id="book-wrap">
+      <div class="book-spine-fixed"><span class="spine-text">Kronik</span></div>
+      <div class="book-spread" id="book-spread">
+        <div class="spread-cover-strip"></div>
+        <div class="spread-paper">
+          <div class="spread-binding-shadow"></div>
+          <div class="spread-content">
+            <div class="spread-topbar">
+              <div>
+                <div class="spread-header">Daftar Isi</div>
+                <div class="spread-header-sub">Catatan Harian</div>
+              </div>
+              <button class="btn-settings" onclick="toggleSettings()" id="btn-settings">⋯</button>
+            </div>
+            <div class="spread-divider"></div>
+            <div class="settings-panel" id="settings-panel">
+              <button class="settings-item" onclick="toggleSelectMode()" id="btn-select">
+                <span class="settings-icon">☑</span> Pilih Lembaran
+              </button>
+              <button class="settings-item settings-item-danger" id="btn-delete-selected" style="display:none" onclick="deleteSelected()">
+                <span class="settings-icon">✕</span> Hapus Dipilih (<span id="selected-count">0</span>)
+              </button>
+              <div class="settings-divider"></div>
+              <button class="settings-item" id="btn-export" onclick="exportData()">
+                <span class="settings-icon">↑</span> Export Data
+              </button>
+              <label class="settings-item" id="btn-import" style="cursor:pointer">
+                <span class="settings-icon">↓</span> Import Data
+                <input type="file" accept=".json" style="display:none" onchange="importData(event)" />
+              </label>
+            </div>
+            <ul class="toc-list" id="toc-list"></ul>
+          </div>
+          <button class="spread-open-btn" onclick="jGoFullscreen(null)">✦ &nbsp;+ Lembaran Baru</button>
+        </div>
+      </div>
+      <div class="book-cover-panel" id="book-cover-panel">
+        <div class="book-cover-face">
+          <div class="emboss-outer"></div>
+          <div class="emboss-inner"></div>
+          <div class="cover-ornament">✦ ✦ ✦</div>
+          <div class="cover-title-wrap">
+            <div class="cover-title">Kronik</div>
+            <div class="cover-divider"></div>
+            <div class="cover-subtitle">jurnal pribadi</div>
+          </div>
+          <div class="cover-ornament">✦ ✦ ✦</div>
+          <div class="cover-hint" id="cover-hint">geser untuk membuka</div>
+        </div>
+        <div class="book-cover-inner"></div>
+      </div>
+      <div class="book-pages" id="book-pages"></div>
+    </div>
+    <div class="cover-tagline" id="cover-tagline">— Jurnal & Legenda —</div>
+    <button class="spread-back-btn" id="spread-back-btn" style="display:none" onclick="goToCover()">← kembali ke cover</button>
+  </div>
+
+  <!-- Phase 3: Fullscreen writing -->
+  <div class="j-screen hidden" id="journal-screen">
+    <div class="page-viewport" id="page-viewport"></div>
+    <div class="page-margin"></div>
+    <div class="page-binding"></div>
+    <div class="save-dot" id="save-dot"></div>
+    <div class="page-num-fixed" id="page-num-fixed"></div>
+    <div class="swipe-hint" id="swipe-hint">← geser halaman →</div>
+  </div>
+
+</div><!-- /panel-journal -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     PROFILE PANEL
+═══════════════════════════════════════════════════════════ -->
+<div class="tab-panel hidden" id="panel-profile">
+  <div class="profile-wrapper">
+
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".json" onchange="handleFile(event)">
+      <div class="upload-icon">⚔️</div>
+      <div class="upload-title">Import Data Daily OS</div>
+      <div class="upload-sub">Drop file backup JSON kamu di sini</div>
+    </div>
+
+    <div class="rpg-card" id="rpgCard">
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="rpg-header" onclick="openEditProfile()">
+        <div class="class-badge" id="classBadge">◆ Petualang ◆</div>
+        <div class="avatar-ring">
+          <div class="avatar-inner" id="avatarEmoji">🧙</div>
+        </div>
+        <div class="char-name" id="charName">—</div>
+        <div class="ep-tap-hint">✦ tap untuk edit ✦</div>
+        <div class="char-title" id="charTitle"></div>
+        <div class="level-row">
+          <div class="level-badge">LVL <span id="levelNum">1</span></div>
+          <div class="exp-bar-wrap">
+            <div class="exp-label"><span>XP</span><span id="expText">0 / 500</span></div>
+            <div class="exp-track"><div class="exp-fill" id="expFill" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="rpg-body">
+        <div class="vitals">
+          <div class="section-title">Kondisi</div>
+          <div class="vital-row">
+            <div class="vital-label">HP</div>
+            <div class="vital-track"><div class="vital-fill" id="hpFill" style="background:linear-gradient(90deg,#7a3030,var(--red));width:0%"></div></div>
+            <div class="vital-num" id="hpNum">0</div>
+          </div>
+          <div class="vital-row">
+            <div class="vital-label">MP</div>
+            <div class="vital-track"><div class="vital-fill" id="mpFill" style="background:linear-gradient(90deg,#1e3a5f,var(--blue));width:0%"></div></div>
+            <div class="vital-num" id="mpNum">0</div>
+          </div>
+          <div class="vital-row">
+            <div class="vital-label">ST</div>
+            <div class="vital-track"><div class="vital-fill" id="stFill" style="background:linear-gradient(90deg,#1a3a1a,var(--green));width:0%"></div></div>
+            <div class="vital-num" id="stNum">0</div>
+          </div>
+        </div>
+        <div class="section-title">Statistik <span class="info-badge">dari habit data</span></div>
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="section-title">Habit Tracker</div>
+        <div class="habits-list" id="habitsList"></div>
+        <div class="section-title">Quest Log (To-do)</div>
+        <div class="todos-summary">
+          <div class="todos-title">Pencapaian</div>
+          <div class="todos-grid">
+            <div class="todos-stat"><div class="todos-num" id="todoDone">0</div><div class="todos-lbl">Selesai</div></div>
+            <div class="todos-stat"><div class="todos-num" id="todoTotal">0</div><div class="todos-lbl">Total</div></div>
+          </div>
+        </div>
+        <div class="section-title">Passive Skills</div>
+        <div class="traits" id="traitsContainer"></div>
+        <div class="sync-row" id="syncRow"></div>
+      </div>
+      <div class="rpg-footer">
+        <div class="footer-note" id="rpgFooterNote">Diperbarui dari Daily OS</div>
+        <button class="reload-btn" id="rpgReloadBtn" onclick="triggerUpload()">✦ Import Ulang</button>
+      </div>
+    </div>
+    <button class="refresh-stat-btn" id="refreshStatBtn" style="display:none" onclick="autoLoadDailyOsProfile()">↻ Refresh Stat</button>
+
+    <div class="rpg-legend" id="rpgLegend">
+      <div class="legend-title">Cara Hitung Stats</div>
+
+      <div class="legend-row">
+        <span class="legend-icon">🧠</span>
+        <span><b>Kecerdasan</b> dari habit kategori <b>Belajar</b> & <b>Karir & Bisnis</b> + todo selesai</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-icon">✨</span>
+        <span><b>Kreativitas</b> dari habit kategori <b>Kreativitas</b> & <b>Belajar</b></span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-icon">💪</span>
+        <span><b>Kekuatan</b> dari habit kategori <b>Kesehatan</b> & <b>Olahraga / Fisik</b> (prioritas tertinggi)</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-icon">💬</span>
+        <span><b>Karisma</b> dari habit kategori <b>Karir & Bisnis</b> & <b>Sosial</b> + aksi sosial</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-icon">📖</span>
+        <span><b>Kebijaksanaan</b> dari habit kategori <b>Produktivitas</b>, <b>Spiritual</b>, <b>Keuangan</b> + todo selesai</span>
+      </div>
+
+      <div class="legend-row">
+        <span class="legend-icon">⚡</span>
+        <span><b>Ketangkasan</b> dari habit kategori <b>Produktivitas</b> + todo urgent selesai</span>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /panel-profile -->
+
+
+<!-- ── EDIT PROFILE OVERLAY ── -->
+<div class="edit-profile-overlay" id="edit-profile-overlay" onclick="editProfileOverlayClick(event)">
+  <div class="edit-profile-panel" id="edit-profile-panel">
+    <div class="ep-title">Edit Profil</div>
+    <label class="ep-label" for="ep-name-input">Nama Karakter</label>
+    <input class="ep-name-input" id="ep-name-input" type="text" maxlength="32" autocomplete="off" spellcheck="false">
+    <label class="ep-label">Pilih Avatar</label>
+    <div class="ep-avatar-grid" id="ep-avatar-grid">
+      <!-- Injected by JS -->
+    </div>
+    <div class="ep-btn-row">
+      <button class="ep-btn ep-btn-cancel" onclick="closeEditProfile()">Batal</button>
+      <button class="ep-btn ep-btn-save" onclick="saveEditProfile()">✦ Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MOOD PICKER OVERLAY ── -->
+<div class="mood-overlay" id="mood-overlay" onclick="moodOverlayClick(event)">
+  <div class="mood-sheet" id="mood-sheet">
+    <div class="mood-sheet-title">Pilih Suasana Hati</div>
+    <div class="mood-grid" id="mood-grid">
+      <!-- Options injected by JS -->
+    </div>
+    <div class="mood-ai-row">
+      <button class="btn-ai-detect" id="btn-ai-detect" onclick="detectMoodAI()">
+        <div class="ai-spinner"></div>
+        <span class="ai-label">✦ Deteksi Mood</span>
+      </button>
+      <button class="btn-mood-clear" onclick="clearMood()">hapus</button>
+    </div>
+    <div class="mood-ai-result" id="mood-ai-result"></div>
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" data-tab="journal" onclick="switchTab('journal')">
+    <span class="nav-icon">📖</span>
+    <span class="nav-label">Jurnal</span>
+  </button>
+  <button class="nav-tab" data-tab="profile" onclick="switchTab('profile')">
+    <span class="nav-icon">⚔️</span>
+    <span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<div class="rpg-toast" id="rpgToast"></div>
+
+<script src="/shared/ecosystem-db.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   INDEXEDDB — single DB, two object stores:
+     • "entries"  — journal entries  { id, date, title, content, order,
+                                       mood, habits_log, source, generatedAt }
+     • "kv"       — key-value store  (used for RPG profile cache, etc.)
+════════════════════════════════════════════════════════════════════ */
+async function dbOpen() {
+  return EcosystemDB.open();
+}
+
+function kvGet(key) {
+  return EcosystemDB.kv.kronik.get(key);
+}
+function kvSet(key, value) {
+  return EcosystemDB.kv.kronik.set(key, value);
+}
+
+function dbGetAllEntries() {
+  return EcosystemDB.journal.getAll();
+}
+function dbPutEntry(entry) {
+  return EcosystemDB.journal.put(entry);
+}
+function dbDeleteEntry(id) {
+  return EcosystemDB.journal.delete(id);
+}
+function dbPutAllEntries(arr, clearFirst = true) {
+  return EcosystemDB.journal.putAll(arr, clearFirst);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   TAB SWITCHING
+════════════════════════════════════════════════════════════════════ */
+let currentTab = 'journal';
+
+function switchTab(tab) {
+  if (currentTab === tab) return;
+  currentTab = tab;
+
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+
+  document.getElementById('panel-journal').classList.toggle('hidden', tab !== 'journal');
+  document.getElementById('panel-profile').classList.toggle('hidden', tab !== 'profile');
+  document.getElementById('ambient').style.opacity = tab === 'journal' ? '1' : '0';
+
+  document.body.className = tab === 'journal' ? 'tab-journal' : 'tab-profile';
+
+  if (tab !== 'journal' && jCurrentId) {
+    clearTimeout(jSaveTimer);
+    jFlushSave();
+  }
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   JOURNAL LOGIC
+════════════════════════════════════════════════════════════════════ */
+const PAGE_CHARS = 900;
+
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const fmtLong  = d => { try { return new Date(d+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); } catch(e){ return d; } };
+const fmtShort = d => { try { return new Date(d+'T00:00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}); } catch(e){ return d; } };
+const genId    = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+
+// In-memory mirror of IndexedDB entries (always sorted newest-first)
+let entries = [];
+
+/* ── Shared data rules ──
+   Semua app harus baca data lewat helper ini, bukan langsung dari raw store.
+*/
+function isArchivedRecord(record) {
+  return record?.isArchived === true
+    || record?.archived === true
+    || record?.status === 'archived'
+    || Boolean(record?.archivedAt);
+}
+
+function toIsoString(value, fallback = undefined) {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (fallback !== undefined) return fallback;
+  return new Date().toISOString();
+}
+
+function normalizeHabitLogItem(item) {
+  const completedAt = toIsoString(item?.completedAt || item?.doneAt || item?.timestamp);
+  return {
+    habitName: item?.habitName || item?.name || 'Habit',
+    category: item?.category || '',
+    completedAt,
+  };
+}
+
+function normalizeJournalEntry(entry, fallbackOrder = 0) {
+  const date = entry?.date || todayStr();
+  const createdAt = toIsoString(
+    entry?.createdAt || entry?.generatedAt,
+    `${date}T00:00:00.000Z`
+  );
+  const updatedAt = toIsoString(entry?.updatedAt || entry?.modifiedAt || createdAt, createdAt);
+  const completedAt = entry?.completedAt ? toIsoString(entry.completedAt, null) : (entry?.generatedAt ? toIsoString(entry.generatedAt, null) : null);
+  return {
+    id: entry?.id || genId(),
+    date,
+    title: entry?.title || '',
+    content: entry?.content || '',
+    order: Number.isFinite(entry?.order) ? entry.order : fallbackOrder,
+    mood: entry?.mood ?? null,
+    habits_log: Array.isArray(entry?.habits_log) ? entry.habits_log.map(normalizeHabitLogItem) : [],
+    source: entry?.source || 'manual',
+    generatedAt: entry?.generatedAt || null,
+    createdAt,
+    updatedAt,
+    completedAt,
+    archivedAt: entry?.archivedAt || null,
+    isArchived: isArchivedRecord(entry),
+  };
+}
+
+function normalizeJournalEntries(list) {
+  return (Array.isArray(list) ? list : [])
+    .map((entry, idx) => normalizeJournalEntry(entry, idx))
+    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+}
+
+function getVisibleEntries(list = entries) {
+  return normalizeJournalEntries(list).filter(entry => !isArchivedRecord(entry));
+}
+
+function getEntryByDate(dateStr, list = entries) {
+  return getVisibleEntries(list).find(entry => entry.date === dateStr) || null;
+}
+
+function normalizeDailyOsHabit(habit) {
+  const normalized = { ...(habit || {}) };
+  normalized.createdAt = toIsoString(normalized.createdAt || normalized.addedAt, null);
+  normalized.updatedAt = toIsoString(normalized.updatedAt || normalized.modifiedAt || normalized.createdAt, normalized.createdAt);
+  normalized.completedAt = normalized.completedAt ? toIsoString(normalized.completedAt, null) : null;
+  normalized.archivedAt = normalized.archivedAt || null;
+  normalized.isArchived = isArchivedRecord(normalized);
+  return normalized;
+}
+
+function normalizeDailyOsTodo(todo) {
+  const normalized = { ...(todo || {}) };
+  normalized.createdAt = toIsoString(normalized.createdAt || normalized.addedAt, null);
+  normalized.updatedAt = toIsoString(normalized.updatedAt || normalized.modifiedAt || normalized.createdAt, normalized.createdAt);
+  normalized.completedAt = normalized.completedAt
+    ? toIsoString(normalized.completedAt, null)
+    : (normalized.done ? toIsoString(normalized.doneAt || normalized.finishedAt || normalized.updatedAt, null) : null);
+  normalized.archivedAt = normalized.archivedAt || null;
+  normalized.isArchived = isArchivedRecord(normalized);
+  return normalized;
+}
+
+function getActiveHabits(data) {
+  return (data?.habits || []).map(normalizeDailyOsHabit).filter(habit => !habit.isArchived);
+}
+
+function getActiveTodos(data) {
+  return (data?.todos || []).map(normalizeDailyOsTodo).filter(todo => !todo.isArchived);
+}
+
+function getHabitCompletionsOnDate(habit, dateStr) {
+  const history = habit?.history || {};
+  const dayValue = history?.[dateStr];
+  if (Array.isArray(dayValue)) return dayValue.length;
+  if (typeof dayValue === 'number') return dayValue;
+  if (dayValue) return 1;
+  return 0;
+}
+
+function isTodoCompletedOnDate(todo, dateStr) {
+  if (!todo) return false;
+  const completedAt = todo.completedAt || todo.doneAt || todo.finishedAt || null;
+  if (completedAt) return completedAt.slice(0, 10) === dateStr;
+  return todo.done === true;
+}
+
+function getYesterdayCompletedTodos(data, dateStr) {
+  return getActiveTodos(data).filter(todo => isTodoCompletedOnDate(todo, dateStr));
+}
+
+function getTodayJournal(list = entries) {
+  return getEntryByDate(todayStr(), list);
+}
+
+/* ── Persist helpers ── */
+let jSaveAllTimer = null;
+
+// Save a single entry to IDB (debounced for typing)
+let jWriteTimer = null;
+function jSaveAll() {
+  // Re-assign order based on current array position, then persist all
+  clearTimeout(jSaveAllTimer);
+  jSaveAllTimer = setTimeout(async () => {
+    entries.forEach((e, i) => { e.order = i; e.updatedAt = new Date().toISOString(); });
+    for (const e of entries) await dbPutEntry(e);
+  }, 300);
+}
+
+function jSaveAllNow() {
+  clearTimeout(jSaveAllTimer);
+  entries.forEach((e, i) => { e.order = i; e.updatedAt = new Date().toISOString(); });
+  // Fire-and-forget (sync-style callers expect void)
+  (async () => { for (const e of entries) await dbPutEntry(e); })();
+}
+
+function jSaveEntry(id, fields) {
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx >= 0) {
+    Object.assign(entries[idx], fields, { updatedAt: new Date().toISOString() });
+    dbPutEntry(entries[idx]); // persist single entry immediately
+  }
+}
+
+function jAddEntry() {
+  const now = new Date().toISOString();
+  const today = todayStr();
+  const e = normalizeJournalEntry({
+    id: genId(),
+    date: today,
+    title: '',
+    content: '',
+    order: 0,
+    mood: null,
+    habits_log: [],
+    source: 'manual',
+    generatedAt: null,
+    createdAt: now,
+    updatedAt: now,
+    completedAt: null,
+    archivedAt: null,
+    isArchived: false,
+  });
+  entries.unshift(e);
+  // Re-sort newest-first and re-assign order
+  entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  entries.forEach((x, i) => { x.order = i; });
+  dbPutEntry(e);
+  return e;
+}
+function jAllEntries() { return getVisibleEntries(entries); }
+function jPagesOf(text) {
+  if (!text) return [''];
+  const chunks = [];
+  for (let i = 0; i < text.length; i += PAGE_CHARS) chunks.push(text.slice(i, i+PAGE_CHARS));
+  return chunks.length ? chunks : [''];
+}
+
+let jCurrentId   = null;
+let jCurrentPage = 0;
+let jIsFlipping  = false;
+let jSaveTimer   = null;
+let jPageEl      = null;
+let jBookIsOpen  = false;
+
+/* Book swipe (cover/spread) */
+let swipeStartX = 0, swipeStartY = 0, swipeLocked = false;
+
+(function setupBookSwipe() {
+  const screen = document.getElementById('cover-screen');
+  screen.addEventListener('touchstart', e => { swipeStartX = e.touches[0].clientX; swipeStartY = e.touches[0].clientY; swipeLocked = false; }, { passive: true });
+  screen.addEventListener('touchend', e => {
+    if (swipeLocked) return;
+    const dx = e.changedTouches[0].clientX - swipeStartX;
+    const dy = e.changedTouches[0].clientY - swipeStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.8) return;
+    swipeLocked = true;
+    if (!jBookIsOpen && dx < 0) openBook();
+    else if (jBookIsOpen && dx < 0) jGoFullscreen(null);
+    else if (jBookIsOpen && dx > 0) goToCover();
+  }, { passive: true });
+  let mStartX = 0, mDrag = false;
+  screen.addEventListener('mousedown', e => { mStartX = e.clientX; mDrag = true; });
+  screen.addEventListener('mouseup', e => {
+    if (!mDrag) return; mDrag = false;
+    const dx = e.clientX - mStartX;
+    if (!jBookIsOpen && dx < -50) openBook();
+    else if (jBookIsOpen && dx < -50) jGoFullscreen(null);
+    else if (jBookIsOpen && dx > 50) goToCover();
+  });
+})();
+
+function openBook() {
+  if (jBookIsOpen) return;
+  jBookIsOpen = true;
+  const coverPanel = document.getElementById('book-cover-panel');
+  const coverFace  = coverPanel.querySelector('.book-cover-face');
+  const coverInner = coverPanel.querySelector('.book-cover-inner');
+  const bookPages  = document.getElementById('book-pages');
+  const spine      = document.querySelector('.book-spine-fixed');
+  document.getElementById('cover-hint').style.display = 'none';
+  spine.classList.add('anim-hidden');
+  bookPages.style.transition = 'opacity 0.15s ease';
+  bookPages.style.opacity = '0';
+  coverInner.classList.remove('show');
+  coverFace.style.display = '';
+  coverPanel.classList.add('opening');
+  setTimeout(() => { coverFace.style.display = 'none'; }, 480);
+  setTimeout(() => {
+    spine.classList.remove('anim-hidden');
+    jRenderSpread();
+    document.getElementById('cover-tagline').style.display = 'none';
+    document.getElementById('spread-back-btn').style.display = '';
+  }, 1000);
+}
+
+function goToCover() {
+  if (!jBookIsOpen) return;
+  jBookIsOpen = false;
+  const coverPanel = document.getElementById('book-cover-panel');
+  const coverFace  = coverPanel.querySelector('.book-cover-face');
+  const coverInner = coverPanel.querySelector('.book-cover-inner');
+  const bookPages  = document.getElementById('book-pages');
+  const spine      = document.querySelector('.book-spine-fixed');
+  spine.classList.add('anim-hidden');
+  document.getElementById('cover-tagline').style.display = '';
+  document.getElementById('spread-back-btn').style.display = 'none';
+  document.getElementById('cover-hint').style.display = '';
+  coverFace.style.display = 'none';
+  coverInner.classList.add('show');
+  coverPanel.classList.remove('opening');
+  setTimeout(() => { coverInner.classList.remove('show'); coverFace.style.display = ''; }, 480);
+  setTimeout(() => {
+    spine.classList.remove('anim-hidden');
+    bookPages.style.transition = 'opacity 0.3s ease';
+    bookPages.style.opacity = '';
+    setTimeout(() => { bookPages.style.transition = ''; }, 300);
+  }, 1000);
+}
+
+function jRenderSpread() {
+  const list = document.getElementById('toc-list');
+  list.innerHTML = '';
+  const all = jAllEntries();
+  if (all.length === 0) {
+    list.innerHTML = '<li class="toc-empty">Belum ada lembaran.<br>Buka editor dan tap ✦ untuk mulai ✦</li>';
+    return;
+  }
+  all.forEach((entry, i) => {
+    const label   = entry.title || '(tanpa judul)';
+    const dateStr = entry.date ? fmtShort(entry.date) : '—';
+    const moodStatus = entry.mood?.status || null;
+    const moodM = moodStatus ? MOOD_LIST.find(m => m.status === moodStatus) : null;
+    const li = document.createElement('li');
+    li.className = 'toc-item' + (selectedIds.has(entry.id) ? ' selected' : '');
+    if (moodStatus) li.dataset.mood = moodStatus;
+    li.dataset.id = entry.id;
+    const moodBadge = moodM ? '<span class="toc-mood" title="' + moodStatus + '">' + moodM.svg + '</span>' : '';
+    li.innerHTML = `
+      <div class="toc-checkbox"></div>
+      <span class="toc-num">${i+1}</span>
+      <span class="toc-date">${dateStr}</span>
+      <span class="toc-dots"></span>
+      <span class="toc-preview">${label}</span>` + moodBadge;
+    li.onclick = () => { if (selectMode) toggleSelectItem(entry.id); else jGoFullscreen(entry.id); };
+    list.appendChild(li);
+  });
+  if (selectMode) list.classList.add('select-mode');
+}
+
+function jGoFullscreen(id) {
+  if (!id) {
+    const visible = getVisibleEntries(entries);
+    if (visible.length === 0) { const e = jAddEntry(); id = e.id; }
+    else id = visible[0].id;
+  }
+  jCurrentId   = id;
+  jCurrentPage = 0;
+  document.getElementById('cover-screen').classList.add('hidden');
+  document.getElementById('journal-screen').classList.remove('hidden');
+  jBuildPage(null, 'flip-in-right');
+  jSetupSwipe();
+  jHideSwipeHintSoon();
+}
+
+function jGoToSpread() {
+  clearTimeout(jSaveTimer); jFlushSave(); jTeardownSwipe();
+  // Bersihkan semua page DOM
+  const vp = document.getElementById('page-viewport');
+  if (vp) vp.innerHTML = '';
+  jPageEl = null;
+  document.getElementById('journal-screen').classList.add('hidden');
+  document.getElementById('cover-screen').classList.remove('hidden');
+  jRenderSpread();
+}
+
+function jNewEntry() {
+  clearTimeout(jSaveTimer); jFlushSave();
+  const e = jAddEntry();
+  jCurrentId   = e.id;
+  jCurrentPage = 0;
+  jBuildPage(jPageEl, 'flip-in-right', 'flip-out-left');
+}
+
+function jDeleteEntry() {
+  if (!jCurrentId) return;
+  const btn = document.querySelector('.btn-delete-inline');
+  if (!btn) return;
+  if (btn.dataset.confirm !== '1') {
+    btn.dataset.confirm = '1'; btn.textContent = 'arsip?'; btn.style.color = 'rgba(160,50,30,0.8)';
+    setTimeout(() => { btn.dataset.confirm = ''; btn.textContent = 'hapus'; btn.style.color = ''; }, 2500);
+    return;
+  }
+  clearTimeout(jSaveTimer);
+  const idx = entries.findIndex(e => e.id === jCurrentId);
+  if (idx < 0) return;
+  const now = new Date().toISOString();
+  entries[idx] = {
+    ...entries[idx],
+    isArchived: true,
+    archivedAt: now,
+    updatedAt: now,
+  };
+  dbPutEntry(entries[idx]);
+  const visible = getVisibleEntries(entries);
+  if (visible.length === 0) { jGoToSpread(); }
+  else {
+    const nextIdx = visible.findIndex(e => e.id === jCurrentId);
+    const targetIdx = Math.min(Math.max(nextIdx, 0), visible.length - 1);
+    jCurrentId   = visible[targetIdx].id;
+    jCurrentPage = 0;
+    jBuildPage(jPageEl, 'flip-in-left', 'flip-out-right');
+  }
+}
+
+function jBuildPage(oldEl, inAnim, outAnim) {
+  const vp = document.getElementById('page-viewport');
+  const visibleEntries = getVisibleEntries(entries);
+  const entry     = visibleEntries.find(e => e.id === jCurrentId) || normalizeJournalEntry({ id: jCurrentId, date: todayStr(), title: '', content: '', mood: null });
+  const entryIdx  = visibleEntries.findIndex(e => e.id === jCurrentId);
+  const entryNum  = entryIdx + 1;
+  const totalEntries = visibleEntries.length;
+
+  // ── CLEANUP: hapus semua page orphan yang tertinggal (anti-glitch) ──
+  vp.querySelectorAll('.journal-page:not([data-active])').forEach(el => el.remove());
+
+  if (oldEl) {
+    oldEl.removeAttribute('data-active');
+    if (outAnim) {
+      oldEl.classList.add(outAnim);
+      const fsOut = setTimeout(() => { if (oldEl.parentNode) oldEl.remove(); }, 450);
+      oldEl.addEventListener('animationend', () => { clearTimeout(fsOut); if (oldEl.parentNode) oldEl.remove(); }, { once: true });
+    } else {
+      oldEl.remove();
+    }
+  }
+
+  const currentMood = entry.mood;
+  const moodM = currentMood ? MOOD_LIST.find(m => m.status === currentMood.status) : null;
+  const moodBtnInner = moodM
+    ? moodM.svg + '<span>' + moodM.status + '</span>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg><span>mood</span>';
+
+  const div = document.createElement('div');
+  div.className = 'journal-page';
+  div.dataset.active = '1';
+  div.innerHTML = `
+    <div class="page-inner">
+      <div class="page-topbar">
+        <div class="topbar-left">
+          <button class="btn-back-spread" onclick="jGoToSpread()">← Tutup</button>
+          <button class="btn-delete-inline" onclick="jDeleteEntry()">hapus</button>
+        </div>
+        <div class="topbar-right">
+          <button class="btn-mood${moodM ? ' has-mood' : ''}" onclick="openMoodPicker()" title="Pilih mood">${moodBtnInner}</button>
+          <span class="page-indicator">${entryNum} / ${totalEntries}</span>
+          <button class="btn-new-inline" onclick="jNewEntry()" title="Lembaran baru">+</button>
+        </div>
+      </div>
+      <div class="page-header-fields">
+        <input class="entry-date-input" id="entry-date" type="date" value="${entry.date || todayStr()}" />
+        <input class="entry-title-input" id="entry-title" type="text" placeholder="Judul lembaran..." value="${entry.title||''}" />
+      </div>
+      <textarea id="entry-ta" placeholder="Tulis sesuatu...">${entry.content||''}</textarea>
+    </div>`;
+
+  vp.appendChild(div);
+  jPageEl = div;
+
+  if (inAnim) {
+    div.classList.add(inAnim);
+    const fsIn = setTimeout(() => { div.classList.remove(inAnim); jIsFlipping = false; }, 450);
+    div.addEventListener('animationend', () => { clearTimeout(fsIn); div.classList.remove(inAnim); jIsFlipping = false; }, { once: true });
+  } else { jIsFlipping = false; }
+
+  const ta     = div.querySelector('textarea');
+  const dateI  = div.querySelector('#entry-date');
+  const titleI = div.querySelector('#entry-title');
+  ta.oninput     = jOnType;
+  dateI.oninput  = () => {
+    jSaveEntry(jCurrentId, { date: dateI.value });
+    // Re-sort entries newest-first after date change
+    entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    entries.forEach((x, i) => { x.order = i; });
+    jRenderSpread();
+  };
+  titleI.oninput = () => { clearTimeout(jSaveTimer); jSaveTimer = setTimeout(() => { jSaveEntry(jCurrentId, { title: titleI.value }); jRenderSpread(); }, 500); };
+}
+
+function jUpdatePageNum(cur, total) {
+  const pi = document.querySelector('.page-indicator');
+  if (pi) pi.textContent = `${cur} / ${total}`;
+}
+
+function jFlipForward() {
+  if (jIsFlipping) return;
+  const visible = getVisibleEntries(entries);
+  const idx = visible.findIndex(e => e.id === jCurrentId);
+  if (idx >= visible.length - 1) return;
+  jIsFlipping = true;
+  jCurrentId   = visible[idx + 1].id;
+  jCurrentPage = 0;
+  const needsFlip = (idx % 2 === 1);
+  jBuildPage(jPageEl, needsFlip ? 'flip-in-forward' : null, needsFlip ? 'flip-out-forward' : null);
+}
+
+function jFlipBackward() {
+  if (jIsFlipping) return;
+  const visible = getVisibleEntries(entries);
+  const idx = visible.findIndex(e => e.id === jCurrentId);
+  if (idx <= 0) return;
+  jIsFlipping = true;
+  jCurrentId   = visible[idx - 1].id;
+  jCurrentPage = 0;
+  const needsFlip = (idx % 2 === 0);
+  jBuildPage(jPageEl, needsFlip ? 'flip-in-backward' : null, needsFlip ? 'flip-out-backward' : null);
+}
+
+/* Swipe in writing mode */
+let jTouchStartX = 0, jTouchStartY = 0, jTouchLocked = false, jSwipeCooldown = false;
+function jSetupSwipe() {
+  const vp = document.getElementById('journal-screen');
+  vp.addEventListener('touchstart', jOnTouchStart, { passive: true });
+  vp.addEventListener('touchend',   jOnTouchEnd,   { passive: true });
+}
+function jTeardownSwipe() {
+  const vp = document.getElementById('journal-screen');
+  vp.removeEventListener('touchstart', jOnTouchStart);
+  vp.removeEventListener('touchend',   jOnTouchEnd);
+}
+function jOnTouchStart(e) { jTouchStartX = e.touches[0].clientX; jTouchStartY = e.touches[0].clientY; jTouchLocked = false; }
+function jOnTouchEnd(e) {
+  if (jTouchLocked || jIsFlipping || jSwipeCooldown) return;
+  const dx = e.changedTouches[0].clientX - jTouchStartX;
+  const dy = e.changedTouches[0].clientY - jTouchStartY;
+  if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.65) return;
+  jTouchLocked = true;
+  jSwipeCooldown = true;
+  setTimeout(() => { jSwipeCooldown = false; }, 500); // cooldown antar swipe
+  if (dx < 0) { jFlipForward(); }
+  else {
+    const visible = getVisibleEntries(entries);
+    const idx = visible.findIndex(e => e.id === jCurrentId);
+    if (idx <= 0) jGoToSpread();
+    else jFlipBackward();
+  }
+}
+
+function jOnType() {
+  clearTimeout(jSaveTimer);
+  document.getElementById('save-dot').classList.add('show');
+  jSaveTimer = setTimeout(jFlushSave, 700);
+}
+
+function jFlushSave() {
+  if (!jPageEl || !jCurrentId) return;
+  const ta = jPageEl.querySelector('textarea');
+  if (!ta) return;
+  const idx = entries.findIndex(e => e.id === jCurrentId);
+  if (idx >= 0) {
+    entries[idx].content = ta.value;
+    dbPutEntry(entries[idx]);
+  }
+  document.getElementById('save-dot').classList.remove('show');
+}
+
+function jHideSwipeHintSoon() {
+  const h = document.getElementById('swipe-hint');
+  h.style.opacity = '1';
+  setTimeout(() => { h.style.opacity = '0'; }, 3000);
+}
+
+/* Settings */
+let selectMode = false;
+let selectedIds = new Set();
+
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  const btn   = document.getElementById('btn-settings');
+  const open  = panel.classList.toggle('open');
+  btn.classList.toggle('active', open);
+  if (!open && selectMode) toggleSelectMode();
+}
+
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  selectedIds.clear();
+  const btn        = document.getElementById('btn-select');
+  const delBtn     = document.getElementById('btn-delete-selected');
+  const list       = document.getElementById('toc-list');
+  const exportBtn  = document.getElementById('btn-export');
+  const importBtn  = document.getElementById('btn-import');
+  if (selectMode) {
+    btn.style.color = 'rgba(140,80,30,0.9)';
+    btn.innerHTML = '<span class="settings-icon">☑</span> Mode Pilih: Aktif';
+    delBtn.style.display = '';
+    list.classList.add('select-mode');
+    if (exportBtn) exportBtn.style.display = 'none';
+    if (importBtn) importBtn.style.display = 'none';
+  } else {
+    btn.style.color = '';
+    btn.innerHTML = '<span class="settings-icon">☑</span> Pilih Lembaran';
+    delBtn.style.display = 'none';
+    list.classList.remove('select-mode');
+    selectedIds.clear();
+    if (exportBtn) exportBtn.style.display = '';
+    if (importBtn) importBtn.style.display = '';
+  }
+  updateSelectedCount(); jRenderSpread();
+}
+
+function updateSelectedCount() { const el = document.getElementById('selected-count'); if (el) el.textContent = selectedIds.size; }
+
+function toggleSelectItem(id) {
+  if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
+  updateSelectedCount();
+  document.querySelectorAll('.toc-item').forEach(li => {
+    if (li.dataset.id === id) li.classList.toggle('selected', selectedIds.has(id));
+  });
+}
+
+function deleteSelected() {
+  if (selectedIds.size === 0) return;
+  const btn = document.getElementById('btn-delete-selected');
+  if (btn.dataset.confirm !== '1') {
+    btn.dataset.confirm = '1';
+    btn.innerHTML = `<span class="settings-icon">✕</span> Yakin hapus ${selectedIds.size} lembaran?`;
+    setTimeout(() => { btn.dataset.confirm = ''; btn.innerHTML = `<span class="settings-icon">✕</span> Hapus Dipilih (<span id="selected-count">${selectedIds.size}</span>)`; }, 2500);
+    return;
+  }
+  entries = entries.filter(e => !selectedIds.has(e.id));
+  // Delete each from IDB
+  selectedIds.forEach(id => dbDeleteEntry(id));
+  selectedIds.clear(); toggleSelectMode(); toggleSettings(); jRenderSpread();
+}
+
+function exportData() {
+  const data = JSON.stringify(normalizeJournalEntries(entries), null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `jurnal-${todayStr()}.json`; a.click(); URL.revokeObjectURL(url);
+  toggleSettings();
+}
+
+function importData(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error('Format tidak valid');
+      const normalizedImported = normalizeJournalEntries(imported);
+      const existingIds = new Set(entries.map(e => e.id));
+      const newEntries  = normalizedImported.filter(e => e.id && !existingIds.has(e.id));
+      // Prepend new entries with correct order
+      entries = [...newEntries, ...entries].map((e, i) => ({ ...e, order: i, updatedAt: new Date().toISOString() }));
+      await dbPutAllEntries(entries);
+      jRenderSpread(); toggleSettings();
+      alert(`${newEntries.length} lembaran berhasil diimport.`);
+    } catch(err) { alert('Gagal import: format file tidak valid.'); }
+  };
+  reader.readAsText(file); event.target.value = '';
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   RPG PROFILE LOGIC
+════════════════════════════════════════════════════════════════════ */
+const CATEGORY_RULES = {
+  'Kesehatan': {
+    stats: ['Kekuatan'],
+    vitals: ['hp','st'],
+    weight: 2
+  },
+  'Olahraga': {
+    stats: ['Kekuatan'],
+    vitals: ['hp','st'],
+    weight: 2.5
+  },
+  'Produktivitas': {
+    stats: ['Ketangkasan','Kebijaksanaan'],
+    vitals: ['st'],
+    weight: 1.5
+  },
+  'Karir & Bisnis': {
+    stats: ['Kecerdasan','Karisma'],
+    vitals: [],
+    weight: 1.5
+  },
+  'Belajar': {
+    stats: ['Kecerdasan','Kreativitas'],
+    vitals: [],
+    weight: 1.5
+  },
+  'Kreativitas': {
+    stats: ['Kreativitas'],
+    vitals: [],
+    weight: 1.5
+  },
+  'Sosial': {
+    stats: ['Karisma'],
+    vitals: [],
+    weight: 1
+  },
+  'Keuangan': {
+    stats: ['Kebijaksanaan'],
+    vitals: [],
+    weight: 1
+  },
+  'Spiritual': {
+    stats: ['Kebijaksanaan'],
+    vitals: ['mp'],
+    weight: 1.5
+  },
+  'General': {
+    stats: ['Ketangkasan'],
+    vitals: [],
+    weight: 1
+  }
+};
+
+const STAT_COLORS = { Kecerdasan:'#4c7ec9', Kreativitas:'#9c6ec9', Kekuatan:'#c94c4c', Karisma:'#c9a84c', Kebijaksanaan:'#5aaa6a', Ketangkasan:'#c97c4c' };
+const STAT_ICONS  = { Kecerdasan:'🧠', Kreativitas:'✨', Kekuatan:'💪', Karisma:'💬', Kebijaksanaan:'📖', Ketangkasan:'⚡' };
+
+function calcLevel(xp) {
+  let level = 1, rem = xp;
+  while (rem >= level * 100) { rem -= level * 100; level++; }
+  const needed = level * 100;
+  return { level, rem, needed, pct: Math.round((rem / needed) * 100) };
+}
+
+function isHabitScheduledOnDate(habit, dateStr) {
+  const activeDays = habit.activeDays || [];
+  if (activeDays.length === 0) return true; // Setiap hari
+  const dow = new Date(dateStr + 'T00:00:00').getDay();
+  return activeDays.includes(dow);
+}
+
+function getHabitTotalItems(habit) {
+  // Sub-aktivitas dihitung — sesuai Daily OS
+  return (habit.subTasks && habit.subTasks.length > 0) ? habit.subTasks.length : 1;
+}
+
+function parseData(data) {
+  const habits = getActiveHabits(data);
+  const todos  = getActiveTodos(data);
+  const totalPoints = data.totalPoints || 0;
+  const today  = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const cutoff = new Date(today); cutoff.setDate(today.getDate() - 30);
+
+  const habitStats = habits.map(h => {
+    const history = h.history || {};
+
+    // Hitung total completions dalam 30 hari (sub-aktivitas dihitung)
+    let totalCompletions = 0;
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (!isHabitScheduledOnDate(h, key)) continue;
+      totalCompletions += getHabitCompletionsOnDate(h, key);
+    }
+
+    // Streak: hitung hari beruntun dimana habit dijadwalkan DAN ada aktivitas
+    // Sama persis dengan logika Daily OS
+    let streak = 0;
+    let sd = new Date(today);
+    for (let i = 0; i < 3650; i++) {
+      const key = `${sd.getFullYear()}-${String(sd.getMonth()+1).padStart(2,'0')}-${String(sd.getDate()).padStart(2,'0')}`;
+      const scheduled = isHabitScheduledOnDate(h, key);
+      const hasActivity = history[key] && (Array.isArray(history[key]) ? history[key].length > 0 : history[key]);
+      if (!scheduled) {
+        // Tidak dijadwalkan hari ini → skip (jangan putus streak)
+      } else if (hasActivity) {
+        streak++;
+      } else if (key === todayKey) {
+        // Hari ini belum dikerjakan → streak lanjut cek kemarin
+      } else {
+        break; // Dijadwalkan tapi tidak dikerjakan → streak putus
+      }
+      sd.setDate(sd.getDate() - 1);
+    }
+
+    return { ...h, totalCompletions, streak };
+  });
+
+  const scores = { Kecerdasan:0, Kreativitas:0, Kekuatan:0, Karisma:0, Kebijaksanaan:0, Ketangkasan:0 };
+  const vitalScores = { hp: 0, mp: 0, st: 0 };
+
+  habitStats.forEach(h => {
+    const completions = h.totalCompletions;
+    if (completions === 0) return;
+
+    // Ambil kategori — handle "Olahraga / Fisik" jadi "Olahraga"
+    let category = h.category || 'General';
+    if (category.includes('/')) category = category.split('/')[0].trim();
+
+    const cat = CATEGORY_RULES[category] || CATEGORY_RULES['General'];
+    const pts = completions * cat.weight * 3;
+
+    cat.stats.forEach(s => scores[s] = (scores[s]||0) + pts);
+    cat.vitals.forEach(v => vitalScores[v] = (vitalScores[v]||0) + completions * cat.weight * 2);
+
+    // Bonus stamina kecil untuk semua aktivitas
+    vitalScores.st += completions * 0.5;
+  });
+
+  const todoDone  = todos.filter(t => t.done).length;
+  const todoTotal = todos.length;
+  const urgentDone = todos.filter(t => t.done && t.priority === 'urgent').length;
+  scores.Ketangkasan += todoDone * 4;
+  scores.Kecerdasan  += todoDone * 2;
+  scores.Karisma     += urgentDone * 3;
+
+  const maxScore = Math.max(...Object.values(scores), 1);
+  const normalizedStats = {};
+  Object.entries(scores).forEach(([k, v]) => { normalizedStats[k] = Math.min(100, Math.round((v / maxScore) * 85) + 5); });
+
+  const maxVital = Math.max(...Object.values(vitalScores), 1);
+  const hp = Math.min(100, Math.round((vitalScores.hp / maxVital) * 80) + 20);
+  const mp = Math.min(100, Math.round((vitalScores.mp / maxVital) * 80) + 15);
+  const st = Math.min(100, Math.round((vitalScores.st / maxVital) * 80) + 15);
+
+  const { level, rem, needed, pct } = calcLevel(totalPoints);
+
+  const dominantStat = Object.entries(normalizedStats).sort((a,b) => b[1]-a[1])[0][0];
+  const classMap   = { Kecerdasan:'Cendekia', Kreativitas:'Kreator', Kekuatan:'Pejuang', Karisma:'Pemimpin', Kebijaksanaan:'Bijaksana', Ketangkasan:'Petualang' };
+  const avatarMap  = { Kecerdasan:'🧠', Kreativitas:'🎨', Kekuatan:'⚔️', Karisma:'👑', Kebijaksanaan:'📜', Ketangkasan:'⚡' };
+
+  const passiveTraits = generateTraits(habitStats, normalizedStats, todoDone, todoTotal);
+
+  const titles = {
+    Cendekia:  ['Pemula Ilmu','Pencari Ilmu','Sarjana Jiwa','Maestro Pengetahuan'],
+    Kreator:   ['Pengukir Ide','Seniman Muda','Arsitek Kreasi','Maestro Kreatif'],
+    Pejuang:   ['Prajurit Tekad','Pejuang Konsisten','Ksatria Disiplin','Legenda Latihan'],
+    Pemimpin:  ['Suara Awal','Pemimpin Tumbuh','Wibawa Sejati','Legenda Karisma'],
+    Bijaksana: ['Pengamat Diam','Filosof Muda','Bijak Berucap','Mahaguru Jiwa'],
+    Petualang: ['Penjelajah Baru','Petualang Gesit','Pendobrak Batas','Legenda Hidup'],
+  };
+  const cls     = classMap[dominantStat];
+  const titleArr = titles[cls] || titles['Petualang'];
+  const tierIdx  = Math.min(3, Math.floor((level - 1) / 8));
+  const title    = titleArr[tierIdx];
+
+  return { level, xpRem: rem, xpNeeded: needed, xpPct: pct, totalPoints, hp, mp, st, stats: normalizedStats, habitStats, todoDone, todoTotal, dominantStat, class: cls, avatar: avatarMap[dominantStat], title, passiveTraits, exportedAt: data.exportedAt };
+}
+
+function generateTraits(habitStats, stats, todoDone, todoTotal) {
+  const traits = [];
+  const topHabits = habitStats.filter(h => h.totalCompletions > 0).sort((a,b) => b.streak - a.streak);
+  if (topHabits[0]?.streak >= 3) traits.push(`${topHabits[0].name} Enthusiast`);
+  if (stats.Kebijaksanaan > 60) traits.push('Deep Thinker');
+  if (stats.Kekuatan > 55) traits.push('Disiplin Fisik');
+  if (stats.Kreativitas > 60) traits.push('Creative Mind');
+  if (stats.Ketangkasan > 55) traits.push('Task Hunter');
+  if (todoDone === todoTotal && todoTotal > 0) traits.push('Perfect Clear ✦');
+  if (habitStats.some(h => h.streak === 0 && h.totalCompletions === 0)) traits.push('Work in Progress');
+  if (stats.Karisma > 55) traits.push('People Person');
+  if (Object.values(stats).filter(v => v > 50).length >= 4) traits.push('All-Rounder');
+  return traits.length > 0 ? traits : ['Karakter Baru'];
+}
+
+function renderProfile(result, skipCache) {
+  // Store class name for edit profile placeholder
+  _epCurrentClass = result.class || 'Adventurer';
+
+  // Apply saved customization (name/avatar) or defaults
+  const overlay = document.getElementById('edit-profile-overlay');
+  const savedName   = overlay ? overlay.dataset.savedName   : '';
+  const savedAvatar = overlay ? overlay.dataset.savedAvatar : '';
+
+  document.getElementById('charName').textContent = savedName || 'Adventurer';
+  document.getElementById('charTitle').textContent = `"${result.title}"`;
+  document.getElementById('classBadge').textContent = `◆ ${result.class} ◆`;
+
+  // Avatar: custom SVG atau emoji default
+  const avatarInner = document.getElementById('avatarEmoji');
+  const customAv = EP_AVATARS.find(a => a.id === savedAvatar);
+  if (customAv) {
+    avatarInner.innerHTML = customAv.svg;
+    avatarInner.style.padding = '4px';
+  } else {
+    avatarInner.textContent = result.avatar;
+    avatarInner.style.padding = '';
+  }
+  document.getElementById('levelNum').textContent = result.level;
+  document.getElementById('expText').textContent = `${result.xpRem} / ${result.xpNeeded}`;
+
+  requestAnimationFrame(() => {
+    document.getElementById('expFill').style.width = result.xpPct + '%';
+    document.getElementById('hpFill').style.width  = result.hp + '%';
+    document.getElementById('mpFill').style.width  = result.mp + '%';
+    document.getElementById('stFill').style.width  = result.st + '%';
+  });
+
+  document.getElementById('hpNum').textContent = result.hp;
+  document.getElementById('mpNum').textContent = result.mp;
+  document.getElementById('stNum').textContent = result.st;
+
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = '';
+  Object.entries(result.stats).forEach(([name, val]) => {
+    const color = STAT_COLORS[name];
+    const icon  = STAT_ICONS[name] || '◆';
+    const div   = document.createElement('div');
+    div.className = 'stat-item';
+    div.innerHTML = `
+      <span class="stat-icon">${icon}</span>
+      <div class="stat-header">
+        <div class="stat-name">${name}</div>
+        <div class="stat-value" style="color:${color}">${val}</div>
+      </div>
+      <div class="stat-bar-track"><div class="stat-bar-fill" style="width:0%;background:linear-gradient(90deg,${color}55,${color})"></div></div>`;
+    grid.appendChild(div);
+    setTimeout(() => div.querySelector('.stat-bar-fill').style.width = val + '%', 100);
+  });
+
+  const habitsList = document.getElementById('habitsList');
+  habitsList.innerHTML = '';
+  result.habitStats.forEach(h => {
+    const totalItems = getHabitTotalItems(h);
+    const subInfo = totalItems > 1 ? ` · ${totalItems} aktivitas` : '';
+    const div = document.createElement('div');
+    div.className = 'habit-row';
+    div.innerHTML = `
+      <div class="habit-dot" style="background:${h.color||'#888'}"></div>
+      <div class="habit-info">
+        <div class="habit-name">${h.name}</div>
+        <div class="habit-meta">${h.category}${subInfo} · ${h.totalCompletions}x (30 hari)</div>
+      </div>
+      <div class="habit-streak">${h.streak > 0 ? '🔥 '+h.streak+'d' : '—'}</div>`;
+    habitsList.appendChild(div);
+  });
+
+  document.getElementById('todoDone').textContent  = result.todoDone;
+  document.getElementById('todoTotal').textContent = result.todoTotal;
+
+  const tc = document.getElementById('traitsContainer');
+  tc.innerHTML = '';
+  const traitColors = ['#c94c4c','#9c6ec9','#4c7ec9','#5aaa6a','#c97c4c','#c9a84c'];
+  result.passiveTraits.forEach((t, i) => {
+    const c = traitColors[i % traitColors.length];
+    tc.innerHTML += `<span class="trait-tag" style="color:${c};border-color:${c}44">${t}</span>`;
+  });
+
+  if (result.exportedAt) {
+    const d = new Date(result.exportedAt);
+    document.getElementById('syncRow').textContent = `Data per ${d.toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})}`;
+  }
+
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('rpgCard').classList.add('visible');
+  document.getElementById('rpgLegend').classList.add('visible');
+
+  // Cache result to IDB (skip if we just loaded from cache to avoid loop)
+  if (!skipCache) {
+    kvSet('rpg_profile_cache', result).catch(() => {});
+    showRpgToast('Profil diperbarui dari Daily OS ✦');
+  }
+}
+
+function handleFile(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { const data = JSON.parse(e.target.result); renderProfile(parseData(data)); }
+    catch (err) { showRpgToast('Format JSON tidak valid!'); }
+  };
+  reader.readAsText(file);
+}
+
+function triggerUpload() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json'; input.onchange = handleFile; input.click();
+}
+
+// Drag & drop on profile
+const rpgZone = document.getElementById('uploadZone');
+rpgZone.addEventListener('dragover', e => { e.preventDefault(); rpgZone.classList.add('drag'); });
+rpgZone.addEventListener('dragleave', () => rpgZone.classList.remove('drag'));
+rpgZone.addEventListener('drop', e => {
+  e.preventDefault(); rpgZone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile({ target: { files: [file] } });
+});
+
+function showRpgToast(msg) {
+  const t = document.getElementById('rpgToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   EDIT PROFILE — Nama & Avatar
+════════════════════════════════════════════════════════════════════ */
+
+const EP_AVATARS = [
+  {
+    id: 'ksatria', name: 'Ksatria',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Helm -->
+      <path stroke-width="1.8" d="M22 22c0-5.5 4.5-10 10-10s10 4.5 10 10v4H22v-4z"/>
+      <path stroke-width="1.8" d="M20 26h24v3c0 1-0.5 2-1.5 2h-21C20.5 31 20 30 20 29v-3z"/>
+      <!-- Badan armor -->
+      <path stroke-width="1.8" d="M22 31v8l-4 6h28l-4-6v-8"/>
+      <path stroke-width="1.5" d="M28 31v6M36 31v6"/>
+      <!-- Garis detail armor -->
+      <path stroke-width="1.2" d="M24 36h16M25 39h14"/>
+      <!-- Pedang kanan -->
+      <line stroke-width="1.8" x1="46" y1="16" x2="54" y2="44"/>
+      <line stroke-width="2" x1="43" y1="28" x2="49" y2="28"/>
+      <path stroke-width="1.5" d="M53 42l2 4-3-1.5"/>
+      <!-- Perisai kiri -->
+      <path stroke-width="1.8" d="M14 24l-4 2v10c0 3 2 5 4 6l4-6V26z"/>
+      <path stroke-width="1.2" d="M12 30l4 4"/>
+    </svg>`
+  },
+  {
+    id: 'penyihir', name: 'Penyihir',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Topi runcing -->
+      <path stroke-width="1.8" d="M32 6l-8 18h16L32 6z"/>
+      <path stroke-width="1.5" d="M20 24h24"/>
+      <!-- Kepala -->
+      <circle stroke-width="1.8" cx="32" cy="30" r="6"/>
+      <!-- Jubah -->
+      <path stroke-width="1.8" d="M24 34l-6 18h28l-6-18"/>
+      <path stroke-width="1.4" d="M26 40l-2 8M38 40l2 8"/>
+      <!-- Tongkat sihir -->
+      <line stroke-width="1.8" x1="10" y1="52" x2="28" y2="28"/>
+      <!-- Bintang di tongkat -->
+      <polygon stroke-width="1.5" points="9,46 10.5,49.5 14,50 11.5,52.5 12.2,56 9,54.2 5.8,56 6.5,52.5 4,50 7.5,49.5"/>
+      <!-- Bintang kecil melayang -->
+      <path stroke-width="1.2" d="M48 14l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>
+      <path stroke-width="1.2" d="M54 22l0.7 1.5 1.5 0.7-1.5 0.7-0.7 1.5-0.7-1.5-1.5-0.7 1.5-0.7z"/>
+    </svg>`
+  },
+  {
+    id: 'healer', name: 'Healer',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Kepala dengan tudung -->
+      <path stroke-width="1.8" d="M20 24c0-6.6 5.4-12 12-12s12 5.4 12 12"/>
+      <path stroke-width="1.5" d="M18 24c0 0-2 2-2 5s2 5 2 5h28s2-2 2-5-2-5-2-5"/>
+      <!-- Wajah -->
+      <circle stroke-width="1.5" cx="32" cy="28" r="5"/>
+      <!-- Jubah panjang -->
+      <path stroke-width="1.8" d="M22 34l-4 20h28l-4-20"/>
+      <path stroke-width="1.4" d="M24 40h16M24 46h16"/>
+      <!-- Simbol salib cahaya di dada -->
+      <line stroke-width="2.2" x1="32" y1="36" x2="32" y2="44"/>
+      <line stroke-width="2.2" x1="28" y1="40" x2="36" y2="40"/>
+      <!-- Sinar cahaya -->
+      <line stroke-width="1.2" x1="32" y1="8" x2="32" y2="5"/>
+      <line stroke-width="1.2" x1="40" y1="10" x2="42" y2="8"/>
+      <line stroke-width="1.2" x1="24" y1="10" x2="22" y2="8"/>
+      <line stroke-width="1.2" x1="44" y1="16" x2="47" y2="14"/>
+      <line stroke-width="1.2" x1="20" y1="16" x2="17" y2="14"/>
+    </svg>`
+  },
+  {
+    id: 'pemanah', name: 'Pemanah',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Kepala -->
+      <circle stroke-width="1.8" cx="32" cy="18" r="7"/>
+      <!-- Ikat kepala -->
+      <path stroke-width="1.5" d="M25 16h14"/>
+      <!-- Badan -->
+      <path stroke-width="1.8" d="M26 25l-4 18h20l-4-18"/>
+      <!-- Lengan menarik busur -->
+      <line stroke-width="1.8" x1="26" y1="27" x2="12" y2="22"/>
+      <line stroke-width="1.8" x1="38" y1="27" x2="50" y2="22"/>
+      <!-- Busur -->
+      <path stroke-width="2" d="M10 14 Q6 22 10 30"/>
+      <line stroke-width="1.4" x1="10" y1="14" x2="10" y2="30"/>
+      <!-- Tali busur -->
+      <line stroke-width="1.2" x1="10" y1="14" x2="26" y2="22" stroke-dasharray="2,1"/>
+      <line stroke-width="1.2" x1="10" y1="30" x2="26" y2="22" stroke-dasharray="2,1"/>
+      <!-- Anak panah -->
+      <line stroke-width="1.8" x1="26" y1="22" x2="52" y2="22"/>
+      <path stroke-width="1.5" d="M52 22l-4-2v4z" fill="#c9a84c" stroke="none"/>
+      <!-- Bulu anak panah -->
+      <path stroke-width="1.2" d="M30 22l-1-2M30 22l-1 2"/>
+      <!-- Kaki -->
+      <line stroke-width="1.8" x1="28" y1="43" x2="25" y2="54"/>
+      <line stroke-width="1.8" x1="36" y1="43" x2="39" y2="54"/>
+    </svg>`
+  },
+  {
+    id: 'elf', name: 'Elf',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Kepala dengan telinga runcing -->
+      <path stroke-width="1.8" d="M22 28c0-5.5 4.5-10 10-10s10 4.5 10 10a10 10 0 01-10 10"/>
+      <path stroke-width="1.8" d="M22 28a10 10 0 0010 10"/>
+      <!-- Telinga runcing -->
+      <path stroke-width="1.8" d="M22 24l-5-3 2 7z"/>
+      <path stroke-width="1.8" d="M42 24l5-3-2 7z"/>
+      <!-- Mahkota daun -->
+      <path stroke-width="1.6" d="M24 22 Q26 16 32 18 Q38 16 40 22"/>
+      <path stroke-width="1.4" d="M26 21 Q28 14 32 16"/>
+      <path stroke-width="1.4" d="M38 21 Q36 14 32 16"/>
+      <path stroke-width="1.2" d="M32 16 Q30 12 32 10 Q34 12 32 16"/>
+      <!-- Badan jubah elegan -->
+      <path stroke-width="1.8" d="M24 38l-5 18h26l-5-18"/>
+      <!-- Detail jubah -->
+      <path stroke-width="1.3" d="M28 42 Q32 48 36 42"/>
+      <path stroke-width="1.3" d="M27 48 Q32 54 37 48"/>
+      <!-- Rambut panjang -->
+      <path stroke-width="1.5" d="M22 28 Q18 38 20 48"/>
+      <path stroke-width="1.5" d="M42 28 Q46 38 44 48"/>
+    </svg>`
+  },
+  {
+    id: 'rogue', name: 'Rogue',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Kepala dengan tudung gelap -->
+      <circle stroke-width="1.8" cx="32" cy="22" r="8"/>
+      <path stroke-width="1.8" d="M22 18 Q20 14 24 12 Q28 8 32 10 Q36 8 40 12 Q44 14 42 18"/>
+      <!-- Topeng (hanya mata) -->
+      <path stroke-width="1.8" d="M24 22 Q28 20 32 22 Q36 20 40 22"/>
+      <line stroke-width="1.5" x1="24" y1="22" x2="24" y2="25"/>
+      <line stroke-width="1.5" x1="40" y1="22" x2="40" y2="25"/>
+      <path stroke-width="1.5" d="M26 22c0 0 1.5-2 3 0M35 22c0 0 1.5-2 3 0"/>
+      <!-- Jubah gelap -->
+      <path stroke-width="1.8" d="M24 30l-6 24h28l-6-24"/>
+      <path stroke-width="1.4" d="M20 38 Q18 44 20 50M44 38 Q46 44 44 50"/>
+      <!-- Dua belati silang -->
+      <line stroke-width="2" x1="14" y1="32" x2="26" y2="46"/>
+      <line stroke-width="2" x1="50" y1="32" x2="38" y2="46"/>
+      <!-- Gagang belati -->
+      <line stroke-width="2" x1="12" y1="30" x2="16" y2="34"/>
+      <line stroke-width="2" x1="52" y1="30" x2="48" y2="34"/>
+      <path stroke-width="1.5" d="M10 30l4-2 2 4z M54 30l-4-2-2 4z"/>
+    </svg>`
+  },
+  {
+    id: 'samurai', name: 'Samurai',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Helm kabuto -->
+      <path stroke-width="1.8" d="M20 26c0-6.6 5.4-12 12-12s12 5.4 12 12"/>
+      <path stroke-width="1.8" d="M18 26h28"/>
+      <path stroke-width="1.6" d="M18 26 Q16 22 18 18 Q20 14 24 16"/>
+      <path stroke-width="1.6" d="M46 26 Q48 22 46 18 Q44 14 40 16"/>
+      <!-- Maedate (ornamen helm) -->
+      <path stroke-width="1.5" d="M32 14 Q34 10 32 7 Q30 10 32 14"/>
+      <!-- Wajah -->
+      <path stroke-width="1.8" d="M22 26v4c0 3.3 4.5 6 10 6s10-2.7 10-6v-4"/>
+      <!-- Badan armor do-maru -->
+      <path stroke-width="1.8" d="M22 36l-4 18h28l-4-18"/>
+      <path stroke-width="1.4" d="M20 40h24M20 45h24M20 50h24"/>
+      <!-- Sode (pelindung bahu) -->
+      <rect stroke-width="1.5" x="10" y="33" width="10" height="8" rx="1"/>
+      <rect stroke-width="1.5" x="44" y="33" width="10" height="8" rx="1"/>
+      <!-- Katana -->
+      <line stroke-width="2" x1="48" y1="10" x2="56" y2="46"/>
+      <line stroke-width="2" x1="45" y1="20" x2="51" y2="20"/>
+      <path stroke-width="1.5" d="M55 44l2 4-3-1"/>
+    </svg>`
+  },
+  {
+    id: 'druid', name: 'Druid',
+    svg: `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#c9a84c" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Kepala -->
+      <circle stroke-width="1.8" cx="32" cy="20" r="7"/>
+      <!-- Mahkota tanduk rusa / alam -->
+      <path stroke-width="1.5" d="M26 14 Q22 8 20 5 Q24 6 26 10"/>
+      <path stroke-width="1.5" d="M38 14 Q42 8 44 5 Q40 6 38 10"/>
+      <path stroke-width="1.3" d="M22 8 Q20 4 22 2"/>
+      <path stroke-width="1.3" d="M42 8 Q44 4 42 2"/>
+      <!-- Jubah alam -->
+      <path stroke-width="1.8" d="M24 27l-6 27h28l-6-27"/>
+      <!-- Pola daun di jubah -->
+      <path stroke-width="1.3" d="M26 33 Q30 30 34 34 Q30 38 26 33z"/>
+      <path stroke-width="1.3" d="M28 40 Q32 37 36 41 Q32 45 28 40z"/>
+      <path stroke-width="1.3" d="M27 47 Q31 44 35 48"/>
+      <!-- Simbol bulan sabit -->
+      <path stroke-width="2" d="M44 12 Q50 16 50 22 Q48 17 44 16 Q48 15 44 12z"/>
+      <!-- Tongkat kayu -->
+      <path stroke-width="1.8" d="M12 54 Q14 40 18 30"/>
+      <path stroke-width="1.4" d="M16 32 Q13 28 15 25 Q17 22 18 26"/>
+      <path stroke-width="1.4" d="M18 30 Q22 26 24 28"/>
+    </svg>`
+  }
+];
+
+let _epSelectedAvatar = null; // id string atau null
+let _epCurrentClass   = '';   // untuk placeholder nama
+
+function buildEpAvatarGrid() {
+  const grid = document.getElementById('ep-avatar-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  EP_AVATARS.forEach(av => {
+    const div = document.createElement('div');
+    div.className = 'ep-avatar-opt';
+    div.dataset.avId = av.id;
+    div.innerHTML = av.svg + `<span class="ep-avatar-name">${av.name}</span>`;
+    div.onclick = () => epSelectAvatar(av.id);
+    grid.appendChild(div);
+  });
+}
+
+function epSelectAvatar(id) {
+  _epSelectedAvatar = id;
+  document.querySelectorAll('.ep-avatar-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.avId === id);
+  });
+}
+
+function openEditProfile() {
+  const overlay = document.getElementById('edit-profile-overlay');
+  if (!overlay) return;
+  // Pre-fill nama
+  const nameInput = document.getElementById('ep-name-input');
+  const savedName = overlay.dataset.savedName || '';
+  nameInput.value = savedName;
+  nameInput.placeholder = _epCurrentClass || 'Adventurer';
+  // Pre-select avatar
+  const savedAv = overlay.dataset.savedAvatar || '';
+  _epSelectedAvatar = savedAv || null;
+  document.querySelectorAll('.ep-avatar-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.avId === savedAv);
+  });
+  overlay.classList.add('open');
+  setTimeout(() => nameInput.focus(), 280);
+}
+
+function closeEditProfile() {
+  document.getElementById('edit-profile-overlay').classList.remove('open');
+}
+
+function editProfileOverlayClick(e) {
+  if (e.target === document.getElementById('edit-profile-overlay')) closeEditProfile();
+}
+
+async function saveEditProfile() {
+  try {
+    const nameInput = document.getElementById('ep-name-input');
+    const name   = nameInput.value.trim();
+    const avatar = _epSelectedAvatar || '';
+
+    await kvSet('profile_name',   name);
+    await kvSet('profile_avatar', avatar);
+
+    // Update overlay dataset agar konsisten
+    const overlay = document.getElementById('edit-profile-overlay');
+    overlay.dataset.savedName   = name;
+    overlay.dataset.savedAvatar = avatar;
+
+    applyProfileCustomization(name, avatar);
+    closeEditProfile();
+    showRpgToast('Profil diperbarui ✦');
+  } catch(err) {
+    showRpgToast('Gagal menyimpan profil');
+    console.error('[EditProfile] save error:', err);
+  }
+}
+
+function applyProfileCustomization(name, avatarId) {
+  // Nama
+  const charNameEl = document.getElementById('charName');
+  if (charNameEl) {
+    charNameEl.textContent = name || _epCurrentClass || 'Adventurer';
+  }
+  // Avatar
+  const avatarInner = document.getElementById('avatarEmoji');
+  if (avatarInner) {
+    const av = EP_AVATARS.find(a => a.id === avatarId);
+    if (av) {
+      avatarInner.innerHTML = av.svg;
+      avatarInner.style.padding = '4px';
+    } else {
+      // Kembalikan ke emoji default (akan di-set lagi oleh renderProfile)
+      avatarInner.style.padding = '';
+    }
+  }
+}
+
+async function loadProfileCustomization() {
+  try {
+    const name   = await kvGet('profile_name');
+    const avatar = await kvGet('profile_avatar');
+    const overlay = document.getElementById('edit-profile-overlay');
+    if (overlay) {
+      overlay.dataset.savedName   = name   || '';
+      overlay.dataset.savedAvatar = avatar || '';
+    }
+    return { name: name || '', avatar: avatar || '' };
+  } catch(err) {
+    return { name: '', avatar: '' };
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MOOD SYSTEM
+════════════════════════════════════════════════════════════════════ */
+
+const MOOD_LIST = [
+  {
+    status: 'Fokus',
+    svgKey: 'sword',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 20L20 4M4 20l4-1 1-4M20 4l-4 1-1 4"/>
+      <path d="M9 15l6-6"/>
+    </svg>`
+  },
+  {
+    status: 'Lelah',
+    svgKey: 'shield-crack',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3L4 7v6c0 4 3.5 7.5 8 9 4.5-1.5 8-5 8-9V7l-8-4z"/>
+      <path d="M10 10l2 3 2-2"/>
+    </svg>`
+  },
+  {
+    status: 'Terinspirasi',
+    svgKey: 'star-glow',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12,2 15.1,8.3 22,9.3 17,14.1 18.2,21 12,17.8 5.8,21 7,14.1 2,9.3 8.9,8.3"/>
+      <line x1="12" y1="2" x2="12" y2="0.5"/>
+      <line x1="20" y1="4" x2="21.5" y2="2.5"/>
+      <line x1="4" y1="4" x2="2.5" y2="2.5"/>
+    </svg>`
+  },
+  {
+    status: 'Berat',
+    svgKey: 'cloud-dark',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 10c0-3.3-2.7-6-6-6a6 6 0 00-5.9 5A4 4 0 006 17h12a4 4 0 000-8z"/>
+      <line x1="9" y1="20" x2="9" y2="22"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/>
+    </svg>`
+  },
+  {
+    status: 'Stabil',
+    svgKey: 'shield',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3L4 7v6c0 4 3.5 7.5 8 9 4.5-1.5 8-5 8-9V7l-8-4z"/>
+      <polyline points="9,12 11,14 15,10"/>
+    </svg>`
+  },
+  {
+    status: 'Semangat',
+    svgKey: 'bolt',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="13,2 3,14 12,14 11,22 21,10 12,10"/>
+    </svg>`
+  },
+  {
+    status: 'Kabur',
+    svgKey: 'spiral',
+    svg: `<svg viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 12c0 0 2-2 2-4a2 2 0 00-4 0c0 3 3 5 3 8a3 3 0 01-6 0c0-4 4-7 4-11a4 4 0 018 0c0 5-5 8-5 12"/>
+    </svg>`
+  }
+];
+
+const MOOD_COLORS = {
+  Fokus:        '#1a3a5c',
+  Lelah:        '#3a3a3a',
+  Terinspirasi: '#3a2254',
+  Berat:        '#1a1a1a',
+  Stabil:       '#1a3a22',
+  Semangat:     '#3a3010',
+  Kabur:        '#1e2a38'
+};
+
+function buildMoodGrid() {
+  const grid = document.getElementById('mood-grid');
+  if (!grid) return;
+  MOOD_LIST.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'mood-option';
+    div.dataset.mood = m.status;
+    div.innerHTML = m.svg + '<span class="mood-label">' + m.status + '</span>';
+    div.onclick = () => selectMood(m.status, m.svgKey);
+    grid.appendChild(div);
+  });
+}
+
+let moodOverlayOpen = false;
+
+function openMoodPicker() {
+  moodOverlayOpen = true;
+  const overlay = document.getElementById('mood-overlay');
+  overlay.classList.add('open');
+  document.getElementById('mood-ai-result').textContent = '';
+  // Highlight current mood
+  const entry = entries.find(e => e.id === jCurrentId);
+  const currentMood = entry?.mood?.status || null;
+  document.querySelectorAll('.mood-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.mood === currentMood);
+  });
+}
+
+function closeMoodPicker() {
+  moodOverlayOpen = false;
+  document.getElementById('mood-overlay').classList.remove('open');
+}
+
+function moodOverlayClick(e) {
+  if (e.target === document.getElementById('mood-overlay')) closeMoodPicker();
+}
+
+function selectMood(status, svgKey) {
+  if (!jCurrentId) return;
+  const mood = { status, svgKey };
+  jSaveEntry(jCurrentId, { mood });
+  // Update btn-mood visual
+  updateMoodBtn(status);
+  // Highlight in grid
+  document.querySelectorAll('.mood-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.mood === status);
+  });
+  // Re-render TOC to update indicator
+  jRenderSpread();
+  setTimeout(closeMoodPicker, 380);
+}
+
+function clearMood() {
+  if (!jCurrentId) return;
+  jSaveEntry(jCurrentId, { mood: null });
+  updateMoodBtn(null);
+  document.querySelectorAll('.mood-option').forEach(opt => opt.classList.remove('active'));
+  jRenderSpread();
+  closeMoodPicker();
+}
+
+function updateMoodBtn(status) {
+  const btn = document.querySelector('.btn-mood');
+  if (!btn) return;
+  if (status) {
+    const m = MOOD_LIST.find(x => x.status === status);
+    btn.innerHTML = (m ? m.svg : '') + '<span>' + status + '</span>';
+    btn.classList.add('has-mood');
+  } else {
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9" opacity="0.3"/></svg><span>mood</span>';
+    btn.classList.remove('has-mood');
+  }
+}
+
+async function detectMoodAI() {
+  if (!jCurrentId) return;
+  const entry = entries.find(e => e.id === jCurrentId);
+  const text = entry?.content?.trim();
+  if (!text || text.length < 10) {
+    document.getElementById('mood-ai-result').textContent = 'Tulis dulu isi jurnalnya ya...';
+    return;
+  }
+  const btn = document.getElementById('btn-ai-detect');
+  const resultEl = document.getElementById('mood-ai-result');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  resultEl.textContent = 'Menganalisis...';
+  try {
+    const res = await fetch('https://dailyos-ai.mywisnu238.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'user',
+          content: `Analisis teks jurnal berikut dan tentukan satu mood yang paling sesuai dari pilihan ini: Fokus, Lelah, Terinspirasi, Berat, Stabil, Semangat, Kabur. Balas hanya dengan satu kata dari pilihan tersebut.\n\nTeks:\n${text.slice(0, 800)}`
+        }]
+      })
+    });
+    const data = await res.json();
+    // Worker mengembalikan { text: "..." }
+    const raw = (data?.text || data?.choices?.[0]?.message?.content || data?.content?.[0]?.text || '').trim();
+    // Coba exact match dulu (case-insensitive), lalu fallback ke includes
+    const rawLower = raw.toLowerCase();
+    const found = MOOD_LIST.find(m => rawLower === m.status.toLowerCase())
+                || MOOD_LIST.find(m => rawLower.includes(m.status.toLowerCase()));
+    if (found) {
+      resultEl.textContent = `AI menyarankan: ${found.status} — konfirmasi?`;
+      // Pre-highlight suggestion
+      document.querySelectorAll('.mood-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.mood === found.status);
+      });
+    } else {
+      resultEl.textContent = 'Mood tidak terdeteksi, pilih manual ya';
+    }
+  } catch(err) {
+    resultEl.textContent = 'Gagal terhubung ke AI. Coba lagi.';
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   DAILYOS BRIDGE — read dailyos_db directly from IndexedDB
+════════════════════════════════════════════════════════════════════ */
+async function readDailyOsData() {
+  return EcosystemDB.getDailyOsData({
+    getActiveHabits,
+    getActiveTodos,
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   FITUR 2 — AUTO UPGRADE STAT RPG
+════════════════════════════════════════════════════════════════════ */
+let _dosDataCache = null;
+
+async function autoLoadDailyOsProfile() {
+  try {
+    const data = await readDailyOsData();
+    _dosDataCache = data;
+    const result = parseData(data);
+    renderProfile(result, false);
+    // BLIND SPOT 2: Simpan ke cache supaya fallback offline tetap fresh
+    try { await kvSet('rpg_profile_cache', result); } catch(e) {}
+    // Show Refresh Stat button; hide upload zone
+    const uploadZone = document.getElementById('uploadZone');
+    const refreshBtn = document.getElementById('refreshStatBtn');
+    if (uploadZone) uploadZone.style.display = 'none';
+    if (refreshBtn) refreshBtn.style.display = 'block';
+    // Update footer note to show auto-sync
+    const footerNote = document.getElementById('rpgFooterNote');
+    if (footerNote) footerNote.textContent = 'Sinkron otomatis dari Daily OS';
+    return true;
+  } catch(err) {
+    // Graceful fallback: show upload zone
+    const uploadZone = document.getElementById('uploadZone');
+    if (uploadZone) uploadZone.style.display = '';
+    return false;
+  }
+}
+
+// ── Unified habitCompleted handler (window event + BroadcastChannel) ──
+async function _onHabitCompleted(detail) {
+  // 1. Update RPG profile
+  try {
+    const data = await readDailyOsData();
+    _dosDataCache = data;
+    renderProfile(parseData(data), false);
+  } catch(err) { /* silently ignore */ }
+
+  // 2. Append to today's habits_log
+  try {
+    const habitName   = detail.habitName || detail.name || 'Habit';
+    const category    = detail.habitCategory || detail.category || '';
+    const completedAt = detail.completedAt || new Date().toISOString();
+    const today = todayStr();
+    let entry = getEntryByDate(today, entries);
+    if (!entry) {
+      entry = normalizeJournalEntry({
+        id: genId(),
+        date: today,
+        title: '',
+        content: '',
+        order: 0,
+        mood: null,
+        habits_log: [],
+        source: 'manual',
+        generatedAt: null,
+        createdAt: completedAt,
+        updatedAt: completedAt,
+        completedAt: null,
+        archivedAt: null,
+        isArchived: false,
+      });
+      entries.unshift(entry);
+      entries.forEach((x, i) => { x.order = i; x.updatedAt = completedAt; });
+    }
+    if (!Array.isArray(entry.habits_log)) entry.habits_log = [];
+    // Cegah duplikat kalau event datang dari dua channel sekaligus
+    const alreadyLogged = entry.habits_log.some(
+      l => l.habitName === habitName && Math.abs(new Date(l.completedAt) - new Date(completedAt)) < 2000
+    );
+    if (!alreadyLogged) {
+      entry.habits_log.push({ habitName, category, completedAt });
+      entry.updatedAt = completedAt;
+      await dbPutEntry(entry);
+    }
+  } catch(err) { /* silently ignore */ }
+}
+
+// Listen via window event (same-page/same-tab)
+window.addEventListener('habitCompleted', (e) => _onHabitCompleted(e.detail || {}));
+
+// Listen via BroadcastChannel (cross-tab, same origin)
+try {
+  const _bc = new BroadcastChannel('dailyos_events');
+  _bc.onmessage = (e) => { if (e.data?.type === 'habitCompleted') _onHabitCompleted(e.data); };
+} catch(e) { /* BroadcastChannel tidak tersedia */ }
+
+/* ════════════════════════════════════════════════════════════════════
+   FITUR 1 — AUTO JOURNAL (boot-time, untuk kemarin)
+   Logic:
+   - Jurnal dibuat untuk tanggal KEMARIN
+   - Hanya dibuat jika hari ini sudah melewati tanggal data Daily OS terakhir
+   - Entry bertanggal kemarin, bukan hari ini
+════════════════════════════════════════════════════════════════════ */
+
+// Helper: dapat string YYYY-MM-DD untuk N hari lalu
+function dateStrOffset(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function ajBootGenerate() {
+  try {
+    // 1. Tanggal kemarin = target jurnal yang akan dibuat
+    const yesterdayStr = dateStrOffset(-1);
+    const todayDateStr = todayStr();
+
+    // 2. Cek apakah sudah ada auto entry untuk kemarin → skip jika sudah ada
+    const existing = getVisibleEntries(entries).find(en => en.date === yesterdayStr && en.source === 'auto');
+    if (existing) {
+      console.log('[AutoJournal] Entry kemarin sudah ada, skip.');
+      return;
+    }
+
+    // 3. Baca data dari dailyos_db (fallback ke cache jika gagal)
+    let dosData;
+    try { dosData = await readDailyOsData(); _dosDataCache = dosData; }
+    catch(e) { dosData = _dosDataCache; }
+    if (!dosData) { console.warn('[AutoJournal] Tidak ada dosData, skip.'); return; }
+
+    // 4. Pastikan ada data aktivitas dari kemarin (minimal ada habit/todo yang tercatat)
+    const activeHabits = getActiveHabits(dosData);
+    const hasAnyDataYesterday = activeHabits.some(h => {
+      const history = h?.history || {};
+      return Object.keys(history).some(k => k === yesterdayStr);
+    }) || getActiveTodos(dosData).some(t => isTodoCompletedOnDate(t, yesterdayStr));
+
+    // Jika tidak ada data sama sekali untuk kemarin, tetap lanjut (buat jurnal kosong)
+    // tapi skip jika dosData tidak mengandung tanggal >= kemarin (data terlalu lama)
+    const allHistoryDates = activeHabits.flatMap(h => Object.keys(h?.history || {}));
+    const latestDataDate = allHistoryDates.sort().reverse()[0] || null;
+    if (latestDataDate && latestDataDate < yesterdayStr) {
+      // Data Daily OS belum mencakup kemarin, skip
+      console.log('[AutoJournal] Data Daily OS belum ada untuk kemarin, skip.');
+      return;
+    }
+
+    // 5. Hitung progres habit KEMARIN
+    const habitDetails = activeHabits.map(h => {
+      const totalItems = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
+      const doneItems  = getHabitCompletionsOnDate(h, yesterdayStr);
+      const pct        = Math.round((doneItems / totalItems) * 100);
+      return { name: h.name, category: h.category || '', totalItems, doneItems, pct };
+    });
+
+    const habitsDone    = habitDetails.filter(h => h.doneItems >= h.totalItems);
+    const habitsPartial = habitDetails.filter(h => h.doneItems > 0 && h.doneItems < h.totalItems);
+    const habitsNotDone = habitDetails.filter(h => h.doneItems === 0);
+
+    // 6. Filter todos: selesai kemarin
+    const todosDone    = getActiveTodos(dosData).filter(t => isTodoCompletedOnDate(t, yesterdayStr)).map(t => t.title);
+    const todosNotDone = getActiveTodos(dosData).filter(t => !t.done).map(t => t.title);
+
+    // 7. Hitung XP kemarin
+    let yesterdayXP = 0;
+    activeHabits.forEach(h => { yesterdayXP += getHabitCompletionsOnDate(h, yesterdayStr) * 10; });
+
+    console.log('[AutoJournal] Data kemarin:', { yesterdayStr, habitsDone, habitsPartial, habitsNotDone, todosDone, todosNotDone, yesterdayXP });
+
+    // 8. Susun prompt
+    const doneList     = habitsDone.map(h => h.name).join(', ') || '-';
+    const partialList  = habitsPartial.map(h => `${h.name} (${h.doneItems}/${h.totalItems} aktivitas)`).join(', ') || '-';
+    const missedList   = habitsNotDone.map(h => h.name).join(', ') || '-';
+    const todoDoneList = todosDone.join(', ') || '-';
+    const todoMissList = todosNotDone.join(', ') || '-';
+
+    const hasActivity = habitsDone.length > 0 || habitsPartial.length > 0 || todosDone.length > 0;
+
+    let prompt;
+    if (!hasActivity && activeHabits.length === 0 && todosDone.length === 0) {
+      prompt = `Tulis entri jurnal pribadi singkat dalam Bahasa Indonesia untuk hari tanpa aktivitas tercatat (tanggal ${yesterdayStr}). Jujur dan reflektif, 1-2 paragraf. Jangan sebut nama AI. Tulis seolah orang ini yang menulis sendiri.`;
+    } else {
+      prompt = `Kamu adalah asisten jurnal pribadi yang JUJUR dan KRITIS. Tulis entri jurnal harian dalam Bahasa Indonesia (3-4 paragraf) berdasarkan data berikut. Jangan sebut nama AI. Tulis seolah orang ini yang menulis sendiri — natural dan personal.
+
+Tanggal: ${yesterdayStr}
+XP kemarin: ${yesterdayXP}
+
+HABIT SELESAI PENUH: ${doneList}
+HABIT SEBAGIAN: ${partialList}
+HABIT TIDAK DIKERJAKAN: ${missedList}
+TODO SELESAI: ${todoDoneList}
+TODO BELUM SELESAI: ${todoMissList}
+
+INSTRUKSI PENTING:
+- Tulis untuk tanggal ${yesterdayStr} (kemarin), bukan hari ini
+- Jika ada habit/todo yang TIDAK dikerjakan, WAJIB dikritik dengan jujur — tanyakan kenapa belum dilakukan, jangan hanya menulis hal positif
+- Jika habit hanya dikerjakan sebagian, sebutkan dan refleksikan kenapa tidak sampai selesai
+- Boleh apresiasi yang sudah dikerjakan, tapi jangan menutupi kekurangan dengan pujian kosong
+- Jika semua selesai, boleh positif — tapi tetap reflektif
+- Gunakan sudut pandang orang pertama (aku/saya)
+- JANGAN hanya menulis hal-hal positif jika ada yang terlewat`;
+    }
+
+    showRpgToast('Sedang menulis jurnal kemarin... ✦');
+
+    // 9. Kirim ke Groq worker
+    const res = await fetch('https://dailyos-ai.mywisnu238.workers.dev', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    console.log('[AutoJournal] Raw response:', data);
+
+    const text = (data?.text || '').trim();
+    if (!text) { console.warn('[AutoJournal] Teks kosong, tidak jadi simpan.'); return; }
+
+    // 10. Simpan entry bertanggal KEMARIN
+    const now = new Date().toISOString();
+    const autoEntry = normalizeJournalEntry({
+      id: genId(),
+      date: yesterdayStr,
+      title: 'Jurnal Harian',
+      content: text,
+      order: 0,
+      mood: null,
+      habits_log: [],
+      source: 'auto',
+      generatedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    entries.push(autoEntry);
+    // Re-sort newest-first
+    entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    entries.forEach((x, i) => { x.order = i; });
+
+    await dbPutEntry(autoEntry);
+    jRenderSpread();
+
+    showRpgToast('Jurnal kemarin telah ditulis ✦');
+    console.log('[AutoJournal] Entry kemarin berhasil disimpan:', yesterdayStr);
+  } catch(err) {
+    console.warn('[AutoJournal] Boot generate gagal:', err);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   BOOT — open IDB, migrate localStorage if needed, then init UI
+════════════════════════════════════════════════════════════════════ */
+(async function boot() {
+  try {
+    await dbOpen();
+    buildMoodGrid();
+    buildEpAvatarGrid();
+
+    // ── Load profile customization (name + avatar) ──
+    try {
+      const { name, avatar } = await loadProfileCustomization();
+      const overlay = document.getElementById('edit-profile-overlay');
+      if (overlay) {
+        overlay.dataset.savedName   = name;
+        overlay.dataset.savedAvatar = avatar;
+      }
+      // Apply ke charName sekarang kalau sudah ada (sebelum renderProfile)
+      if (name) {
+        const el = document.getElementById('charName');
+        if (el) el.textContent = name;
+      }
+      if (avatar) {
+        const avatarInner = document.getElementById('avatarEmoji');
+        const av = EP_AVATARS.find(a => a.id === avatar);
+        if (av && avatarInner) {
+          avatarInner.innerHTML = av.svg;
+          avatarInner.style.padding = '4px';
+        }
+      }
+    } catch(e) { /* ignore */ }
+
+    // ── Migrate from old localStorage (buku_jurnal_v3 or v2) ──
+    const idbEntries = await dbGetAllEntries();
+    if (idbEntries.length === 0) {
+      // Try v3 first
+      const lsV3 = localStorage.getItem('buku_jurnal_v3');
+      if (lsV3) {
+        try {
+          const parsed = JSON.parse(lsV3);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const normalized = normalizeJournalEntries(parsed).map((e, i) => ({ ...e, order: i }));
+            await dbPutAllEntries(normalized);
+            entries = normalized;
+            localStorage.removeItem('buku_jurnal_v3');
+          }
+        } catch(e) {}
+      }
+
+      // Try v2 if still empty
+      if (entries.length === 0) {
+        const lsV2 = localStorage.getItem('buku_jurnal_v2');
+        if (lsV2) {
+          try {
+            const oldDb = JSON.parse(lsV2);
+            const migrated = Object.keys(oldDb).sort().map((d, i) => normalizeJournalEntry({
+              id: genId(),
+              date: d,
+              title: '',
+              content: oldDb[d] || '',
+              order: i,
+              source: 'manual',
+              createdAt: `${d}T00:00:00.000Z`,
+              updatedAt: `${d}T00:00:00.000Z`,
+              archivedAt: null,
+              isArchived: false,
+            }, i));
+            await dbPutAllEntries(migrated);
+            entries = migrated;
+            localStorage.removeItem('buku_jurnal_v2');
+          } catch(e) {}
+        }
+      }
+    } else {
+      entries = normalizeJournalEntries(idbEntries);
+    }
+
+    // ── Auto-load Daily OS stat (Fitur 2) ──
+    const dosLoaded = await autoLoadDailyOsProfile();
+    if (!dosLoaded) {
+      // Fallback: restore RPG profile cache
+      try {
+        const cached = await kvGet('rpg_profile_cache');
+        if (cached) renderProfile(cached, true);
+      } catch(e) {}
+    }
+
+    // ── Auto Journal: generate jurnal kemarin saat boot ──
+    ajBootGenerate(); // fire-and-forget, tidak block render
+
+  } catch(err) {
+    console.error('Kronik boot error:', err);
+  } finally {
+    // ── Render journal spread — always runs ──
+    jRenderSpread();
+  }
+})();
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => console.log('[Kronik SW] Registered:', reg.scope))
+        .catch(err => console.warn('[Kronik SW] Failed:', err));
+    });
+  }
+</script>
+</body>
+</html>

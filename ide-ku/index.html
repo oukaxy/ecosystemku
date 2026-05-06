@@ -1,0 +1,2812 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ideku</title>
+
+  <!-- PWA Meta -->
+  <meta name="description" content="Catat, kelola, dan eksekusi ide kamu." />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Ideku" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- PWA Manifest inline via JS (no separate file needed) -->
+  <link rel="manifest" href="./manifest.json" />
+
+  <!-- App Icon SVG as favicon -->
+  <link rel="icon" type="image/png" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow-x: hidden; width: 100%; max-width: 100vw; }
+
+    /* ── CSS Variables (Light) ── */
+    :root {
+      --bg: #f5f5f5;
+      --surface: #ffffff;
+      --border: #ececec;
+      --border2: #e8e8e8;
+      --text: #111111;
+      --text-muted: #aaaaaa;
+      --text-faint: #cccccc;
+      --text-sub: #999999;
+      --input-bg: #f5f5f5;
+      --btn-ghost-border: #e5e5e5;
+      --stat-label: #c0c0c0;
+      --card-body-border: #f3f3f3;
+      --act-bg: #f5f5f5;
+      --modal-overlay: rgba(0,0,0,0.18);
+      --shadow-menu: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    /* ── CSS Variables (Dark) ── */
+    html.dark {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --border2: #2a2a2a;
+      --text: #f0f0f0;
+      --text-muted: #666666;
+      --text-faint: #444444;
+      --text-sub: #777777;
+      --input-bg: #111111;
+      --btn-ghost-border: #333333;
+      --stat-label: #555555;
+      --card-body-border: #222222;
+      --act-bg: #111111;
+      --modal-overlay: rgba(0,0,0,0.5);
+      --shadow-menu: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.2s, color 0.2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea, select {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    /* ── Fix #1: Select color scheme ── */
+    select.form-field {
+      color-scheme: light;
+    }
+    html.dark select.form-field {
+      color-scheme: dark;
+      background-color: var(--input-bg);
+      color: var(--text);
+    }
+    html.dark select.form-field option {
+      background-color: #1e1e1e;
+      color: #f0f0f0;
+    }
+
+    /* ── Layout ── */
+    .app { min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; width: 100%; }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 30;
+      width: 100%; overflow: hidden;
+    }
+    .header-inner {
+      max-width: 560px; margin: 0 auto;
+      padding: 14px 16px;
+    }
+    .header-top {
+      display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: #111; border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    html.dark .brand-icon {
+      background: #f0f0f0;
+    }
+    html.dark .brand-icon svg circle,
+    html.dark .brand-icon svg line {
+      stroke: #111;
+    }
+    .brand-icon svg { width: 18px; height: 18px; }
+    .brand-name { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+    .brand-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    .btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 600;
+      padding: 8px 14px; border-radius: 8px;   /* #7: 8px */
+      border: none; cursor: pointer;
+      transition: opacity 0.15s, background 0.12s;
+      letter-spacing: -0.2px;
+    }
+    .btn:hover { opacity: 0.78; }
+    .btn-dark { background: #111; color: #fff; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--btn-ghost-border); }
+    .btn-ghost:hover { opacity: 1; color: var(--text); border-color: var(--text-muted); }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+    .stat {
+      flex: 1; padding: 12px 0; text-align: center;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      line-height: 1;
+    }
+    .stat:first-child .stat-num {
+      font-size: 18px;
+    }
+    .stat-label {
+      font-size: 10px; color: var(--stat-label);
+      margin-top: 3px; letter-spacing: 0.1px;
+    }
+
+    /* ── Content ── */
+    .content { max-width: 560px; margin: 0 auto; padding: 18px 16px 80px; width: 100%; overflow-x: hidden; }
+
+    /* ── Auto-hide bar (stats + search + filters) ── */
+    .autohide-bar {
+      position: sticky;
+      z-index: 29;
+      background: var(--bg);
+      width: 100%;
+      transform: translateY(0);
+      transition: transform 0.25s ease;
+      will-change: transform;
+    }
+    .autohide-bar.hidden {
+      transform: translateY(-100%);
+    }
+    .autohide-bar-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+    .autohide-stats {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      margin: 0 -16px;
+    }
+    .autohide-search-filters {
+      padding-top: 14px;
+    }
+
+    /* ── Form Fields (shared) ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .form-field {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 13px; color: var(--text);
+      font-size: 14px; font-family: 'Inter', sans-serif;
+      outline: none; display: block;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .form-field:focus { border-color: var(--text-muted); background: var(--surface); }
+    .form-field::placeholder { color: var(--text-faint); }
+    textarea.form-field { resize: none; }
+    select.form-field {
+      cursor: pointer; height: 42px;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23bbb' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      padding-right: 30px;
+    }
+
+    /* ── Unified Form Modal ── */
+    .form-modal {
+      background: var(--surface); border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 560px;
+      padding: 0;
+      animation: slideUp 0.22s cubic-bezier(.32,.72,0,1);
+      overflow: hidden;
+    }
+    .form-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 20px 0;
+      margin-bottom: 20px;
+    }
+    .form-modal-title {
+      font-size: 15px; font-weight: 700;
+      letter-spacing: -0.3px; color: var(--text);
+    }
+    .form-modal-close {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--input-bg); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 16px; line-height: 1;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s; font-family: 'Inter', sans-serif;
+      flex-shrink: 0;
+    }
+    .form-modal-close:hover { background: var(--border); color: var(--text); }
+    .form-modal-body {
+      padding: 0 20px;
+      max-height: 65vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .form-group { margin-bottom: 12px; }
+    .form-label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-muted); letter-spacing: 0.4px;
+      text-transform: uppercase; margin-bottom: 5px;
+    }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-modal-footer {
+      display: flex; gap: 8px;
+      padding: 16px 20px 28px;
+      margin-top: 4px;
+    }
+    .btn-form-cancel {
+      flex: 1; background: transparent; color: var(--text-muted);
+      border: 1px solid var(--btn-ghost-border); border-radius: 9px;
+      padding: 11px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.12s;
+    }
+    .btn-form-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn-form-submit {
+      flex: 2; background: var(--text); color: var(--bg);
+      border: none; border-radius: 9px;
+      padding: 11px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: opacity 0.15s;
+    }
+    .btn-form-submit:hover { opacity: 0.8; }
+
+    /* ── Search ── */
+    .search-wrap {
+      position: relative; margin-bottom: 10px;
+    }
+    .search-icon {
+      position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+      color: var(--text-faint); pointer-events: none;
+      display: flex; align-items: center;
+    }
+    .search-input {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 9px 36px 9px 34px; color: var(--text);
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.12s;
+    }
+    .search-input:focus { border-color: var(--text-muted); }
+    .search-input::placeholder { color: var(--text-faint); }
+    .search-clear {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--text-faint); border: none; cursor: pointer;
+      display: none; align-items: center; justify-content: center;
+      color: var(--bg); font-size: 11px; line-height: 1;
+      transition: background 0.12s;
+    }
+    .search-clear.visible { display: flex; }
+    .search-clear:hover { background: var(--text-muted); }
+
+    /* ── Counter animation ── */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stat-num.animating { animation: countUp 0.3s ease forwards; }
+
+    /* ── Filters ── */
+    .filters-wrap {
+      margin-bottom: 14px;
+      display: flex; flex-direction: column; gap: 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--surface); overflow: hidden;
+    }
+    .filters-group {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding: 8px 10px;
+    }
+    .filters-group::-webkit-scrollbar { display: none; }
+    .filters-group + .filters-group {
+      border-top: 1px solid var(--border);
+    }
+    .filters-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+      text-transform: uppercase; color: var(--text-faint);
+      white-space: nowrap; flex-shrink: 0;
+      display: flex; align-items: center; padding-right: 4px;
+      min-width: 42px;
+    }
+    .f-btn {
+      padding: 5px 12px; border-radius: 6px;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+      background: transparent; color: var(--text-muted);
+      border: 1px solid transparent;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .f-btn:hover { color: var(--text); background: var(--input-bg); }
+    .f-btn.on {
+      background: var(--text); color: var(--bg);
+      border-color: var(--text);
+      font-weight: 600;
+    }
+    .f-sep { display: none; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;         /* #7: 10px card */
+      margin-bottom: 7px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
+      animation: fadeIn 0.14s ease;
+      width: 100%; box-sizing: border-box;
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .card:hover {
+      border-color: var(--text-muted);
+      background: var(--surface);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      transform: translateY(-1px);
+    }
+    html.dark .card:hover {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    .card.done { opacity: 0.42; }
+
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .card-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      line-height: 1.4; letter-spacing: -0.2px;
+    }
+    .card-title.done { text-decoration: line-through; color: var(--text-muted); font-weight: 400; }
+
+    .card-meta {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 6px; margin-top: 7px;
+    }
+    .meta-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .meta-t { font-size: 11.5px; color: var(--text-muted); }
+    .meta-sep { color: var(--text-faint); font-size: 10px; }
+    .meta-pri { font-size: 11px; font-weight: 600; }
+    .meta-date { font-size: 11px; color: var(--text-faint); margin-left: auto; white-space: nowrap; flex-shrink: 0; }
+
+    /* ── Fix #3: Card action buttons ── */
+    .card-btns {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+    }
+    .btn-del, .btn-edit {
+      width: 28px; height: 28px; border-radius: 8px;  /* #7: 8px */
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-faint); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s; flex-shrink: 0; line-height: 1;
+      font-size: 13px;
+    }
+    .btn-edit:hover {
+      background: var(--input-bg); border-color: var(--border);
+      color: var(--text-muted);
+    }
+    .btn-del:hover {
+      background: #fef2f2; border-color: #fecaca; color: #ef4444;
+    }
+    html.dark .btn-del:hover {
+      background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #ef4444;
+    }
+
+    /* Expanded */
+    .card-body {
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid var(--card-body-border);
+      animation: fadeDown 0.14s ease;
+    }
+    .card-notes { font-size: 13px; color: var(--text-sub); line-height: 1.65; margin-bottom: 12px; }
+    .card-actions { display: flex; flex-direction: column; gap: 8px; }
+    .act-row { display: flex; align-items: center; gap: 6px; }
+    .act-label { font-size: 10.5px; color: var(--text-faint); font-weight: 500; min-width: 52px; letter-spacing: 0.1px; }
+    .act-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+    .act-btn {
+      padding: 4px 10px; border-radius: 6px;   /* #7: 6px inner element */
+      font-size: 11.5px;
+      font-weight: 500; background: var(--act-bg); color: var(--text-muted);
+      border: 1px solid var(--border); cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all 0.1s;
+      white-space: nowrap;
+    }
+    .act-btn:hover { color: var(--text); border-color: var(--text-muted); }
+    .act-btn.on-s { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .act-btn.on-p { font-weight: 700; background: var(--surface); }
+
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 64px 24px; }
+    .empty-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: var(--surface); border: 1px solid var(--border2);
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon svg { opacity: 0.25; }
+    .empty-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; letter-spacing: -0.2px; }
+    .empty-txt { font-size: 12.5px; color: var(--text-faint); line-height: 1.6; }
+    .empty-cta {
+      margin-top: 20px; display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px;
+      background: var(--text); color: var(--bg);
+      font-size: 12.5px; font-weight: 600; font-family: 'Inter', sans-serif;
+      border: none; cursor: pointer; transition: opacity 0.15s;
+      letter-spacing: -0.1px;
+    }
+    .empty-cta:hover { opacity: 0.78; }
+
+    /* ── Delete Confirm Modal ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: var(--modal-overlay);
+      display: flex; align-items: flex-end; justify-content: center;
+      z-index: 100; padding: 0;
+      animation: overlayIn 0.15s ease;
+    }
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: var(--surface); border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 560px;
+      padding: 24px 24px 32px;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(24px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border); margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .modal-sub { font-size: 13px; color: var(--text-sub); margin-bottom: 24px; line-height: 1.5; }
+    .modal-actions { display: flex; gap: 8px; }
+    .btn-del-confirm {
+      flex: 1; background: #ef4444; color: #fff; border: none;
+      border-radius: 8px; padding: 11px; font-size: 13px;
+      font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: opacity 0.15s;
+    }
+    .btn-del-confirm:hover { opacity: 0.85; }
+    .btn-del-cancel {
+      flex: 1; background: transparent; color: var(--text-muted);
+      border: 1px solid var(--btn-ghost-border); border-radius: 8px;
+      padding: 11px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: color 0.12s;
+    }
+    .btn-del-cancel:hover { color: var(--text); border-color: var(--text-muted); }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; font-size: 13px; color: var(--text-faint); }
+
+    /* Breakdown button */
+    .btn-breakdown {
+      margin-top: 12px; width: 100%;
+      padding: 8px; border-radius: 8px;    /* #7: 8px */
+      font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed var(--border2);
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: -0.1px;
+    }
+    .btn-breakdown:hover {
+      border-color: var(--text-muted);
+      color: var(--text);
+      border-style: solid;
+    }
+
+    /* AI action buttons row */
+    .card-ai-row { display: flex; gap: 6px; margin-top: 12px; }
+    .btn-ai {
+      flex: 1; padding: 8px; border-radius: 8px;    /* #7: 8px */
+      font-size: 12px; font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px dashed var(--border2);
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: -0.1px;
+    }
+    .btn-ai:hover { border-color: var(--text-muted); color: var(--text); border-style: solid; }
+    .btn-ai:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Menu Dropdown ── */
+    #menu-dropdown {
+      position: fixed; top: 62px; right: 16px; z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: var(--shadow-menu);
+      min-width: 168px; overflow: hidden;
+    }
+    .menu-btn {
+      width: 100%; text-align: left;
+      padding: 13px 16px; border: none;
+      background: none; font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      color: var(--text); cursor: pointer;
+      font-weight: 500; display: flex;
+      align-items: center; gap: 8px;
+      transition: background 0.1s;
+      border-bottom: 1px solid var(--border);
+    }
+    .menu-btn:last-child { border-bottom: none; }
+    .menu-btn:hover { background: var(--input-bg); }
+    #toast { transition: opacity 0.3s; }
+
+    /* ── Manage Categories Modal ── */
+    .cat-modal {
+      background: var(--surface); border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 560px;
+      animation: slideUp 0.22s cubic-bezier(.32,.72,0,1);
+      overflow: hidden;
+    }
+    .cat-list {
+      padding: 8px 20px; max-height: 44vh; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .cat-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 8px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      gap: 10px;
+    }
+    .cat-item-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .cat-item-count { font-size: 11px; color: var(--text-faint); margin-left: auto; }
+    .cat-item-del {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-faint); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s; flex-shrink: 0;
+    }
+    .cat-item-del:hover:not(:disabled) {
+      background: #fef2f2; border-color: #fecaca; color: #ef4444;
+    }
+    html.dark .cat-item-del:hover:not(:disabled) {
+      background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25);
+    }
+    .cat-item-del:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cat-add-row {
+      display: flex; gap: 8px;
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .cat-add-input {
+      flex: 1; background: var(--input-bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; color: var(--text);
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      outline: none; transition: border-color 0.12s;
+    }
+    .cat-add-input:focus { border-color: var(--text-muted); }
+    .cat-add-input::placeholder { color: var(--text-faint); }
+    .cat-add-btn {
+      padding: 9px 16px; border-radius: 8px;
+      background: var(--text); color: var(--bg);
+      border: none; font-size: 13px; font-weight: 600;
+      font-family: 'Inter', sans-serif; cursor: pointer;
+      transition: opacity 0.15s; white-space: nowrap;
+    }
+    .cat-add-btn:hover { opacity: 0.8; }
+    .cat-empty {
+      text-align: center; padding: 24px;
+      font-size: 13px; color: var(--text-faint);
+    }
+
+    /* ── Perkaya Preview Modal ── */
+    .perkaya-modal {
+      background: var(--surface); border-radius: 16px 16px 0 0;
+      width: 100%; max-width: 560px;
+      animation: slideUp 0.22s cubic-bezier(.32,.72,0,1);
+      overflow: hidden;
+    }
+    .perkaya-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .perkaya-header-left { display: flex; flex-direction: column; gap: 2px; }
+    .perkaya-title { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+    .perkaya-subtitle { font-size: 11.5px; color: var(--text-muted); }
+    .perkaya-body { padding: 16px 20px; max-height: 52vh; overflow-y: auto; }
+    .perkaya-skeleton {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .skeleton-line {
+      height: 13px; border-radius: 6px;
+      background: linear-gradient(90deg, var(--border) 25%, var(--input-bg) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    .perkaya-result {
+      font-size: 13px; color: var(--text-sub); line-height: 1.7;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .perkaya-original {
+      margin-top: 14px; padding: 12px 14px;
+      background: var(--input-bg); border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .perkaya-original-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+      text-transform: uppercase; color: var(--text-faint); margin-bottom: 5px;
+    }
+    .perkaya-original-text {
+      font-size: 12.5px; color: var(--text-muted); line-height: 1.6;
+    }
+    .perkaya-error {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; padding: 20px 0; text-align: center;
+    }
+    .perkaya-error-icon { font-size: 24px; }
+    .perkaya-error-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .perkaya-error-msg { font-size: 12.5px; color: var(--text-faint); }
+    .perkaya-footer {
+      display: flex; gap: 8px;
+      padding: 14px 20px 28px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Breakdown Modal ── */
+    .breakdown-result {
+      font-size: 13px; color: var(--text-sub); line-height: 1.75;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .btn-copy {
+      flex: 1; background: transparent; color: var(--text-muted);
+      border: 1px solid var(--btn-ghost-border); border-radius: 9px;
+      padding: 11px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.12s; display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+    }
+    .btn-copy:hover { color: var(--text); border-color: var(--text-muted); }
+    .btn-copy.copied {
+      color: #10b981; border-color: #10b981;
+      background: rgba(16,185,129,0.06);
+    }
+  
+    /* ── Type Selector Modal ── */
+    #type-selector-modal .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    #type-selector-modal .btn-del-cancel,
+    #type-selector-modal .btn-form-submit {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 9px;
+    }
+
+    /* ── Wishlist Card ── */
+    .card.wishlist-type {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .wishlist-main {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 14px 12px;
+    }
+
+    .wishlist-image-wrap {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+    }
+
+    .wishlist-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .wishlist-image-fallback {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .wishlist-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .wishlist-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .wishlist-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+      flex: 1;
+      min-width: 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .wishlist-title.done { text-decoration: line-through; color: var(--text-muted); font-weight: 400; }
+
+    .wishlist-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      margin-top: -2px;
+    }
+
+    .wishlist-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
+      margin-top: 2px;
+    }
+
+    .wishlist-meta {
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 1px;
+    }
+
+    /* ── Wishlist footer bar ── */
+    .wishlist-footer {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      background: var(--input-bg);
+      padding: 0 14px;
+      min-height: 34px;
+    }
+
+    .wishlist-footer-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-sub);
+      padding: 8px 0;
+      flex-shrink: 0;
+    }
+
+    .wishlist-footer-sep {
+      width: 1px;
+      height: 14px;
+      background: var(--border);
+      margin: 0 10px;
+      flex-shrink: 0;
+    }
+
+    .wishlist-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .wishlist-priority-dots {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+    }
+
+    .wishlist-priority-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    /* ── AI Score Badge ── */
+    .wishlist-score-badge {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: opacity 0.12s;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-family: 'Inter', sans-serif;
+    }
+    .wishlist-score-badge:hover { opacity: 0.75; }
+    .wishlist-score-badge.score-green {
+      background: rgba(16,185,129,0.12);
+      color: #10b981;
+      border-color: rgba(16,185,129,0.25);
+    }
+    .wishlist-score-badge.score-yellow {
+      background: rgba(245,158,11,0.12);
+      color: #d97706;
+      border-color: rgba(245,158,11,0.25);
+    }
+    .wishlist-score-badge.score-red {
+      background: rgba(239,68,68,0.1);
+      color: #ef4444;
+      border-color: rgba(239,68,68,0.2);
+    }
+
+    .wishlist-type .card-body {
+      margin-top: 0;
+      padding: 12px 14px;
+      border-top: 1px solid var(--card-body-border);
+      animation: fadeDown 0.14s ease;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 360px) {
+      .wishlist-title { font-size: 13px; }
+      .wishlist-price { font-size: 12px; }
+      .wishlist-image-wrap { width: 50px; height: 50px; }
+    }
+    @media (max-width: 280px) {
+      .wishlist-image-wrap { width: 44px; height: 44px; }
+      .wishlist-main { padding: 12px 12px 10px; gap: 10px; }
+    }
+
+    /* ── Custom File Input ── */
+    .file-input-hidden { display: none !important; }
+    .file-input-btn {
+      width: 100%; padding: 10px 13px;
+      border: 1px dashed var(--border2); border-radius: 8px;
+      background: var(--input-bg); color: var(--text-muted);
+      font-size: 13px; font-family: 'Inter', sans-serif;
+      font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      transition: all 0.15s;
+    }
+    .file-input-btn:hover { border-color: var(--text-muted); color: var(--text); border-style: solid; }
+    .file-input-btn svg { flex-shrink: 0; }
+
+    /* ── Image preview thumbnail ── */
+    .img-preview-wrap {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px;
+      background: var(--input-bg); border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .img-preview-thumb {
+      width: 52px; height: 52px; object-fit: cover;
+      border-radius: 6px; flex-shrink: 0;
+      border: 1px solid var(--border);
+    }
+    .img-preview-info { flex: 1; min-width: 0; }
+    .img-preview-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .img-preview-size { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
+    .img-preview-remove {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: transparent; border: 1px solid transparent;
+      color: var(--text-faint); cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.12s;
+    }
+    .img-preview-remove:hover { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
+    html.dark .img-preview-remove:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #ef4444; }
+
+    /* ── Fix 4: Compact type filter inline with status ── */
+    .filters-type-inline {
+      display: flex; gap: 5px; align-items: center;
+      padding: 0 6px 0 0;
+      border-right: 1px solid var(--border);
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Header (permanen sticky) -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="7.5" r="4" stroke="white" stroke-width="1.5"/>
+              <line x1="9" y1="11.5" x2="9" y2="14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="7" y1="15" x2="11" y2="15" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+              <line x1="7.5" y1="16.8" x2="10.5" y2="16.8" stroke="white" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">Ideku</div>
+            <div class="brand-sub">Catat · Kelola · Eksekusi</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center" id="header-btn-wrap">
+          <button class="btn btn-ghost" id="btn-theme" onclick="toggleTheme()" style="padding:8px 10px;font-size:15px;line-height:1" title="Ganti tema">☀︎</button>
+          <button class="btn btn-ghost" id="btn-menu" onclick="toggleMenu()" style="padding:8px 10px;font-size:16px;line-height:1">⋯</button>
+          <button class="btn btn-dark" id="btn-new" onclick="openAdd()">+</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Auto-hide bar: Stats + Search + Filters -->
+  <div class="autohide-bar" id="autohide-bar">
+    <div class="autohide-stats">
+      <div style="max-width:560px;margin:0 auto">
+        <div class="stats" id="stats"></div>
+      </div>
+    </div>
+    <div class="autohide-bar-inner">
+      <div class="autohide-search-filters">
+        <!-- Search -->
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <circle cx="6.5" cy="6.5" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+            </svg>
+          </span>
+          <input class="search-input" id="search-input" placeholder="Cari ide..." oninput="onSearch(this.value)" />
+          <button class="search-clear" id="search-clear" onclick="clearSearch()">
+            <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-wrap">
+          <div class="filters-group" id="filters-status"></div>
+          <div class="filters-group" id="filters-cat"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- List -->
+    <div id="list"></div>
+  </div>
+</div>
+
+<!-- Menu Dropdown -->
+<div id="menu-dropdown" style="display:none">
+  <button class="menu-btn" onclick="openManageCats()">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="1" width="5" height="5" rx="1.5"/><rect x="8" y="1" width="5" height="5" rx="1.5"/>
+      <rect x="1" y="8" width="5" height="5" rx="1.5"/><rect x="8" y="8" width="5" height="5" rx="1.5"/>
+    </svg>
+    Kelola Kategori
+  </button>
+  <button class="menu-btn" onclick="exportIdeas()">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 2v7M4 7l3 3 3-3"/><path d="M2 11h10"/>
+    </svg>
+    Export JSON
+  </button>
+  <button class="menu-btn" onclick="triggerImport()">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 9V2M4 5l3-3 3 3"/><path d="M2 11h10"/>
+    </svg>
+    Import JSON
+  </button>
+  <button class="menu-btn" onclick="openDeleteAll()" style="color:#ef4444;">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="#ef4444" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="2,4 3,4 12,4"/><path d="M5 4V2h4v2"/><path d="M11 4l-.8 8H3.8L3 4"/>
+      <line x1="5.5" y1="6.5" x2="5.5" y2="9.5"/><line x1="8.5" y1="6.5" x2="8.5" y2="9.5"/>
+    </svg>
+    Hapus Semua Data
+  </button>
+</div>
+<input type="file" id="import-file" accept=".json" style="display:none" onchange="importIdeas(event)" />
+
+<!-- Toast -->
+<div id="toast" style="display:none;position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;z-index:200;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,0.15);"></div>
+
+<!-- Delete Confirm Modal -->
+<div class="overlay" id="modal" style="display:none" onclick="cancelDelete(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Hapus ide ini?</div>
+    <div class="modal-sub" id="modal-sub">Ide yang dihapus tidak bisa dikembalikan.</div>
+    <div class="modal-actions">
+      <button class="btn-del-cancel" onclick="cancelDelete()">Batal</button>
+      <button class="btn-del-confirm" onclick="confirmDelete()">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete All Confirm Modal -->
+<div class="overlay" id="delete-all-modal" style="display:none" onclick="cancelDeleteAll(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Hapus semua data?</div>
+    <div class="modal-sub">Semua ide dan wishlist akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.</div>
+    <div class="modal-actions">
+      <button class="btn-del-cancel" onclick="cancelDeleteAll()">Batal</button>
+      <button class="btn-del-confirm" onclick="confirmDeleteAll()">Hapus Semua</button>
+    </div>
+  </div>
+</div>
+
+<!-- Perkaya Preview Modal -->
+<div class="overlay" id="perkaya-modal" style="display:none" onclick="cancelPerkaya(event)">
+  <div class="perkaya-modal">
+    <div class="perkaya-header">
+      <div class="perkaya-header-left">
+        <div class="perkaya-title">Hasil Perkaya Ide</div>
+        <div class="perkaya-subtitle" id="perkaya-idea-title">—</div>
+      </div>
+      <button class="form-modal-close" onclick="cancelPerkaya()">×</button>
+    </div>
+    <div class="perkaya-body" id="perkaya-body">
+      <div class="perkaya-skeleton">
+        <div class="skeleton-line" style="width:90%"></div>
+        <div class="skeleton-line" style="width:75%"></div>
+        <div class="skeleton-line" style="width:85%"></div>
+        <div class="skeleton-line" style="width:60%"></div>
+        <div class="skeleton-line" style="width:80%"></div>
+      </div>
+    </div>
+    <div class="perkaya-footer">
+      <button class="btn-form-cancel" onclick="cancelPerkaya()">Buang</button>
+      <button class="btn-form-submit" id="perkaya-save-btn" onclick="savePerkaya()" disabled>Simpan ke Catatan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Breakdown Modal -->
+<div class="overlay" id="breakdown-modal" style="display:none" onclick="cancelBreakdown(event)">
+  <div class="perkaya-modal">
+    <div class="perkaya-header">
+      <div class="perkaya-header-left">
+        <div class="perkaya-title">Prompt Breakdown</div>
+        <div class="perkaya-subtitle" id="breakdown-idea-title">—</div>
+      </div>
+      <button class="form-modal-close" onclick="cancelBreakdown()">×</button>
+    </div>
+    <div class="perkaya-body" id="breakdown-body">
+      <div class="perkaya-skeleton">
+        <div class="skeleton-line" style="width:90%"></div>
+        <div class="skeleton-line" style="width:72%"></div>
+        <div class="skeleton-line" style="width:85%"></div>
+        <div class="skeleton-line" style="width:60%"></div>
+        <div class="skeleton-line" style="width:79%"></div>
+        <div class="skeleton-line" style="width:88%"></div>
+      </div>
+    </div>
+    <div class="perkaya-footer">
+      <button class="btn-form-cancel" onclick="cancelBreakdown()">Tutup</button>
+      <button class="btn-copy" id="breakdown-copy-btn" onclick="copyBreakdown()" disabled>
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="8" height="8" rx="1.5"/>
+          <path d="M2 10V2h8"/>
+        </svg>
+        Salin Prompt
+      </button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="add-modal" style="display:none" onclick="cancelAdd(event)">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <span class="form-modal-title">Ide baru</span>
+      <button class="form-modal-close" onclick="cancelAdd()">×</button>
+    </div>
+    <div class="form-modal-body">
+      <div class="form-group">
+        <label class="form-label">Judul</label>
+        <input class="form-field" id="f-title" placeholder="Tulis ide kamu..." onkeydown="if(event.key==='Enter')submitIdea()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-field" id="f-notes" placeholder="Detail, konteks, atau referensi..." rows="3"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select class="form-field" id="f-cat"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioritas</label>
+          <select class="form-field" id="f-pri">
+            <option>Penting</option><option selected>Nanti</option><option>Kapan-kapan</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Wishlist Fields (hidden by default) -->
+      <div id="wishlist-fields" style="display:none; margin-top:12px;">
+        <div class="form-group">
+          <label class="form-label">Harga (Rp)</label>
+          <input class="form-field" id="f-price" type="text" inputmode="numeric" placeholder="Contoh: 50.000" oninput="formatRupiah(this)" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Foto Produk</label>
+          <div id="f-image-preview" style="display:none" class="img-preview-wrap">
+            <img id="f-image-thumb" src="" alt="Preview" class="img-preview-thumb" />
+            <div class="img-preview-info">
+              <div class="img-preview-name" id="f-image-name">—</div>
+              <div class="img-preview-size" id="f-image-size"></div>
+            </div>
+            <button type="button" class="img-preview-remove" onclick="removeAddWishlistImage()" title="Hapus foto">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+            </button>
+          </div>
+          <button type="button" class="file-input-btn" id="f-image-btn" onclick="document.getElementById('f-image').click()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="12" height="9" rx="1.5"/><path d="M1 9l3-3 2.5 2.5L9 6l4 4"/><circle cx="4.5" cy="6.5" r="1"/></svg>
+            Upload Foto
+          </button>
+          <input class="file-input-hidden" id="f-image" type="file" accept="image/*" onchange="handleAddWishlistImageUpload(event)" />
+        </div>
+      </div>
+    </div>
+    <div class="form-modal-footer">
+      <button class="btn-form-cancel" onclick="cancelAdd()">Batal</button>
+      <button class="btn-form-submit" onclick="submitIdea()">Simpan ide</button>
+    </div>
+  </div>
+</div>
+
+<!-- Type Selector Modal (NEW) -->
+<div class="overlay" id="type-selector-modal" style="display:none" onclick="closeTypeSelector(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Pilih Jenis Item</div>
+    <div class="modal-sub">Apakah ini Idea atau Wishlist?</div>
+    <div class="modal-actions" style="flex-direction:row; gap:12px;">
+      <button class="btn-del-cancel" style="flex:1; background:transparent; border:1px solid var(--border); color:var(--text); display:flex; align-items:center; justify-content:center; gap:7px;" onclick="selectType('Idea')">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="5.5" r="3"/><line x1="7" y1="8.5" x2="7" y2="10"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5"/><line x1="6" y1="11.8" x2="8" y2="11.8"/></svg>
+        Idea
+      </button>
+      <button class="btn-form-submit" style="flex:1; display:flex; align-items:center; justify-content:center; gap:7px;" onclick="selectType('Wishlist')">
+        <svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2h1.2l1.6 6h6.4l1.3-4H4.5"/><circle cx="5.5" cy="11" r="0.9" fill="currentColor"/><circle cx="9.5" cy="11" r="0.9" fill="currentColor"/></svg>
+        Wishlist
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="overlay" id="edit-modal" style="display:none" onclick="cancelEdit(event)">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <span class="form-modal-title">Edit ide</span>
+      <button class="form-modal-close" onclick="cancelEdit()">×</button>
+    </div>
+    <div class="form-modal-body">
+      <div class="form-group">
+        <label class="form-label">Judul</label>
+        <input class="form-field" id="e-title" placeholder="Judul ide..." onkeydown="if(event.key==='Enter')saveEdit()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-field" id="e-notes" placeholder="Detail, konteks, atau referensi..." rows="3"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select class="form-field" id="e-cat"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioritas</label>
+          <select class="form-field" id="e-pri">
+            <option>Penting</option><option>Nanti</option><option>Kapan-kapan</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-modal-footer">
+      <button class="btn-form-cancel" onclick="cancelEdit()">Batal</button>
+      <button class="btn-form-submit" onclick="saveEdit()">Simpan perubahan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Wishlist Modal -->
+<div class="overlay" id="edit-wishlist-modal" style="display:none" onclick="cancelEditWishlist(event)">
+  <div class="form-modal">
+    <div class="form-modal-header">
+      <span class="form-modal-title">Edit Wishlist</span>
+      <button class="form-modal-close" onclick="cancelEditWishlist()">×</button>
+    </div>
+    <div class="form-modal-body">
+      <div class="form-group">
+        <label class="form-label">Judul</label>
+        <input class="form-field" id="ew-title" placeholder="Nama item wishlist..." onkeydown="if(event.key==='Enter')saveEditWishlist()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan</label>
+        <textarea class="form-field" id="ew-notes" placeholder="Detail, link, atau referensi..." rows="2"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select class="form-field" id="ew-cat"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioritas</label>
+          <select class="form-field" id="ew-pri">
+            <option>Penting</option><option>Nanti</option><option>Kapan-kapan</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga (Rp)</label>
+        <input class="form-field" id="ew-price" type="text" inputmode="numeric" placeholder="Contoh: 250.000" oninput="formatRupiah(this)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Foto Produk</label>
+        <div id="ew-image-preview" style="display:none" class="img-preview-wrap">
+          <img id="ew-image-thumb" src="" alt="Preview" class="img-preview-thumb" />
+          <div class="img-preview-info">
+            <div class="img-preview-name" id="ew-image-name">Foto tersimpan</div>
+            <div class="img-preview-size" id="ew-image-size"></div>
+          </div>
+          <button type="button" class="img-preview-remove" onclick="removeWishlistImage()" title="Hapus foto">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+          </button>
+        </div>
+        <button type="button" class="file-input-btn" id="ew-image-btn" onclick="document.getElementById('ew-image-file').click()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="12" height="9" rx="1.5"/><path d="M1 9l3-3 2.5 2.5L9 6l4 4"/><circle cx="4.5" cy="6.5" r="1"/></svg>
+          Ganti Foto
+        </button>
+        <input class="file-input-hidden" id="ew-image-file" type="file" accept="image/*" onchange="handleWishlistImageUpload(event)" />
+      </div>
+    </div>
+    <div class="form-modal-footer">
+      <button class="btn-form-cancel" onclick="cancelEditWishlist()">Batal</button>
+      <button class="btn-form-submit" onclick="saveEditWishlist()">Simpan perubahan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Categories Modal -->
+<div class="overlay" id="cat-modal" style="display:none" onclick="closeManageCats(event)">
+  <div class="cat-modal">
+    <div class="form-modal-header">
+      <span class="form-modal-title">Kelola Kategori</span>
+      <button class="form-modal-close" onclick="closeManageCats()">×</button>
+    </div>
+    <div class="cat-list" id="cat-list"></div>
+    <div class="cat-add-row">
+      <input class="cat-add-input" id="cat-add-input" placeholder="Nama kategori baru..."
+        maxlength="24" onkeydown="if(event.key==='Enter')addCategory()" />
+      <button class="cat-add-btn" onclick="addCategory()">Tambah</button>
+    </div>
+    <div style="padding: 0 20px 24px">
+      <button class="btn-form-submit" style="width:100%" onclick="closeManageCats()">Selesai</button>
+    </div>
+  </div>
+</div>
+<script src="/shared/ecosystem-db.js"></script>
+<script>
+
+
+// ── IndexedDB ──
+const DB_NAME = "ideku_db", DB_STORE = "ideas", DB_VER = 1;
+let db;
+
+async function getAllIdeas() {
+  return EcosystemDB.ideas.getAll();
+}
+async function putIdea(idea) {
+  return EcosystemDB.ideas.put(idea);
+}
+async function deleteIdeaDB(id) {
+  return EcosystemDB.ideas.delete(id);
+}
+
+// ── State ──
+let ideas = [];
+let filterStatus = null;
+let filterCat = "Semua";
+let filterType = "Idea";  // "Idea" or "Wishlist"
+let addingType = "Idea"; // NEW: track which type user is adding
+let searchQuery = "";
+let pendingDeleteId = null;
+let editingId = null;
+
+const STATUSES = ["Belum", "Proses", "Selesai"];
+const PRIORITIES = ["Penting", "Nanti", "Kapan-kapan"];
+const DEFAULT_CATEGORIES = ["Dev", "Bisnis", "Konten", "Belajar", "Kreatif", "Personal", "Belanja"];
+let CATEGORIES = JSON.parse(localStorage.getItem("ideku-categories") || "null") || [...DEFAULT_CATEGORIES];
+const ITEM_TYPES = ["Idea", "Wishlist"];
+const TYPE_ICON = {
+  "Idea": `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><circle cx="7" cy="5.5" r="3"/><line x1="7" y1="8.5" x2="7" y2="10"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5"/><line x1="6" y1="11.8" x2="8" y2="11.8"/></svg>`,
+  "Wishlist": `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><path d="M1.5 2h1.2l1.6 6h6.4l1.3-4H4.5"/><circle cx="5.5" cy="11" r="0.9" fill="currentColor"/><circle cx="9.5" cy="11" r="0.9" fill="currentColor"/></svg>`
+};
+const STATUS_DOT = { "Belum": "#d1d5db", "Proses": "#f59e0b", "Selesai": "#10b981" };
+const PRI_COLOR  = { "Penting": "#ef4444", "Nanti": "#f59e0b", "Kapan-kapan": "#10b981" };
+
+function saveCategories() {
+  localStorage.setItem("ideku-categories", JSON.stringify(CATEGORIES));
+}
+
+// ── Wishlist Image Fallback ──
+function getWishlistFallbackImage() {
+  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='12' fill='%23f0f0f0'/%3E%3Cpath d='M34 48h8l13 26h22l7-19H43' stroke='%23c8c8c8' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='52' cy='77' r='3.5' fill='%23c8c8c8'/%3E%3Ccircle cx='70' cy='77' r='3.5' fill='%23c8c8c8'/%3E%3C/svg%3E";
+}
+
+function handleImageError(img) {
+  if (!img.dataset.fallbackLoaded) {
+    img.dataset.fallbackLoaded = "true";
+    img.src = getWishlistFallbackImage();
+  }
+}
+
+// ── Format Rupiah ──
+function formatRupiah(input) {
+  const raw = input.value.replace(/\D/g, "");
+  input.dataset.raw = raw;
+  input.value = raw ? Number(raw).toLocaleString("id-ID") : "";
+}
+
+function getRupiahRaw(id) {
+  const el = document.getElementById(id);
+  if (!el) return 0;
+  // dataset.raw is set by formatRupiah; fallback: strip dots from value
+  const raw = el.dataset.raw || el.value.replace(/\./g, "").replace(/\D/g, "");
+  return parseFloat(raw) || 0;
+}
+
+// ── Delete All ──
+function openDeleteAll() {
+  menuOpen = false;
+  document.getElementById("menu-dropdown").style.display = "none";
+  if (ideas.length === 0) { showToast("Tidak ada data untuk dihapus."); return; }
+  document.getElementById("delete-all-modal").style.display = "flex";
+}
+
+function cancelDeleteAll(e) {
+  if (e && e.target !== document.getElementById("delete-all-modal")) return;
+  document.getElementById("delete-all-modal").style.display = "none";
+}
+
+function confirmDeleteAll() {
+  const total = ideas.length;
+  Promise.all(ideas.map(i => deleteIdeaDB(i.id))).then(() => {
+    ideas = [];
+    document.getElementById("delete-all-modal").style.display = "none";
+    render();
+    showToast(`${total} item berhasil dihapus`);
+  });
+}
+
+function populateCatSelects(selectedAdd, selectedEdit) {
+  const opts = CATEGORIES.map(c => `<option>${c}</option>`).join("");
+  const fCat = document.getElementById("f-cat");
+  const eCat = document.getElementById("e-cat");
+  if (fCat) {
+    fCat.innerHTML = opts;
+    if (selectedAdd && CATEGORIES.includes(selectedAdd)) fCat.value = selectedAdd;
+  }
+  if (eCat) {
+    eCat.innerHTML = opts;
+    if (selectedEdit && CATEGORIES.includes(selectedEdit)) eCat.value = selectedEdit;
+  }
+}
+
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// ── Render ──
+let _prevStats = {};
+function renderStats() {
+  const belum = ideas.filter(i => i.status === "Belum").length;
+  const sedang = ideas.filter(i => i.status === "Proses").length;
+  const selesai = ideas.filter(i => i.status === "Selesai").length;
+  const stats = [
+    { label: "Total", val: ideas.length, key: "total" },
+    { label: "Belum mulai", val: belum, key: "belum" },
+    { label: "Proses", val: sedang, key: "proses" },
+    { label: "Selesai", val: selesai, key: "selesai" },
+  ];
+  document.getElementById("stats").innerHTML = stats.map(s => `
+    <div class="stat">
+      <div class="stat-num" id="stat-${s.key}">${s.val}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>
+  `).join("");
+  // Animate changed numbers
+  stats.forEach(s => {
+    if (_prevStats[s.key] !== s.val) {
+      const el = document.getElementById(`stat-${s.key}`);
+      if (el) {
+        el.classList.remove("animating");
+        void el.offsetWidth; // reflow
+        el.classList.add("animating");
+      }
+    }
+  });
+  _prevStats = { total: ideas.length, belum, proses: sedang, selesai };
+}
+
+function renderFilters() {
+  const TYPE_SVG = {
+    "Idea": `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><circle cx="7" cy="5.5" r="3"/><line x1="7" y1="8.5" x2="7" y2="10"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5"/></svg>`,
+    "Wishlist": `<svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px"><path d="M1.5 2h1.2l1.6 6h6.4l1.3-4H4.5"/><circle cx="5.5" cy="11" r="0.8" fill="currentColor"/><circle cx="9.5" cy="11" r="0.8" fill="currentColor"/></svg>`
+  };
+
+  // Status row: type pills (compact) + separator + status pills
+  const typePills = `
+    <div class="filters-type-inline">
+      ${ITEM_TYPES.map(t => `
+        <button class="f-btn ${filterType === t ? "on" : ""}" onclick="setFilterType('${t}')" style="padding:5px 9px;font-size:11px;display:inline-flex;align-items:center;gap:3px">${TYPE_SVG[t]} ${t}</button>
+      `).join("")}
+    </div>`;
+
+  const statusBtns = STATUSES.map(s =>
+    `<button class="f-btn${filterStatus === s ? " on" : ""}" onclick="setFilterStatus('${s}')">${s}</button>`
+  ).join("");
+  const catBtns = ["Semua", ...CATEGORIES].map(c =>
+    `<button class="f-btn${filterCat === c ? " on" : ""}" onclick="setFilterCat('${c}')">${c}</button>`
+  ).join("");
+
+  document.getElementById("filters-status").innerHTML =
+    `${typePills}<span class="filters-label" style="min-width:auto">Status</span>${statusBtns}`;
+  document.getElementById("filters-cat").innerHTML =
+    `<span class="filters-label">Tag</span>${catBtns}`;
+
+  // Remove separate type row if it exists
+  const typeWrap = document.getElementById("filters-type");
+  if (typeWrap) typeWrap.remove();
+}
+
+function renderList() {
+  const q = searchQuery.toLowerCase();
+  let filtered = ideas.filter(i =>
+    (!filterStatus || i.status === filterStatus) &&
+    (filterCat === "Semua" || i.category === filterCat) &&
+    (!q || i.title.toLowerCase().includes(q) || (i.notes || "").toLowerCase().includes(q))
+  );
+
+  // Filter by type
+  filtered = filtered.filter(i => i.type === filterType);
+
+  const el = document.getElementById("list");
+  if (filtered.length === 0) {
+    const isFiltered = ideas.length > 0;
+    const isSearch = searchQuery.length > 0;
+    const isWishlistFilter = filterType === "Wishlist";
+    const hasNoWishlist = ideas.filter(i => i.type === "Wishlist").length === 0;
+
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">
+          ${isWishlistFilter
+            ? `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`
+            : `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 4-3.5 7-7 9-3.5-2-7-5-7-9a7 7 0 0 1 7-7z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="15" x2="12.01" y2="15"/></svg>`
+          }
+        </div>
+        ${isSearch
+          ? `<div class="empty-title">Tidak ditemukan</div>
+             <div class="empty-txt">Coba kata kunci lain.</div>`
+          : isWishlistFilter && hasNoWishlist
+            ? `<div class="empty-title">Belum ada wishlist</div>
+               <div class="empty-txt">Simpan barang impianmu di sini.<br>Catat harga, foto, dan prioritasnya.</div>
+               <button class="empty-cta" onclick="selectType('Wishlist')">+ Tambah wishlist pertama</button>`
+            : isFiltered
+              ? `<div class="empty-title">Tidak ada item di sini</div>
+                 <div class="empty-txt">Coba ganti filter atau tambah item baru.</div>`
+              : `<div class="empty-title">Belum ada ide tersimpan</div>
+                 <div class="empty-txt">Ide bagus dimulai dari satu langkah kecil.<br>Catat sekarang sebelum lupa!</div>
+                 <button class="empty-cta" onclick="openAdd()">+ Tambah ide pertama</button>`
+        }
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(idea => {
+    const done = idea.status === "Selesai";
+    const priColor = PRI_COLOR[idea.priority] || "#aaa";
+    const statusActions = STATUSES.map(s =>
+      `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}')">${s}</button>`
+    ).join("");
+    const priActions = PRIORITIES.map(p =>
+      `<button class="act-btn${idea.priority === p ? " on-p" : ""}"
+        style="${idea.priority === p ? `color:${PRI_COLOR[p]};border-color:${PRI_COLOR[p]}44` : ""}"
+        onclick="updatePriority(${idea.id},'${p}')">${p}</button>`
+    ).join("");
+
+    const titleHtml = escHtml(idea.title);
+    const titleAttr = escAttr(idea.title);
+    const categoryHtml = escHtml(idea.category || "-");
+    const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : "—";
+    const imgSrc = idea.image || "";
+    const metaLine = `${categoryHtml} · ${idea.priority}`;
+    const statusDot = STATUS_DOT[idea.status] || "#d1d5db";
+
+    // Priority dots (3 dots, filled based on priority)
+    const priDotColor = PRI_COLOR[idea.priority] || "#aaa";
+    const priDotCount = idea.priority === "Penting" ? 3 : idea.priority === "Nanti" ? 2 : 1;
+    const priorityDotsHtml = [1,2,3].map(i =>
+      `<span class="wishlist-priority-dot" style="background:${i <= priDotCount ? priDotColor : "var(--border)"}"></span>`
+    ).join("");
+
+    // Auto AI score
+    const aiScore = aiDecisionSystem.analyze({
+      title: idea.title, price: idea.price, priority: idea.priority,
+      notes: idea.notes, category: idea.category
+    });
+    const scoreClass = aiScore.label === "Layak" ? "score-green" : aiScore.label === "Pertimbangkan" ? "score-yellow" : "score-red";
+    const scoreIconColor = aiScore.label === "Layak" ? "#10b981" : aiScore.label === "Pertimbangkan" ? "#d97706" : "#ef4444";
+    const scoreIcon = `<svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="${scoreIconColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4.5" x2="7" y2="7.5"/><circle cx="7" cy="9.5" r="0.7" fill="${scoreIconColor}" stroke="none"/></svg>`;
+
+    let bodyContent = "";
+    if (idea.notes) {
+      bodyContent = `
+        <p class="card-notes">${escHtml(idea.notes)}</p>
+        <div class="card-actions">
+          <div class="act-row">
+            <span class="act-label">Status</span>
+            <div class="act-btns">${statusActions}</div>
+          </div>
+          <div class="act-row">
+            <span class="act-label">Prioritas</span>
+            <div class="act-btns">${priActions}</div>
+          </div>
+        </div>
+        <div class="card-ai-row">
+          <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
+          <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
+        </div>
+      `;
+    } else {
+      bodyContent = `
+        <div class="card-actions">
+          <div class="act-row">
+            <span class="act-label">Status</span>
+            <div class="act-btns">${statusActions}</div>
+          </div>
+          <div class="act-row">
+            <span class="act-label">Prioritas</span>
+            <div class="act-btns">${priActions}</div>
+          </div>
+        </div>
+        <div class="card-ai-row">
+          <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
+          <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
+        </div>
+      `;
+    }
+
+    if (idea.type === "Wishlist") {
+      return `
+        <div class="card wishlist-type${done ? " done" : ""}" id="card-${idea.id}" onclick="toggleCard(${idea.id})">
+
+          <div class="wishlist-main">
+            <div class="wishlist-image-wrap">
+              <img src="${imgSrc}" alt="${titleHtml}" class="wishlist-image" onerror="handleImageError(this)" />
+            </div>
+            <div class="wishlist-content">
+              <div class="wishlist-top-row">
+                <div class="wishlist-title${done ? " done" : ""}">${titleHtml}</div>
+                <div class="wishlist-actions" onclick="event.stopPropagation()">
+                  <button class="btn-edit" onclick="openEdit(event,${idea.id})" title="Edit">
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+                  </button>
+                  <button class="btn-del" onclick="askDelete(event,${idea.id},'${titleAttr}')" title="Hapus">
+                    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="wishlist-price">${priceText}</div>
+              <div class="wishlist-meta">${metaLine}</div>
+            </div>
+          </div>
+
+          <div class="wishlist-footer">
+            <div class="wishlist-footer-item">
+              <span class="wishlist-status-dot" style="background:${statusDot}"></span>
+              <span>${idea.status}</span>
+            </div>
+            <div class="wishlist-footer-sep"></div>
+            <div class="wishlist-footer-item">
+              <div class="wishlist-priority-dots">${priorityDotsHtml}</div>
+              <span>${idea.priority}</span>
+            </div>
+            <button class="wishlist-score-badge ${scoreClass}" onclick="event.stopPropagation();getAIDecision(${idea.id})">
+              ${scoreIcon}
+              ${aiScore.label}
+            </button>
+          </div>
+
+          <div class="card-body wishlist-type" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
+            ${idea.notes ? `<p class="card-notes" style="margin-bottom:10px">${escHtml(idea.notes)}</p>` : ""}
+            <div class="card-actions">
+              <div class="act-row">
+                <span class="act-label">Status</span>
+                <div class="act-btns">${statusActions}</div>
+              </div>
+              <div class="act-row">
+                <span class="act-label">Prioritas</span>
+                <div class="act-btns">${priActions}</div>
+              </div>
+            </div>
+          </div>
+
+        </div>`;
+    }
+
+    return `
+      <div class="card${done ? " done" : ""}" id="card-${idea.id}" onclick="toggleCard(${idea.id})">
+        <div class="card-top">
+          <div style="flex:1">
+            <div class="card-title${done ? " done" : ""}">
+              ${TYPE_ICON[idea.type]
+                ? `<span style="display:inline-flex;align-items:center;gap:5px;line-height:1.4">${TYPE_ICON[idea.type]}<span>${titleHtml}</span></span>`
+                : titleHtml
+              }
+            </div>
+            <div class="card-meta">
+              <span class="meta-dot" style="background:${STATUS_DOT[idea.status]}"></span>
+              <span class="meta-t">${idea.status}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-t">${categoryHtml}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-pri" style="color:${priColor}">${idea.priority}</span>
+              <span class="meta-date">${fmtDate(idea.id)}</span>
+            </div>
+          </div>
+          <div class="card-btns">
+            <button class="btn-edit" onclick="openEdit(event,${idea.id})" title="Edit">
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/>
+              </svg>
+            </button>
+            <button class="btn-del" onclick="askDelete(event,${idea.id},'${titleAttr}')" title="Hapus">
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+                <line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="card-body" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
+          ${bodyContent}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function render() {
+  renderStats();
+  renderFilters();
+  renderList();
+}
+
+// ── Actions ──
+function openAdd() {
+  document.getElementById("type-selector-modal").style.display = "flex";
+}
+
+function closeTypeSelector(event) {
+  if (event && event.target !== event.currentTarget) return;
+  document.getElementById("type-selector-modal").style.display = "none";
+}
+
+function selectType(type) {
+  addingType = type;
+  closeTypeSelector();
+
+  populateCatSelects(CATEGORIES[0], null);
+
+  const wishlistFields = document.getElementById("wishlist-fields");
+  const addModalTitle = document.querySelector("#add-modal .form-modal-title");
+
+  if (type === "Wishlist") {
+    wishlistFields.style.display = "block";
+    addModalTitle.textContent = "Wishlist Baru";
+  } else {
+    wishlistFields.style.display = "none";
+    addModalTitle.textContent = "Idea Baru";
+  }
+
+  // Clear previous values
+  document.getElementById("f-title").value = "";
+  document.getElementById("f-notes").value = "";
+  document.getElementById("f-price").value = "";
+  document.getElementById("f-image").value = "";
+  document.getElementById("f-pri").value = "Nanti";
+  _pendingAddImageBase64 = null;
+  const fPreview = document.getElementById("f-image-preview");
+  const fBtn = document.getElementById("f-image-btn");
+  if (fPreview) fPreview.style.display = "none";
+  if (fBtn) fBtn.style.display = "flex";
+
+  document.getElementById("add-modal").style.display = "flex";
+  setTimeout(() => document.getElementById("f-title").focus(), 80);
+}
+
+function cancelAdd(e) {
+  if (e && e.target !== document.getElementById("add-modal")) return;
+  _pendingAddImageBase64 = null;
+  document.getElementById("add-modal").style.display = "none";
+  document.getElementById("type-selector-modal").style.display = "none";
+}
+
+function submitIdea() {
+  const title = document.getElementById("f-title").value.trim();
+  const notes = document.getElementById("f-notes").value.trim();
+  const cat = document.getElementById("f-cat").value;
+  const pri = document.getElementById("f-pri").value;
+
+  if (!title) { showToast("Judul tidak boleh kosong"); return; }
+
+  const newIdea = {
+    id: Date.now(),
+    title,
+    notes,
+    category: cat,
+    priority: pri,
+    status: "Belum",
+    type: addingType,  // NEW
+    price: 0,          // NEW
+    image: ""          // NEW
+  };
+
+  // Handle Wishlist specific fields
+  if (addingType === "Wishlist") {
+    if (document.getElementById("f-price").value) newIdea.price = getRupiahRaw("f-price");
+    if (_pendingAddImageBase64) newIdea.image = _pendingAddImageBase64;
+  }
+
+  putIdea(newIdea).then(() => {
+    ideas.push(newIdea);
+    renderStats();
+    renderFilters();
+    renderList();
+    _pendingAddImageBase64 = null;
+    cancelAdd();
+    showToast(addingType === "Wishlist" ? "Wishlist ditambahkan!" : "Ide ditambahkan!");
+  });
+}
+
+function toggleCard(id) {
+  const body = document.getElementById(`body-${id}`);
+  if (!body) return;
+  body.style.display = body.style.display === "none" ? "block" : "none";
+}
+
+function updateStatus(id, status) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  idea.status = status;
+  putIdea(idea).then(() => render());
+}
+
+function updatePriority(id, priority) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  idea.priority = priority;
+  putIdea(idea).then(() => render());
+}
+
+function setFilterStatus(s) { filterStatus = (filterStatus === s) ? null : s; render(); }
+function setFilterCat(c) { filterCat = c; render(); }
+function setFilterType(type) {
+  filterType = type;
+  renderList();
+}
+
+function recommendBuy(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  showToast(`Rekomendasi untuk "${idea.title}": beli sekarang`);
+}
+
+function recommendWait(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  showToast(`Rekomendasi untuk "${idea.title}": tunda dulu`);
+}
+
+function recommendSkip(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  showToast(`Rekomendasi untuk "${idea.title}": tidak layak`);
+}
+
+function onSearch(val) {
+  searchQuery = val.trim();
+  const clearBtn = document.getElementById("search-clear");
+  if (clearBtn) clearBtn.classList.toggle("visible", searchQuery.length > 0);
+  renderList();
+}
+
+function clearSearch() {
+  searchQuery = "";
+  const input = document.getElementById("search-input");
+  const clearBtn = document.getElementById("search-clear");
+  if (input) input.value = "";
+  if (clearBtn) clearBtn.classList.remove("visible");
+  renderList();
+}
+
+// ── Delete with confirmation ──
+function askDelete(e, id, title) {
+  e.stopPropagation();
+  pendingDeleteId = id;
+  document.getElementById("modal-sub").textContent = `"${title}" akan dihapus permanen.`;
+  document.getElementById("modal").style.display = "flex";
+}
+
+function cancelDelete(e) {
+  if (e && e.target !== document.getElementById("modal")) return;
+  pendingDeleteId = null;
+  document.getElementById("modal").style.display = "none";
+}
+
+function confirmDelete() {
+  if (!pendingDeleteId) return;
+  deleteIdeaDB(pendingDeleteId).then(() => {
+    ideas = ideas.filter(i => i.id !== pendingDeleteId);
+    pendingDeleteId = null;
+    document.getElementById("modal").style.display = "none";
+    render();
+  });
+}
+
+// ── Breakdown via Groq → Modal + Copy ──
+let _breakdownResult = null;
+
+async function breakdownIdea(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+
+  _breakdownResult = null;
+
+  const modal = document.getElementById("breakdown-modal");
+  const body = document.getElementById("breakdown-body");
+  const copyBtn = document.getElementById("breakdown-copy-btn");
+  const ideaTitle = document.getElementById("breakdown-idea-title");
+
+  ideaTitle.textContent = idea.title;
+  copyBtn.disabled = true;
+  copyBtn.classList.remove("copied");
+  copyBtn.innerHTML = `
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M2 10V2h8"/>
+    </svg>
+    Salin Prompt`;
+  body.innerHTML = `
+    <div class="perkaya-skeleton">
+      <div class="skeleton-line" style="width:90%"></div>
+      <div class="skeleton-line" style="width:72%"></div>
+      <div class="skeleton-line" style="width:85%"></div>
+      <div class="skeleton-line" style="width:60%"></div>
+      <div class="skeleton-line" style="width:79%"></div>
+      <div class="skeleton-line" style="width:88%"></div>
+    </div>`;
+  modal.style.display = "flex";
+
+  const priorityCtx = {
+    "Penting":     "tinggi — eksekusi dalam 1–2 minggu",
+    "Nanti":       "sedang — bisa dimulai bulan ini",
+    "Kapan-kapan": "rendah — tanpa deadline ketat",
+  };
+
+  const systemPrompt = `Kamu adalah asisten yang membantu merapikan dan menyusun ide menjadi prompt breakdown yang siap dipakai di AI lain (ChatGPT, Gemini, dll). Tugasmu bukan mengeksekusi breakdown, tapi menghasilkan prompt yang terstruktur, jelas, dan kaya konteks — supaya AI yang menerima prompt ini bisa langsung menghasilkan rencana eksekusi yang konkret dan actionable. Gunakan bahasa Indonesia yang santai.`;
+
+  const userPrompt =
+`Rapikan ide berikut menjadi prompt breakdown yang siap di-paste ke AI lain:
+
+Judul: ${idea.title}
+Kategori: ${idea.category}
+Prioritas: ${idea.priority} (${priorityCtx[idea.priority] || ""})${idea.notes ? `\nCatatan: ${idea.notes}` : ""}
+
+Hasilkan prompt yang:
+1. Punya konteks ide yang jelas dan lengkap
+2. Meminta rencana eksekusi 5–8 langkah konkret dengan estimasi waktu
+3. Menyebutkan kategori "${idea.category}" supaya AI bisa menyesuaikan saran tools/platform yang relevan
+4. Mencerminkan urgensi berdasarkan prioritas "${idea.priority}"
+5. Meminta langkah pertama yang bisa dilakukan hari ini atau minggu ini
+6. Meminta AI menggunakan kondisi/tools/platform yang relevan dan terkini
+
+Keluarkan hanya teks prompt-nya saja, tanpa penjelasan tambahan.`;
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    let res;
+    try {
+      res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          title: idea.title,
+          notes: idea.notes,
+          category: idea.category,
+          priority: idea.priority,
+          mode: "breakdown",
+          systemPrompt,
+          userPrompt,
+        }),
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      const errMsg = data.error === "quota"
+        ? "Kuota AI habis, coba beberapa saat lagi."
+        : data.error === "timeout"
+        ? "Koneksi timeout. Cek internet kamu."
+        : "Gagal menghubungi server AI.";
+      throw new Error(errMsg);
+    }
+
+    _breakdownResult = data.result;
+    body.innerHTML = `<div class="breakdown-result">${escHtml(_breakdownResult)}</div>`;
+    copyBtn.disabled = false;
+
+  } catch (err) {
+    const msg = err.name === "AbortError"
+      ? "Timeout 15 detik terlampaui. Coba lagi."
+      : err.message || "Terjadi kesalahan tidak terduga.";
+    body.innerHTML = `
+      <div class="perkaya-error">
+        <div class="perkaya-error-icon">⚠️</div>
+        <div class="perkaya-error-title">Gagal membuat prompt</div>
+        <div class="perkaya-error-msg">${escHtml(msg)}</div>
+        <button class="act-btn" style="margin-top:8px" onclick="document.getElementById('breakdown-modal').style.display='none';breakdownIdea(${id})">Coba lagi</button>
+      </div>`;
+  }
+}
+
+function cancelBreakdown(e) {
+  if (e && e.target !== document.getElementById("breakdown-modal")) return;
+  document.getElementById("breakdown-modal").style.display = "none";
+  _breakdownResult = null;
+}
+
+function copyBreakdown() {
+  if (!_breakdownResult) return;
+  navigator.clipboard.writeText(_breakdownResult).then(() => {
+    const btn = document.getElementById("breakdown-copy-btn");
+    btn.classList.add("copied");
+    btn.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="2,7 5,11 12,3"/>
+      </svg>
+      Tersalin!`;
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M2 10V2h8"/>
+        </svg>
+        Salin Prompt`;
+    }, 2500);
+  }).catch(() => showToast("✗ Gagal menyalin, coba manual."));
+}
+
+// ── Perkaya Ide via Groq (Cloudflare Worker) ──
+const WORKER_URL = "https://ideku-proxy.mywisnu238.workers.dev";
+let _perkayaIdeaId = null;
+let _perkayaResult = null;
+
+async function perkayaIdea(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+
+  // Kalau sudah ada notes, tunjukkan konfirmasi via modal langsung
+  _perkayaIdeaId = id;
+  _perkayaResult = null;
+
+  // Tampilkan modal dengan skeleton loading
+  const modal = document.getElementById("perkaya-modal");
+  const body = document.getElementById("perkaya-body");
+  const saveBtn = document.getElementById("perkaya-save-btn");
+  const ideaTitle = document.getElementById("perkaya-idea-title");
+
+  ideaTitle.textContent = idea.title;
+  saveBtn.disabled = true;
+  body.innerHTML = `
+    <div class="perkaya-skeleton">
+      <div class="skeleton-line" style="width:88%"></div>
+      <div class="skeleton-line" style="width:72%"></div>
+      <div class="skeleton-line" style="width:91%"></div>
+      <div class="skeleton-line" style="width:65%"></div>
+      <div class="skeleton-line" style="width:79%"></div>
+    </div>`;
+
+  // Kalau ada notes sebelumnya, tampilin dulu di bawah skeleton nanti
+  const originalNotes = idea.notes ? idea.notes.trim() : null;
+
+  modal.style.display = "flex";
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    let res;
+    try {
+      res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          title: idea.title,
+          notes: idea.notes,
+          category: idea.category,
+          priority: idea.priority,
+        }),
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      const errMsg = data.error === "quota"
+        ? "Kuota AI habis, coba beberapa saat lagi."
+        : data.error === "timeout"
+        ? "Koneksi timeout. Cek internet kamu."
+        : "Gagal menghubungi server AI.";
+      throw new Error(errMsg);
+    }
+
+    _perkayaResult = data.result;
+
+    // Tampilkan hasil + original notes (kalau ada)
+    body.innerHTML = `
+      <div class="perkaya-result">${escHtml(_perkayaResult)}</div>
+      ${originalNotes ? `
+      <div class="perkaya-original">
+        <div class="perkaya-original-label">Catatan sebelumnya</div>
+        <div class="perkaya-original-text">${escHtml(originalNotes)}</div>
+      </div>` : ""}`;
+
+    saveBtn.disabled = false;
+
+  } catch (err) {
+    const msg = err.name === "AbortError"
+      ? "Timeout 15 detik terlampaui. Coba lagi."
+      : err.message || "Terjadi kesalahan tidak terduga.";
+    body.innerHTML = `
+      <div class="perkaya-error">
+        <div class="perkaya-error-icon">⚠️</div>
+        <div class="perkaya-error-title">Gagal memperkaya ide</div>
+        <div class="perkaya-error-msg">${escHtml(msg)}</div>
+        <button class="act-btn" style="margin-top:8px" onclick="document.getElementById('perkaya-modal').style.display='none';perkayaIdea(${id})">Coba lagi</button>
+      </div>`;
+  }
+}
+
+function cancelPerkaya(e) {
+  if (e && e.target !== document.getElementById("perkaya-modal")) return;
+  document.getElementById("perkaya-modal").style.display = "none";
+  _perkayaIdeaId = null;
+  _perkayaResult = null;
+}
+
+async function savePerkaya() {
+  if (!_perkayaResult || !_perkayaIdeaId) return;
+  const idea = ideas.find(i => i.id === _perkayaIdeaId);
+  if (!idea) return;
+
+  const saveBtn = document.getElementById("perkaya-save-btn");
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Menyimpan...";
+
+  idea.notes = _perkayaResult;
+  await putIdea(idea);
+
+  document.getElementById("perkaya-modal").style.display = "none";
+  _perkayaIdeaId = null;
+  _perkayaResult = null;
+
+  render();
+  const body = document.getElementById(`body-${idea.id}`);
+  if (body) body.style.display = "block";
+  showToast("Ide berhasil diperkaya");
+}
+function openEdit(e, id) {
+  e.stopPropagation();
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  editingId = id;
+
+  if (idea.type === "Wishlist") {
+    // Populate wishlist edit modal
+    const ewCat = document.getElementById("ew-cat");
+    ewCat.innerHTML = CATEGORIES.map(c => `<option>${c}</option>`).join("");
+    if (CATEGORIES.includes(idea.category)) ewCat.value = idea.category;
+
+    document.getElementById("ew-title").value = idea.title;
+    document.getElementById("ew-notes").value = idea.notes || "";
+    document.getElementById("ew-pri").value = idea.priority;
+    document.getElementById("ew-price").value = idea.price ? Number(idea.price).toLocaleString("id-ID") : "";
+    document.getElementById("ew-price").dataset.raw = idea.price || "";
+
+    // Show image preview if exists
+    const preview = document.getElementById("ew-image-preview");
+    const thumb = document.getElementById("ew-image-thumb");
+    const btn = document.getElementById("ew-image-btn");
+    if (idea.image) {
+      thumb.src = idea.image;
+      document.getElementById("ew-image-name").textContent = "Foto tersimpan";
+      document.getElementById("ew-image-size").textContent = "";
+      preview.style.display = "flex";
+      btn.style.display = "none";
+    } else {
+      preview.style.display = "none";
+      thumb.src = "";
+      btn.style.display = "flex";
+    }
+    document.getElementById("ew-image-file").value = "";
+
+    document.getElementById("edit-wishlist-modal").style.display = "flex";
+    setTimeout(() => document.getElementById("ew-title").focus(), 80);
+  } else {
+    // Idea edit modal
+    populateCatSelects(null, idea.category);
+    document.getElementById("e-title").value = idea.title;
+    document.getElementById("e-notes").value = idea.notes || "";
+    document.getElementById("e-pri").value = idea.priority;
+    document.getElementById("edit-modal").style.display = "flex";
+    setTimeout(() => document.getElementById("e-title").focus(), 80);
+  }
+}
+
+// Wishlist image stored as base64 in IndexedDB (via idea.image field)
+let _pendingWishlistImageBase64 = null;
+let _pendingAddImageBase64 = null;
+
+function handleAddWishlistImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("✗ Ukuran foto maks. 2MB");
+    event.target.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    _pendingAddImageBase64 = ev.target.result;
+    document.getElementById("f-image-thumb").src = _pendingAddImageBase64;
+    document.getElementById("f-image-name").textContent = file.name;
+    document.getElementById("f-image-size").textContent = (file.size / 1024).toFixed(0) + " KB";
+    document.getElementById("f-image-preview").style.display = "flex";
+    document.getElementById("f-image-btn").style.display = "none";
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeAddWishlistImage() {
+  _pendingAddImageBase64 = null;
+  document.getElementById("f-image-thumb").src = "";
+  document.getElementById("f-image-preview").style.display = "none";
+  document.getElementById("f-image-btn").style.display = "flex";
+  document.getElementById("f-image").value = "";
+}
+
+function handleWishlistImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("✗ Ukuran foto maks. 2MB");
+    event.target.value = "";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    _pendingWishlistImageBase64 = ev.target.result;
+    document.getElementById("ew-image-thumb").src = _pendingWishlistImageBase64;
+    document.getElementById("ew-image-name").textContent = file.name;
+    document.getElementById("ew-image-size").textContent = (file.size / 1024).toFixed(0) + " KB";
+    document.getElementById("ew-image-preview").style.display = "flex";
+    document.getElementById("ew-image-btn").style.display = "none";
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeWishlistImage() {
+  _pendingWishlistImageBase64 = "__remove__";
+  document.getElementById("ew-image-thumb").src = "";
+  document.getElementById("ew-image-name").textContent = "Foto tersimpan";
+  document.getElementById("ew-image-size").textContent = "";
+  document.getElementById("ew-image-preview").style.display = "none";
+  document.getElementById("ew-image-btn").style.display = "flex";
+  document.getElementById("ew-image-file").value = "";
+}
+
+function cancelEditWishlist(e) {
+  if (e && e.target !== document.getElementById("edit-wishlist-modal")) return;
+  editingId = null;
+  _pendingWishlistImageBase64 = null;
+  document.getElementById("edit-wishlist-modal").style.display = "none";
+}
+
+function saveEditWishlist() {
+  const title = document.getElementById("ew-title").value.trim();
+  if (!title) { document.getElementById("ew-title").focus(); return; }
+  const idea = ideas.find(i => i.id === editingId);
+  if (!idea) return;
+
+  idea.title = title;
+  idea.notes = document.getElementById("ew-notes").value.trim();
+  idea.category = document.getElementById("ew-cat").value;
+  idea.priority = document.getElementById("ew-pri").value;
+  idea.price = getRupiahRaw("ew-price");
+
+  if (_pendingWishlistImageBase64 === "__remove__") {
+    idea.image = "";
+  } else if (_pendingWishlistImageBase64) {
+    idea.image = _pendingWishlistImageBase64;
+  }
+  // else: keep existing image
+
+  putIdea(idea).then(() => {
+    editingId = null;
+    _pendingWishlistImageBase64 = null;
+    document.getElementById("edit-wishlist-modal").style.display = "none";
+    render();
+    showToast("Wishlist berhasil diperbarui");
+  });
+}
+
+function cancelEdit(e) {
+  if (e && e.target !== document.getElementById("edit-modal")) return;
+  editingId = null;
+  document.getElementById("edit-modal").style.display = "none";
+}
+
+function saveEdit() {
+  const title = document.getElementById("e-title").value.trim();
+  if (!title) { document.getElementById("e-title").focus(); return; }
+  const idea = ideas.find(i => i.id === editingId);
+  if (!idea) return;
+  idea.title = title;
+  idea.notes = document.getElementById("e-notes").value.trim();
+  idea.category = document.getElementById("e-cat").value;
+  idea.priority = document.getElementById("e-pri").value;
+  putIdea(idea).then(() => {
+    editingId = null;
+    document.getElementById("edit-modal").style.display = "none";
+    render();
+    showToast("Ide berhasil diperbarui");
+  });
+}
+
+// ── Manage Categories ──
+function openManageCats() {
+  menuOpen = false;
+  document.getElementById("menu-dropdown").style.display = "none";
+  renderCatList();
+  document.getElementById("cat-modal").style.display = "flex";
+  setTimeout(() => document.getElementById("cat-add-input").focus(), 80);
+}
+
+function closeManageCats(e) {
+  if (e && e.target !== document.getElementById("cat-modal")) return;
+  document.getElementById("cat-modal").style.display = "none";
+  render(); // re-render filters with updated categories
+}
+
+function renderCatList() {
+  const list = document.getElementById("cat-list");
+  if (CATEGORIES.length === 0) {
+    list.innerHTML = `<div class="cat-empty">Belum ada kategori.</div>`;
+    return;
+  }
+  list.innerHTML = CATEGORIES.map(c => {
+    const count = ideas.filter(i => i.category === c).length;
+    const inUse = count > 0;
+    return `
+      <div class="cat-item">
+        <span class="cat-item-name">${escHtml(c)}</span>
+        <span class="cat-item-count">${count > 0 ? `${count} ide` : ""}</span>
+        <button class="cat-item-del" onclick="deleteCategory('${escHtml(c)}')"
+          ${inUse ? 'disabled title="Masih dipakai oleh ide"' : 'title="Hapus"'}>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+          </svg>
+        </button>
+      </div>`;
+  }).join("");
+}
+
+function addCategory() {
+  const input = document.getElementById("cat-add-input");
+  const name = input.value.trim();
+  if (!name) { input.focus(); return; }
+  const normalized = name.charAt(0).toUpperCase() + name.slice(1);
+  if (CATEGORIES.map(c => c.toLowerCase()).includes(normalized.toLowerCase())) {
+    showToast("Kategori sudah ada.");
+    input.select();
+    return;
+  }
+  CATEGORIES.push(normalized);
+  saveCategories();
+  input.value = "";
+  renderCatList();
+  showToast(`Kategori "${normalized}" ditambahkan`);
+}
+
+function deleteCategory(name) {
+  const inUse = ideas.some(i => i.category === name);
+  if (inUse) return; // tombol disabled, tapi double-guard
+  CATEGORIES = CATEGORIES.filter(c => c !== name);
+  saveCategories();
+  renderCatList();
+  showToast(`Kategori "${name}" dihapus`);
+}
+
+// Close modal on ESC
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    document.getElementById("add-modal").style.display = "none";
+    document.getElementById("modal").style.display = "none";
+    document.getElementById("delete-all-modal").style.display = "none";
+    document.getElementById("edit-modal").style.display = "none";
+    document.getElementById("edit-wishlist-modal").style.display = "none";
+    document.getElementById("perkaya-modal").style.display = "none";
+    document.getElementById("breakdown-modal").style.display = "none";
+    document.getElementById("cat-modal").style.display = "none";
+    document.getElementById("type-selector-modal").style.display = "none";
+    pendingDeleteId = null;
+    editingId = null;
+    _pendingWishlistImageBase64 = null;
+    _pendingAddImageBase64 = null;
+    _perkayaIdeaId = null;
+    _perkayaResult = null;
+    _breakdownResult = null;
+  }
+});
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function escAttr(s) {
+  return escHtml(s).replace(/'/g, "&#39;");
+}
+
+// ── Dark Mode ──
+function initTheme() {
+  const saved = localStorage.getItem("ideku-theme");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = saved ? saved === "dark" : prefersDark;
+  applyTheme(isDark);
+}
+
+function applyTheme(isDark) {
+  const html = document.documentElement;
+  const btn = document.getElementById("btn-theme");
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (isDark) {
+    html.classList.add("dark");
+    if (btn) btn.textContent = "☾";
+    if (metaTheme) metaTheme.setAttribute("content", "#0f0f0f");
+  } else {
+    html.classList.remove("dark");
+    if (btn) btn.textContent = "☀︎";
+    if (metaTheme) metaTheme.setAttribute("content", "#ffffff");
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains("dark");
+  localStorage.setItem("ideku-theme", isDark ? "light" : "dark");
+  applyTheme(!isDark);
+}
+
+// ── Menu ──
+let menuOpen = false;
+function toggleMenu() {
+  menuOpen = !menuOpen;
+  document.getElementById("menu-dropdown").style.display = menuOpen ? "block" : "none";
+}
+document.addEventListener("click", e => {
+  if (menuOpen && !e.target.closest("#menu-dropdown") && !e.target.closest("#btn-menu")) {
+    menuOpen = false;
+    document.getElementById("menu-dropdown").style.display = "none";
+  }
+});
+
+// ── Toast ──
+function showToast(msg, duration = 2200) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.style.display = "block";
+  t.style.opacity = "1";
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.style.opacity = "0";
+    setTimeout(() => t.style.display = "none", 300);
+  }, duration);
+}
+
+// ── Export ──
+function exportIdeas() {
+  menuOpen = false;
+  document.getElementById("menu-dropdown").style.display = "none";
+  if (ideas.length === 0) { showToast("Tidak ada ide untuk diekspor."); return; }
+  const data = JSON.stringify(ideas, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `ideku-backup-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`${ideas.length} ide berhasil diekspor`);
+}
+
+// ── Import ──
+function triggerImport() {
+  menuOpen = false;
+  document.getElementById("menu-dropdown").style.display = "none";
+  document.getElementById("import-file").value = "";
+  document.getElementById("import-file").click();
+}
+
+function importIdeas(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error("Format tidak valid");
+      // Merge: skip duplicate ids
+      const existingIds = new Set(ideas.map(i => i.id));
+      const newOnes = imported.filter(i => i.id && i.title && !existingIds.has(i.id));
+      const merged = [...newOnes, ...ideas].sort((a,b) => b.id - a.id);
+      // Save all to IndexedDB
+      Promise.all(merged.map(i => putIdea(i))).then(() => {
+        ideas = merged;
+        render();
+        showToast(`${newOnes.length} ide baru berhasil diimpor`);
+      });
+    } catch(err) {
+      showToast("✗ File tidak valid. Pastikan format JSON benar.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Service Worker (PWA offline) ──
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+
+// ── Wishlist AI Decision System ──
+class WishlistAIDecisionSystem {
+  constructor() {
+    this.priorityWeights = {
+      "Penting": 3,
+      "Nanti": 2,
+      "Kapan-kapan": 1
+    };
+
+    this.categoryContext = {
+      "Belanja": { type: "purchase" },
+      "Personal": { type: "lifestyle" },
+      "Kreatif": { type: "investment" },
+      "Dev": { type: "investment" },
+      "Bisnis": { type: "investment" },
+      "Konten": { type: "investment" },
+      "Belajar": { type: "investment" }
+    };
+
+    this.priceThresholds = {
+      low: 100000,
+      medium: 500000,
+      high: 2000000
+    };
+  }
+
+  analyze(item) {
+    if (!item || !item.title) {
+      return {
+        label: "Pertimbangkan",
+        recommendation: "Tunda",
+        reason: "Data item tidak lengkap."
+      };
+    }
+
+    let score = 50;
+    score += this.calculatePriorityScore(item.priority);
+    score += this.calculatePriceScore(item.price);
+    score += this.calculateNotesScore(item.notes);
+    score += this.calculateCategoryScore(item.category, item.price);
+    score = Math.max(0, Math.min(100, score));
+
+    const decision = this.getDecision(score, item);
+    return {
+      label: decision.label,
+      recommendation: decision.recommendation,
+      reason: decision.reason
+    };
+  }
+
+  calculatePriorityScore(priority) {
+    const weight = this.priorityWeights[priority] || 1;
+    if (weight === 3) return 20;
+    if (weight === 2) return 5;
+    if (weight === 1) return -15;
+    return 0;
+  }
+
+  calculatePriceScore(price) {
+    if (!price || price === 0) return 0;
+    if (price <= this.priceThresholds.low) return 10;
+    if (price <= this.priceThresholds.medium) return 0;
+    if (price <= this.priceThresholds.high) return -12;
+    return -25;
+  }
+
+  calculateNotesScore(notes) {
+    if (!notes || notes.trim().length === 0) return -15;
+    const length = notes.trim().length;
+    const wordCount = notes.trim().split(/\s+/).length;
+    if (length < 20) return -5;
+    if (length < 50) return 5;
+    if (wordCount >= 10) return 15;
+    return 10;
+  }
+
+  calculateCategoryScore(category, price) {
+    const context = this.categoryContext[category];
+    if (!context) return 0;
+    if (context.type === "investment") {
+      return price >= this.priceThresholds.medium ? 8 : 5;
+    }
+    if (context.type === "lifestyle") return 2;
+    if (context.type === "purchase") return 3;
+    return 0;
+  }
+
+  getDecision(score, item) {
+    if (score >= 70) {
+      return {
+        label: "Layak",
+        recommendation: "Beli",
+        reason: this.generateReason(score, item, "buy")
+      };
+    }
+    if (score >= 50) {
+      return {
+        label: "Pertimbangkan",
+        recommendation: "Tunda",
+        reason: this.generateReason(score, item, "consider")
+      };
+    }
+    return {
+      label: "Tidak Layak",
+      recommendation: "Jangan",
+      reason: this.generateReason(score, item, "skip")
+    };
+  }
+
+  generateReason(score, item, decision) {
+    const priority = item.priority || "Nanti";
+    const price = item.price || 0;
+    const hasNotes = item.notes && item.notes.trim().length > 0;
+
+    const reasons = {
+      buy: [
+        priority === "Penting" && `Prioritas tinggi dan ${hasNotes ? "ada rencana jelas" : "perlu segera ditindaklanjuti"}.`,
+        price <= this.priceThresholds.low && "Harga terjangkau, kerugian minimal.",
+        hasNotes && "Ada catatan detail yang menunjukkan keputusan matang.",
+        this.categoryContext[item.category]?.type === "investment" && "Investasi untuk kebutuhan jangka panjang.",
+        score >= 85 && "Semua faktor mendukung pembelian sekarang."
+      ],
+      consider: [
+        price > this.priceThresholds.medium && !hasNotes && "Harga cukup tinggi, tapi catatan masih kurang detail.",
+        priority === "Nanti" && price > this.priceThresholds.low && "Prioritas sedang + harga cukup tinggi, percepat riset atau tunda.",
+        priority === "Kapan-kapan" && price <= this.priceThresholds.medium && "Prioritas rendah—cari yang lebih urgent dulu.",
+        !hasNotes && "Tanpa catatan detail, lebih baik tunda hingga yakin 100%."
+      ],
+      skip: [
+        priority === "Kapan-kapan" && price > this.priceThresholds.medium && "Prioritas rendah tapi harga tinggi—bukan waktu yang tepat.",
+        price > this.priceThresholds.high && priority !== "Penting" && "Harga sangat tinggi untuk prioritas tidak urgent.",
+        !hasNotes && price > this.priceThresholds.medium && "Tanpa rencana jelas + harga tinggi = impulsif.",
+        priority === "Kapan-kapan" && !hasNotes && "Tidak urgent dan tidak ada pertimbangan matang."
+      ]
+    };
+
+    const candidates = reasons[decision].filter(Boolean);
+    return candidates.length > 0 ? candidates[0] : this.getDefaultReason(decision);
+  }
+
+  getDefaultReason(decision) {
+    const defaults = {
+      buy: "Semua faktor mendukung untuk segera membeli.",
+      consider: "Ada beberapa faktor yang perlu dipertimbangkan lebih lanjut.",
+      skip: "Belum waktu yang tepat untuk membeli item ini."
+    };
+    return defaults[decision] || "Pertimbangkan kembali keputusan ini.";
+  }
+}
+
+const aiDecisionSystem = new WishlistAIDecisionSystem();
+
+function getAIDecision(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea || idea.type !== "Wishlist") return;
+
+  const decision = aiDecisionSystem.analyze({
+    title: idea.title,
+    price: idea.price,
+    priority: idea.priority,
+    notes: idea.notes,
+    category: idea.category
+  });
+
+  showAIDecisionModal(idea, decision);
+}
+
+function showAIDecisionModal(idea, decision) {
+  const labelColor = {
+    "Layak": "#10b981",
+    "Pertimbangkan": "#f59e0b",
+    "Tidak Layak": "#ef4444"
+  };
+
+  const color = labelColor[decision.label] || "#6b7280";
+
+  const modal = document.createElement("div");
+  modal.className = "overlay";
+  modal.style.display = "flex";
+  modal.style.zIndex = "999";
+  modal.onclick = (e) => {
+    if (e.target === modal) document.body.removeChild(modal);
+  };
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:360px">
+      <div class="modal-handle"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:0 24px">
+        <div style="width:36px;height:36px;border-radius:9px;background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M8 8V6a4 4 0 018 0v2"/><circle cx="8.5" cy="14" r="1" fill="#7c3aed" stroke="none"/><circle cx="12" cy="14" r="1" fill="#7c3aed" stroke="none"/><circle cx="15.5" cy="14" r="1" fill="#7c3aed" stroke="none"/></svg></div>
+        <div>
+          <div class="modal-title" style="margin:0">${escHtml(idea.title)}</div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:2px">AI Recommendation</div>
+        </div>
+      </div>
+
+      <div style="padding:16px;background:${color}15;border:1px solid ${color}40;margin:0 24px 16px;border-radius:10px">
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:6px">Keputusan</div>
+        <div style="font-size:18px;font-weight:700;color:${color};margin-bottom:8px">${decision.label}</div>
+        <div style="font-size:13px;color:var(--text-sub);line-height:1.5">${escHtml(decision.reason)}</div>
+      </div>
+
+      <div style="padding:12px;background:var(--input-bg);margin:0 24px 20px;border-radius:8px;border-left:3px solid ${color}">
+        <div style="font-size:10px;color:var(--text-faint);font-weight:600;margin-bottom:4px">Rekomendasi</div>
+        <div style="font-size:15px;font-weight:700;color:var(--text)">${decision.recommendation}</div>
+      </div>
+
+      <div class="modal-actions" style="margin:0 24px 32px">
+        <button class="btn-del-cancel" onclick="document.body.removeChild(this.closest('.overlay'))">Tutup</button>
+        <button class="btn-form-submit" style="background:${color};border:none" onclick="document.body.removeChild(this.closest('.overlay'))">Paham</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+// ── Init ──
+initTheme();
+populateCatSelects(CATEGORIES[0], null);
+EcosystemDB.open().then(() => getAllIdeas()).then(data => {
+  ideas = data;
+  render();
+}).catch(() => {
+  document.getElementById("list").innerHTML = `<div class="loading">Gagal memuat data.</div>`;
+});
+
+// ── Auto-hide scroll behavior ──
+(function() {
+  const bar = document.getElementById('autohide-bar');
+  const header = document.querySelector('.header');
+
+  function setBarTop() {
+    const hh = header.getBoundingClientRect().height;
+    bar.style.top = hh + 'px';
+  }
+
+  setBarTop();
+  window.addEventListener('resize', setBarTop);
+
+  let lastScrollY = window.scrollY;
+  let ticking = false;
+  const THRESHOLD = 60;
+
+  function onScroll() {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const currentY = window.scrollY;
+        const delta = currentY - lastScrollY;
+
+        if (delta > 0 && currentY > THRESHOLD) {
+          // Scrolling down past threshold → hide
+          bar.classList.add('hidden');
+        } else if (delta < 0) {
+          // Scrolling up (any amount) → show
+          bar.classList.remove('hidden');
+        }
+
+        lastScrollY = currentY;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
+</script>
+</body>
+</html>

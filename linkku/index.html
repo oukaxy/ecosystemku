@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0c0c0e">
+<meta name="description" content="Linkku — Simpan link pribadimu">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Linkku">
+<title>Linkku</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon-192.svg">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0e;--bg2:#111114;--bg3:#18181c;--bg4:#1e1e24;
+  --border:#26262e;--border2:#32323c;
+  --text:#f0f0f2;--text2:#8a8a9a;--text3:#4a4a5a;
+  --accent-dim:rgba(240,240,242,0.07);
+  --green:#4ade80;--red:#f87171;
+  --pr-bg:#0d0a13;--pr-border:#2a1a38;
+  --pr-accent:#c084fc;--pr-dim:rgba(192,132,252,0.1);
+  --r:8px;--r-sm:6px;--fh:'Nunito',sans-serif;--fm:'Nunito Mono',monospace;--t:0.14s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fh);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body.pm{background:var(--pr-bg)}
+body.pm .topbar{background:rgba(13,10,19,0.92);border-bottom-color:var(--pr-border)}
+body.pm .sidebar{border-right-color:var(--pr-border);background:var(--pr-bg)}
+body.pm .cat-item.active{color:var(--pr-accent);border-left-color:var(--pr-accent);background:var(--pr-dim)}
+body.pm .btn-add{background:var(--pr-accent);color:#0c0c0e}
+body.pm .btn-add:hover{background:#a855f7}
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(12,12,14,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;gap:8px}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.logo-mark{width:20px;height:20px;border:2px solid var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center}
+.logo-mark svg{width:9px;height:9px}
+/* Search: flex-grow fills available space, never overflows */
+.sw{flex:1;min-width:0;position:relative}
+.sw svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3);pointer-events:none}
+.si{width:100%;height:32px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fh);font-size:12px;padding:0 9px 0 28px;outline:none;transition:border-color var(--t)}
+.si:focus{border-color:var(--border2)}
+.si::placeholder{color:var(--text3)}
+.tr{display:flex;align-items:center;gap:6px;flex-shrink:0}
+/* PM badge: hanya dot kecil di pojok logo-mark */
+.pm-badge{display:none}
+.pm-dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--pr-accent);border:1.5px solid var(--bg);position:absolute;bottom:-1px;right:-1px}
+body.pm .pm-dot{display:block}
+.bico{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
+.bico:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.bico svg{width:14px;height:14px}
+.badd{display:none} /* hidden — replaced by FAB */
+/* FAB */
+.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;z-index:150;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,.55),0 1px 4px rgba(0,0,0,.3);transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease}
+.fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,0,0,.65)}
+.fab:active{transform:scale(.93)}
+.fab svg{width:22px;height:22px;flex-shrink:0}
+body.pm .fab{background:var(--pr-accent);color:#0c0c0e}
+/* Toast moves up a bit so it's not behind FAB */
+.tc{bottom:calc(88px + env(safe-area-inset-bottom))!important}
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:196px 1fr;min-height:calc(100dvh - 52px)}
+/* SIDEBAR */
+.sidebar{border-right:1px solid var(--border);padding:10px 0;position:sticky;top:52px;height:calc(100dvh - 52px);overflow-y:auto;scrollbar-width:none;background:var(--bg);transition:background .2s}
+.sidebar::-webkit-scrollbar{display:none}
+.slabel{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:7px 13px 2px}
+.ci{display:flex;align-items:center;justify-content:space-between;padding:6px 13px;cursor:pointer;color:var(--text2);font-size:12px;font-weight:600;transition:all var(--t);border-left:2px solid transparent;user-select:none;gap:5px}
+.ci:hover{color:var(--text);background:var(--bg3)}
+.ci.active{color:var(--text);border-left-color:var(--text);background:var(--accent-dim)}
+.ci-l{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
+.ci-l svg{width:12px;height:12px;flex-shrink:0}
+.ci-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ccnt{font-family:var(--fm);font-size:9px;color:var(--text3);background:var(--bg4);border:1px solid var(--border);padding:1px 5px;border-radius:20px;flex-shrink:0}
+.sdiv{border:none;border-top:1px solid var(--border);margin:6px 0}
+.sfooter{border-top:1px solid var(--border);padding-top:4px;margin-top:2px}
+/* CONTENT */
+.content{padding:16px 18px;min-height:calc(100dvh - 52px)}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
+.ctitle{font-size:15px;font-weight:800;letter-spacing:-.3px}
+.ccountlbl{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:1px}
+.hr{display:flex;align-items:center;gap:5px}
+.fchip{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all var(--t)}
+.fchip:hover{color:var(--text2);border-color:var(--border2)}
+.fchip.active{background:var(--bg4);border-color:var(--border2);color:var(--text)}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;contain:layout}
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color var(--t),transform var(--t);display:flex;flex-direction:column;position:relative;will-change:transform;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.card:hover{border-color:var(--border2);transform:translateY(-1px)}
+/* Thumbnail 16:9 */
+.cthumb{width:100%;aspect-ratio:16/9;background:var(--bg3);position:relative;overflow:hidden;flex-shrink:0}
+.cthumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
+.cthumb-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cthumb-fb::before{content:'';position:absolute;inset:0;background:var(--cfav-bg,var(--bg4))}
+/* favicon stays at native 16px — rendered crisp, not stretched */
+.cfav-big{width:16px;height:16px;image-rendering:crisp-edges;position:relative;z-index:1;flex-shrink:0}
+.cletter{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--text2);position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid var(--border2)}
+.cfav{width:16px;height:16px;border-radius:2px;image-rendering:crisp-edges}
+/* Card body */
+.cbody{padding:8px 10px 4px;flex:1;display:flex;flex-direction:column;gap:2px}
+/* domain/source line — use heading font, lighter weight */
+.csrc{display:flex;align-items:center;gap:4px;font-family:var(--fh);font-size:10px;font-weight:600;color:var(--text3);overflow:hidden}
+.csrc img{width:10px;height:10px;border-radius:2px;flex-shrink:0;image-rendering:crisp-edges}
+.csrc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctitle2{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px}
+.cnote{font-family:var(--fm);font-size:10px;color:var(--text2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;transition:all .2s ease}
+.cnote.exp{display:block;-webkit-line-clamp:unset;overflow:visible;white-space:pre-wrap}
+.cnote-arr{font-family:var(--fm);font-size:9px;color:var(--text3);margin-top:2px;cursor:pointer;display:flex;align-items:center;gap:2px;transition:color var(--t)}
+.cnote-arr:hover{color:var(--text2)}
+.cnote-arr svg{width:10px;height:10px;transition:transform .2s ease}
+.cnote-arr.exp svg{transform:rotate(180deg)}
+.ctags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.ctag{font-family:var(--fm);font-size:8px;padding:2px 6px;border-radius:20px;background:var(--bg4);border:1px solid var(--border);color:var(--text3)}
+/* Footer: stick to bottom of card, no excess gap */
+.cfoot{display:flex;align-items:center;justify-content:space-between;padding:4px 10px 7px;margin-top:auto}
+.cdate{font-family:var(--fm);font-size:9px;color:var(--text3)}
+.cacts{display:flex;gap:3px;opacity:0;transition:opacity var(--t)}
+.card:hover .cacts{opacity:1}
+.cbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
+.cbtn:hover{background:var(--bg4);color:var(--text)}
+.cbtn svg{width:10px;height:10px}
+.cbtn.del:hover{background:rgba(248,113,113,.1);border-color:var(--red);color:var(--red)}
+
+/* Tag Picker */
+.tag-picker{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tpick{font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;transition:all var(--t);user-select:none;display:inline-flex;align-items:center;gap:4px}
+.tpick:hover{border-color:var(--border2);color:var(--text2)}
+.tpick.on{background:var(--bg4);border-color:var(--border2);color:var(--text);font-weight:700}
+.tpick-del{font-size:11px;line-height:1;color:var(--text3);padding:0 0 0 2px;cursor:pointer;border-radius:50%;transition:color var(--t)}
+.tpick-del:hover{color:var(--red)}
+.tag-new{display:flex;gap:5px;margin-top:6px}
+.tag-new input{flex:1;height:28px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fm);font-size:11px;padding:0 8px;outline:none}
+.tag-new input:focus{border-color:var(--border2)}
+.tag-new button{height:28px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--fh);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
+.tag-new button:hover{background:var(--bg4);color:var(--text)}
+/* EMPTY STATE */
+.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 80px;text-align:center;min-height:50dvh}
+.empty-icon{width:64px;height:64px;border-radius:18px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.empty-icon svg{width:28px;height:28px;color:var(--text3)}
+.empty-t{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px}
+.empty-s{font-family:var(--fm);font-size:11px;color:var(--text3);line-height:1.6;max-width:220px}
+.empty-cta{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;color:var(--text3)}
+.empty-cta svg{width:18px;height:18px;color:var(--text2);animation:bouncedown 1.4s ease infinite}
+@keyframes bouncedown{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+/* OVERLAY / MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;opacity:0;pointer-events:none;transition:opacity .16s ease}
+.ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:440px;max-height:90dvh;overflow-y:auto;scrollbar-width:none;transform:translateY(10px);transition:transform .16s ease}
+.modal::-webkit-scrollbar{display:none}
+.ov.open .modal{transform:translateY(0)}
+.msm{max-width:290px}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
+.mt{font-size:14px;font-weight:800}
+.mc{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
+.mc:hover{background:var(--bg3);color:var(--text)}
+.mc svg{width:11px;height:11px}
+.mb{padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.mf{display:flex;gap:7px;padding:0 18px 18px;justify-content:flex-end}
+/* Form */
+.fld{display:flex;flex-direction:column;gap:4px}
+.flbl{font-family:var(--fm);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.fi,.fta,.fsel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fm);font-size:12px;padding:7px 9px;outline:none;width:100%;transition:border-color var(--t)}
+.fi:focus,.fta:focus,.fsel:focus{border-color:var(--border2)}
+.fi::placeholder,.fta::placeholder{color:var(--text3)}
+.fta{resize:vertical;min-height:55px}
+.fsel{cursor:pointer}
+.fsel option{background:var(--bg3)}
+.togrow{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)}
+.toginfo{display:flex;flex-direction:column;gap:1px}
+.togname{font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
+.togname svg{width:11px;height:11px}
+.togdesc{font-family:var(--fm);font-size:10px;color:var(--text3)}
+.tog{width:34px;height:19px;border-radius:10px;background:var(--border);cursor:pointer;position:relative;transition:background var(--t);flex-shrink:0;border:none}
+.tog.on{background:#c084fc}
+.tog::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform var(--t)}
+.tog.on::after{transform:translateX(15px)}
+/* Buttons */
+.bsec{height:32px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer;transition:all var(--t)}
+.bsec:hover{background:var(--bg3);color:var(--text)}
+.bpri{height:32px;padding:0 14px;border-radius:var(--r-sm);border:none;background:var(--text);color:var(--bg);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer;transition:opacity var(--t)}
+.bpri:hover{opacity:.85}
+.bdanger{height:32px;padding:0 14px;border-radius:var(--r-sm);border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.08);color:var(--red);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer;transition:all var(--t)}
+.bdanger:hover{background:rgba(248,113,113,.16)}
+/* PIN */
+.pdots{display:flex;gap:7px;justify-content:center;padding:4px 0}
+.pdot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border2);transition:all var(--t)}
+.pdot.on{background:#c084fc;border-color:#c084fc}
+.ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:2px}
+.pkey{height:46px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--fh);font-size:17px;font-weight:700;cursor:pointer;transition:all var(--t);display:flex;align-items:center;justify-content:center}
+.pkey:hover{background:var(--bg4);border-color:var(--border2)}
+.pkey:active{transform:scale(.94)}
+.pkey svg{width:13px;height:13px}
+.pok{background:var(--pr-dim);border-color:var(--pr-border);color:#c084fc}
+.perr{font-family:var(--fm);font-size:10px;color:var(--red);text-align:center;min-height:14px}
+/* Settings */
+.ss{display:flex;flex-direction:column;gap:5px}
+.ssl{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding-bottom:4px;border-bottom:1px solid var(--border)}
+.sr{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all var(--t)}
+.sr:hover{background:var(--bg4);border-color:var(--border2)}
+.srl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600}
+.srl svg{width:13px;height:13px;flex-shrink:0}
+.srs{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:1px}
+.srr svg{width:11px;height:11px;color:var(--text3)}
+.drow{color:var(--red)}
+.drow .srs{color:rgba(248,113,113,.6)}
+.drow .srr svg{color:var(--red)}
+/* Cat manager */
+.ncr{display:flex;gap:5px;align-items:center}
+.emji{width:38px;text-align:center;font-size:14px}
+.cml{display:flex;flex-direction:column;gap:4px}
+.cmi{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)}
+.cmil{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.cmil svg{width:11px;height:11px;color:var(--text3)}
+/* URL preview */
+.uprev{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);font-family:var(--fm);font-size:10px;color:var(--text3)}
+.uprev img{width:11px;height:11px;border-radius:2px;flex-shrink:0}
+.uprev-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ftag{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text3);flex-shrink:0}
+.fdot{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* Toast */
+.tc{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}
+.toast{background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:var(--fm);font-size:11px;padding:6px 14px;border-radius:100px;animation:tin .18s ease;white-space:nowrap}
+@keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.toast.ok{color:var(--green);border-color:rgba(74,222,128,.3)}
+.toast.err{color:var(--red);border-color:rgba(248,113,113,.3)}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+/* ── SIDEBAR BACKDROP (mobile) ── */
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:89;opacity:0;transition:opacity .22s ease}
+.sb-backdrop.show{opacity:1}
+
+/* ── BOTTOM SHEET (long-press card actions) ── */
+.bs-ov{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;background:rgba(0,0,0,0)}
+.bs-ov.open{opacity:1;pointer-events:all;background:rgba(0,0,0,.6)}
+.bs{background:var(--bg2);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:540px;padding-bottom:env(safe-area-inset-bottom);transform:translateY(100%);transition:transform .26s cubic-bezier(.4,0,.2,1)}
+.bs-ov.open .bs{transform:translateY(0)}
+.bs-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 6px}
+.bs-preview{display:flex;align-items:center;gap:10px;padding:8px 18px 12px;border-bottom:1px solid var(--border)}
+.bs-thumb{width:48px;height:27px;border-radius:5px;background:var(--bg3);overflow:hidden;flex-shrink:0}
+.bs-thumb img{width:100%;height:100%;object-fit:cover}
+.bs-info{flex:1;min-width:0}
+.bs-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bs-url{font-family:var(--fm);font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.bs-actions{display:flex;flex-direction:column;gap:0}
+.bs-btn{display:flex;align-items:center;gap:10px;padding:16px 20px;background:transparent;border:none;border-top:1px solid var(--border);color:var(--text);font-family:var(--fh);font-size:13px;font-weight:600;cursor:pointer;transition:background .12s ease;text-align:left;width:100%}
+.bs-btn:first-child{border-top:none}
+.bs-btn:hover,.bs-btn:active{background:var(--bg3)}
+.bs-btn svg{width:16px;height:16px;color:var(--text2);flex-shrink:0}
+.bs-btn.danger{color:var(--red)}
+.bs-btn.danger svg{color:var(--red)}
+.bs-sep{grid-column:1/-1;height:1px;background:var(--border);margin:0}
+
+/* ── CARD TAP FEEDBACK (mobile) ── */
+@media(hover:none){
+  .card{-webkit-tap-highlight-color:transparent}
+  .card:active{transform:scale(.97);border-color:var(--border2)}
+  .cacts{opacity:1!important} /* always show action buttons on touch */
+  .cbtn{width:26px;height:26px} /* slightly bigger tap target */
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:660px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:-206px;top:52px;height:calc(100dvh - 52px);width:206px;z-index:90;transition:left .22s ease;border-right:1px solid var(--border)}
+  .sidebar.open{left:0}
+  .sb-backdrop{display:block}
+  .content{padding:10px 10px calc(80px + env(safe-area-inset-bottom)) 10px}
+  /* Mobile: horizontal list cards */
+  .grid{grid-template-columns:1fr;gap:6px}
+  .card{flex-direction:row;flex-wrap:wrap;align-items:stretch;min-height:72px}
+  /* thumbnail: fixed square on mobile — no aspect-ratio stretch */
+  .cthumb{width:88px;height:88px;aspect-ratio:unset;flex-shrink:0;border-radius:var(--r) 0 0 var(--r)}
+  /* bigger favicon in list view fallback */
+  .cthumb-fb .cfav-big{width:24px;height:24px;image-rendering:auto}
+  .cbody{flex:1;min-width:0;padding:9px 10px 4px}
+  .ctitle2{font-size:13px}
+  .cfoot{width:100%;border-top:1px solid var(--border);padding:4px 10px 6px;margin-top:0;display:flex;align-items:center;justify-content:space-between}
+  .cacts{display:none!important}
+  /* hint tahan kartu */
+  .cfoot::after{content:'Tahan untuk opsi';font-family:var(--fm);font-size:9px;color:var(--text3);opacity:0.6}
+  /* search: fixed small width, icons always visible */
+  .sw{width:130px;flex-shrink:1}
+  .si:focus{width:130px} /* don't expand on mobile, space is tight */
+  .bmob{display:flex!important}
+  .topbar{padding:0 10px;gap:6px}
+}
+@media(min-width:661px){
+  .content{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
+  .fab{bottom:calc(28px + env(safe-area-inset-bottom));right:24px;width:56px;height:56px}
+}
+.bmob{display:none}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-mark" style="position:relative">
+      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 5h6M5 2l3 3-3 3"/></svg>
+      <span class="pm-dot"></span>
+    </div>
+    Linkku
+  </div>
+  <div class="sw">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input class="si" type="text" placeholder="Cari link..." id="si" autocomplete="off">
+  </div>
+  <div class="tr">
+    <button class="bico bmob" id="btnMob">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <button class="bico" id="btnPT" title="Mode Privat">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </button>
+    <button class="bico" id="btnSet" title="Pengaturan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <!-- Normal nav -->
+    <div id="navN">
+      <div class="slabel">Semua</div>
+      <div class="ci active" data-cat="all" onclick="selCat('all')">
+        <div class="ci-l">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span class="ci-lbl">Semua Link</span>
+        </div>
+        <span class="ccnt" id="cntAll">0</span>
+      </div>
+      <hr class="sdiv">
+      <div class="slabel">Kategori</div>
+      <div id="catList"></div>
+      <div class="sfooter">
+        <div class="ci" onclick="openCatMgr()">
+          <div class="ci-l">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span class="ci-lbl" style="color:var(--text3)">Kelola Kategori</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Private nav -->
+    <div id="navP" style="display:none">
+      <div style="padding:9px 13px 5px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#c084fc">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Mode Privat
+      </div>
+      <div class="ci active" data-cat="private-all" onclick="selCat('private-all')">
+        <div class="ci-l">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span class="ci-lbl">Semua Privat</span>
+        </div>
+        <span class="ccnt" id="cntPriv">0</span>
+      </div>
+      <hr class="sdiv">
+      <div class="slabel">Kategori</div>
+      <div id="catListP"></div>
+      <div class="sfooter">
+        <div class="ci" onclick="openPrivCatMgr()">
+          <div class="ci-l">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span class="ci-lbl" style="color:var(--text3)">Kelola Kategori Privat</span>
+          </div>
+        </div>
+        <div class="ci" onclick="exitPrivate()">
+          <div class="ci-l" style="color:var(--text3)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span class="ci-lbl">Keluar Mode Privat</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="ch">
+      <div>
+        <div class="ctitle" id="pgTitle">Semua Link</div>
+        <div class="ccountlbl" id="pgCount">0 link</div>
+      </div>
+      <div class="hr">
+        <span class="fchip active" data-f="all" onclick="setF('all')">Semua</span>
+        <span class="fchip" data-f="recent" onclick="setF('recent')">Terbaru</span>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<!-- Modal: Add/Edit -->
+<div class="ov" id="ovL">
+  <div class="modal">
+    <div class="mh"><div class="mt" id="mLT">Tambah Link</div>
+      <button class="mc" onclick="closeOv('ovL')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="fld"><label class="flbl">URL *</label><input class="fi" type="url" id="lU" placeholder="https://..." oninput="onUrlI()" autocomplete="off"></div>
+      <div id="upw" style="display:none"></div>
+      <div class="fld"><label class="flbl">Judul</label><input class="fi" type="text" id="lTi" placeholder="Auto-fetch dari URL..."></div>
+      <div class="fld"><label class="flbl">Catatan</label><textarea class="fta" id="lN" placeholder="Catatan opsional..."></textarea></div>
+      <div class="fld"><label class="flbl">Kategori</label><select class="fsel" id="lC"></select></div>
+      <div class="fld">
+        <label class="flbl">Tags</label>
+        <div class="tag-picker" id="tagPicker"></div>
+        <div class="tag-new">
+          <input type="text" id="tagNewI" placeholder="Tag baru..." maxlength="24" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewTag()}">
+          <button onclick="addNewTag()">+ Tambah</button>
+        </div>
+        <input type="hidden" id="lTg">
+      </div>
+      <div class="togrow">
+        <div class="toginfo">
+          <div class="togname"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Link Privat</div>
+          <div class="togdesc">Hanya muncul di Mode Privat</div>
+        </div>
+        <button class="tog" id="togP" onclick="togPFn()"></button>
+      </div>
+    </div>
+    <div class="mf"><button class="bsec" onclick="closeOv('ovL')">Batal</button><button class="bpri" onclick="saveLink()">Simpan</button></div>
+  </div>
+</div>
+
+<!-- Modal: PIN enter -->
+<div class="ov" id="ovPin">
+  <div class="modal msm">
+    <div class="mh"><div class="mt" id="pinTit">Masukkan PIN</div>
+      <button class="mc" onclick="closeOv('ovPin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="pdots" id="pDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
+      <div class="perr" id="pErr"></div>
+      <div class="ppad">
+        <button class="pkey" onclick="pi('1')">1</button><button class="pkey" onclick="pi('2')">2</button><button class="pkey" onclick="pi('3')">3</button>
+        <button class="pkey" onclick="pi('4')">4</button><button class="pkey" onclick="pi('5')">5</button><button class="pkey" onclick="pi('6')">6</button>
+        <button class="pkey" onclick="pi('7')">7</button><button class="pkey" onclick="pi('8')">8</button><button class="pkey" onclick="pi('9')">9</button>
+        <button class="pkey" onclick="pd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
+        <button class="pkey" onclick="pi('0')">0</button><button class="pkey pok" onclick="pc()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Set PIN -->
+<div class="ov" id="ovSP">
+  <div class="modal msm">
+    <div class="mh"><div class="mt">Atur PIN Privat</div>
+      <button class="mc" onclick="closeOv('ovSP')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--text3);text-align:center" id="spHint">Masukkan PIN 4 digit baru</div>
+      <div class="pdots" id="spDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
+      <div class="perr" id="spErr"></div>
+      <div class="ppad">
+        <button class="pkey" onclick="spi('1')">1</button><button class="pkey" onclick="spi('2')">2</button><button class="pkey" onclick="spi('3')">3</button>
+        <button class="pkey" onclick="spi('4')">4</button><button class="pkey" onclick="spi('5')">5</button><button class="pkey" onclick="spi('6')">6</button>
+        <button class="pkey" onclick="spi('7')">7</button><button class="pkey" onclick="spi('8')">8</button><button class="pkey" onclick="spi('9')">9</button>
+        <button class="pkey" onclick="spd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
+        <button class="pkey" onclick="spi('0')">0</button><button class="pkey pok" onclick="spc()">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Settings -->
+<div class="ov" id="ovSet">
+  <div class="modal">
+    <div class="mh"><div class="mt">Pengaturan</div>
+      <button class="mc" onclick="closeOv('ovSet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="ss"><div class="ssl">Keamanan</div>
+        <div class="sr" onclick="openSetPin()">
+          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div>PIN Privat<div class="srs" id="pinSt">Belum diatur</div></div></div>
+          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+      <div class="ss"><div class="ssl">Data</div>
+        <div class="sr" onclick="exportData()">
+          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div>Export Data<div class="srs">Download JSON</div></div></div>
+          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="sr" onclick="importData()">
+          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div>Import Data<div class="srs">Dari file JSON</div></div></div>
+          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+        <div class="sr drow" onclick="confirmReset()">
+          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><div>Reset Semua Data<div class="srs">Hapus semua link & kategori</div></div></div>
+          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+        </div>
+      </div>
+      <div style="padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)">
+        <div style="font-size:12px;font-weight:700;margin-bottom:2px">Linkku v2.0</div>
+        <div style="font-family:var(--fm);font-size:10px;color:var(--text3)">Data tersimpan lokal di browser kamu.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Private Category Manager -->
+<div class="ov" id="ovPrivCat">
+  <div class="modal">
+    <div class="mh"><div class="mt">Kelola Kategori Privat</div>
+      <button class="mc" onclick="closeOv('ovPrivCat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="ncr">
+        <input class="fi emji" type="text" id="npcE" placeholder="🔒" maxlength="2">
+        <input class="fi" type="text" id="npcN" placeholder="Nama kategori privat...">
+        <button class="bpri" onclick="addPrivCat()" style="flex-shrink:0;padding:0 11px">Tambah</button>
+      </div>
+      <div class="cml" id="pcml"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cat Manager -->
+<div class="ov" id="ovCat">
+  <div class="modal">
+    <div class="mh"><div class="mt">Kelola Kategori</div>
+      <button class="mc" onclick="closeOv('ovCat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="ncr">
+        <input class="fi emji" type="text" id="ncE" placeholder="📁" maxlength="2">
+        <input class="fi" type="text" id="ncN" placeholder="Nama kategori...">
+        <button class="bpri" onclick="addCat()" style="flex-shrink:0;padding:0 11px">Tambah</button>
+      </div>
+      <div class="cml" id="cml"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Confirm -->
+<div class="ov" id="ovCfm">
+  <div class="modal" style="max-width:320px">
+    <div class="mh"><div class="mt" id="cfmTit">Konfirmasi</div>
+      <button class="mc" onclick="closeOv('ovCfm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb"><p style="font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.6" id="cfmMsg"></p></div>
+    <div class="mf"><button class="bsec" onclick="closeOv('ovCfm')">Batal</button><button class="bdanger" id="cfmBtn">Hapus</button></div>
+  </div>
+</div>
+
+<div class="tc" id="tc"></div>
+<input type="file" id="impI" accept=".json" style="display:none" onchange="handleImp(event)">
+
+<!-- Sidebar backdrop -->
+<div class="sb-backdrop" id="sbBackdrop"></div>
+
+<!-- Bottom Sheet: Card Actions -->
+<div class="bs-ov" id="bsOv">
+  <div class="bs" id="bsEl">
+    <div class="bs-handle"></div>
+    <div class="bs-preview">
+      <div class="bs-thumb"><img id="bsThumb" src="" alt=""></div>
+      <div class="bs-info">
+        <div class="bs-title" id="bsTitle">—</div>
+        <div class="bs-url" id="bsUrl">—</div>
+      </div>
+    </div>
+    <div class="bs-actions">
+      <button class="bs-btn" id="bsBtnCopy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Salin URL
+      </button>
+      <button class="bs-btn" id="bsBtnEdit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      </button>
+      <button class="bs-btn danger" id="bsBtnDel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        Hapus
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- FAB: Tambah Link -->
+<button class="fab" id="btnAdd" title="Tambah Link" aria-label="Tambah Link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<script>
+// ── STATE ──
+let L=[],C=[],PC=[],cur='all',flt='all',q='',eid=null,pm=false,pBuf='',pCb=null,pRaw=false,spStep=1,spF='',spB='';
+
+// ── INDEXEDDB STORAGE ──
+let _db=null;
+function openDB(){
+  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+  return new Promise((res,rej)=>{
+    if(_db){res(_db);return}
+    const req=indexedDB.open('linkkuDB',1);
+    req.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');
+    };
+    req.onsuccess=e=>{_db=e.target.result;res(_db)};
+    req.onerror=e=>rej(e);
+  });
+}
+async function dbGet(key){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readonly');
+    const req=tx.objectStore('kv').get(key);
+    req.onsuccess=()=>res(req.result??null);
+    req.onerror=e=>rej(e);
+  });
+}
+async function dbSet(key,val){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readwrite');
+    tx.objectStore('kv').put(val,key);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e);
+  });
+}
+async function dbDel(key){
+  const db=await openDB();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readwrite');
+    tx.objectStore('kv').delete(key);
+    tx.oncomplete=()=>res();
+    tx.onerror=e=>rej(e);
+  });
+}
+
+async function save(){
+  await dbSet('lk_l',L);
+  await dbSet('lk_c',C);
+  await dbSet('lk_pc',PC);
+}
+
+async function load(){
+  // migrate from localStorage first
+  const LS=localStorage;
+  let migrated=false;
+  if(LS.getItem('lk_l')){
+    try{const v=JSON.parse(LS.getItem('lk_l'));if(Array.isArray(v)){await dbSet('lk_l',v);migrated=true;}}catch{}
+    LS.removeItem('lk_l');
+  }
+  if(LS.getItem('lk_c')){
+    try{const v=JSON.parse(LS.getItem('lk_c'));if(Array.isArray(v)){await dbSet('lk_c',v);migrated=true;}}catch{}
+    LS.removeItem('lk_c');
+  }
+  if(LS.getItem('lk_pin')){
+    await dbSet('lk_pin',LS.getItem('lk_pin'));
+    LS.removeItem('lk_pin');
+  }
+
+  L=(await dbGet('lk_l'))||[];
+  C=(await dbGet('lk_c'))||[];
+  PC=(await dbGet('lk_pc'))||[];
+  if(!Array.isArray(L))L=[];
+  if(!Array.isArray(C))C=[];
+  if(!Array.isArray(PC))PC=[];
+  if(!C.length){C=[{id:'yt',n:'YouTube'},{id:'tools',n:'Tools'},{id:'reading',n:'Reading'},{id:'project',n:'Project'}];await save()}
+  if(migrated)toast('Data dimigrasi ke IndexedDB','ok');
+}
+async function gpin(){return(await dbGet('lk_pin'))||''}
+async function hashPin(p){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function spin(p){const h=await hashPin(p);await dbSet('lk_pin',h)}
+async function verifyPin(p){return(await hashPin(p))===(await gpin())}
+
+// ── PRIVATE MODE ──
+function enterPM(){
+  pm=true;cur='private-all';
+  sessionStorage.setItem('lk_pm','1');
+  sessionStorage.setItem('lk_cur','private-all');
+  document.body.classList.add('pm');
+  document.getElementById('navN').style.display='none';
+  document.getElementById('navP').style.display='block';
+  document.getElementById('btnPT').style.color='#c084fc';
+  render();
+}
+function exitPrivate(){
+  pm=false;cur='all';
+  sessionStorage.removeItem('lk_pm');
+  sessionStorage.removeItem('lk_cur');
+  document.body.classList.remove('pm');
+  document.getElementById('navN').style.display='block';
+  document.getElementById('navP').style.display='none';
+  document.getElementById('btnPT').style.color='';
+  render();
+}
+async function togglePM(){
+  if(pm){exitPrivate();return}
+  if(!(await gpin())){toast('Atur PIN dulu di Pengaturan','err');return}
+  openPin('Masukkan PIN',()=>enterPM());
+}
+
+// ── RENDER ──
+function render(){renderSB();renderCards()}
+
+function renderSB(){
+  const pub=L.filter(l=>!l.p),prv=L.filter(l=>l.p);
+  document.getElementById('cntAll').textContent=pub.length;
+  document.getElementById('cntPriv').textContent=prv.length;
+
+  const mkCat=(l,cats,priv)=>cats.map(c=>{
+    const cnt=l.filter(x=>x.pcat===c.id||x.cat===c.id).length;
+    if(priv&&!cnt)return'';
+    const act=cur===c.id?'active':'';
+    return`<div class="ci ${act}" data-cat="${c.id}" onclick="selCat('${c.id}')"><div class="ci-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="ci-lbl">${esc(c.n)}</span></div><span class="ccnt">${cnt}</span></div>`;
+  }).join('');
+
+  document.getElementById('catList').innerHTML=mkCat(pub,C,false);
+  document.getElementById('catListP').innerHTML=mkCat(prv,PC,true)||`<div style="padding:5px 13px;font-family:var(--fm);font-size:10px;color:var(--text3)">Belum ada</div>`;
+
+  document.querySelectorAll((pm?'#navP':'#navN')+' .ci').forEach(el=>{
+    el.classList.toggle('active',el.dataset.cat===cur);
+  });
+}
+
+function gFiltered(){
+  let r=L.filter(l=>pm?l.p:!l.p);
+  if(cur==='private-all'){}
+  else if(cur!=='all'){
+    if(pm)r=r.filter(l=>l.pcat===cur);
+    else r=r.filter(l=>l.cat===cur);
+  }
+  if(q){const lq=q.toLowerCase();r=r.filter(l=>(l.ti||'').toLowerCase().includes(lq)||(l.url||'').toLowerCase().includes(lq)||(l.note||'').toLowerCase().includes(lq)||(l.tags||[]).some(t=>t.toLowerCase().includes(lq)))}
+  if(flt==='recent')r=r.slice().sort((a,b)=>b.ts-a.ts).slice(0,20);
+  return r;
+}
+
+function renderCards(){
+  const g=document.getElementById('grid');
+  const rows=gFiltered();
+  let title='Semua Link';
+  if(pm)title=cur==='private-all'?'Semua Privat':(C.find(c=>c.id===cur)?.n||'Kategori');
+  else if(cur!=='all')title=C.find(c=>c.id===cur)?.n||'Kategori';
+  document.getElementById('pgTitle').textContent=title;
+  document.getElementById('pgCount').textContent=`${rows.length} link`;
+  if(!rows.length){
+    const isSearch=!!q;
+    const isCat=cur!=='all'&&cur!=='private-all';
+    let icon,emptyTitle,sub,cta='';
+    if(isSearch){
+      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
+      emptyTitle='Tidak ditemukan';sub='Coba kata kunci lain';
+    } else if(isCat){
+      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+      emptyTitle='Kategori kosong';sub='Belum ada link di kategori ini';
+      cta=`<div class="empty-cta">Tap tombol + untuk menambah<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>`;
+    } else {
+      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+      emptyTitle='Belum ada link';sub='Simpan link favoritmu di sini, akses kapan saja.';
+      cta=`<div class="empty-cta">Tap tombol + untuk mulai<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>`;
+    }
+    g.innerHTML=`<div class="empty"><div class="empty-icon">${icon}</div><div class="empty-t">${emptyTitle}</div><div class="empty-s">${sub}</div>${cta}</div>`;
+    return;
+  }
+  g.innerHTML=rows.map(l=>cHtml(l)).join('');
+  // attach long-press listeners for mobile bottom sheet
+  g.querySelectorAll('.card[data-id]').forEach(card=>attachLP(card,card.dataset.id));
+}
+
+function cHtml(l){
+  const dom=gDom(l.url);
+  const fav=`https://www.google.com/s2/favicons?domain=${dom}&sz=32`;
+  const cat=C.find(c=>c.id===l.cat);
+  const tags=(l.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
+  // stable per-domain hue for fallback bg
+  let hue=0;for(let i=0;i<dom.length;i++)hue=(hue*31+dom.charCodeAt(i))%360;
+  const fbStyle=`style="--cfav-bg:hsl(${hue},16%,13%)"`;
+  const initLetter=esc((l.ti||dom||'?').charAt(0).toUpperCase());
+  const thumb=l.thumb
+    ?`<img src="${esc(l.thumb)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'cthumb-fb\\'><div class=\\'cletter\\'>${initLetter}</div></div>'">`
+    :`<div class="cthumb-fb" ${fbStyle}><img class="cfav-big" src="${fav}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="cletter" style="display:none">${initLetter}</div></div>`;
+  const titleHtml=l.ti
+    ?`<div class="ctitle2">${esc(l.ti)}</div>`
+    :`<div class="ctitle2" style="color:var(--text3);font-style:italic">${esc(dom)}</div>`;
+  return`<div class="card" data-id="${l.id}"><div class="cthumb">${thumb}</div><div class="cbody"><div class="csrc"><img src="${fav}" alt="" onerror="this.style.display='none'"><span>${esc(dom)}</span>${cat?`<span style="color:var(--text3)"> · ${esc(cat.n)}</span>`:''}</div>${titleHtml}${l.note?`<div class="cnote" onclick="toggleNote(event,'${l.id}')" id="note-${l.id}">${esc(l.note)}</div><div class="cnote-arr" id="narr-${l.id}" onclick="toggleNote(event,'${l.id}')"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg></div>`:''} ${tags?`<div class="ctags">${tags}</div>`:''}</div><div class="cfoot"><span class="cdate">${fmtD(l.ts)}</span><div class="cacts"><button class="cbtn" onclick="cpUrl('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="cbtn" onclick="editL('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="cbtn del" onclick="delL('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div></div></div>`;
+}
+
+// ── BOTTOM SHEET (long-press) ──
+let bsId=null,lpTimer=null,lpMoved=false;
+
+function openBS(id){
+  const l=L.find(x=>x.id===id);if(!l)return;
+  bsId=id;
+  const dom=gDom(l.url);
+  document.getElementById('bsTitle').textContent=l.ti||dom;
+  document.getElementById('bsUrl').textContent=dom;
+  const img=document.getElementById('bsThumb');
+  if(l.thumb){img.src=l.thumb;img.style.display='block'}
+  else{img.style.display='none'}
+  const ov=document.getElementById('bsOv');
+  ov.classList.add('open');
+}
+function closeBS(){
+  document.getElementById('bsOv').classList.remove('open');
+  bsId=null;
+}
+document.getElementById('bsOv').addEventListener('click',e=>{if(e.target===document.getElementById('bsOv'))closeBS()});
+document.getElementById('bsBtnCopy').addEventListener('click',()=>{if(bsId)cpUrl(bsId);closeBS()});
+document.getElementById('bsBtnEdit').addEventListener('click',()=>{if(bsId)editL(bsId);closeBS()});
+document.getElementById('bsBtnDel').addEventListener('click',()=>{const id=bsId;closeBS();if(id)delL(id)});
+
+// Swipe down to close bottom sheet
+let bsStartY=0;
+document.getElementById('bsEl').addEventListener('touchstart',e=>{bsStartY=e.touches[0].clientY},{passive:true});
+document.getElementById('bsEl').addEventListener('touchend',e=>{
+  if(e.changedTouches[0].clientY-bsStartY>60)closeBS();
+},{passive:true});
+
+// Long-press on cards → bottom sheet (only on touch devices)
+const _lpAttached=new WeakSet();
+let lpTriggered=false;
+function attachLP(card,id){
+  if(_lpAttached.has(card))return;
+  _lpAttached.add(card);
+  card.addEventListener('touchstart',e=>{
+    lpMoved=false;
+    lpTriggered=false;
+    lpTimer=setTimeout(()=>{
+      if(!lpMoved){
+        lpTriggered=true;
+        if(navigator.vibrate)navigator.vibrate(40);
+        openBS(id);
+      }
+    },420);
+  },{passive:true});
+  card.addEventListener('touchmove',()=>{lpMoved=true;clearTimeout(lpTimer)},{passive:true});
+  card.addEventListener('touchend',e=>{
+    clearTimeout(lpTimer);
+    // Kalau long-press sudah trigger, block click event berikutnya
+    if(lpTriggered){
+      lpTriggered=false;
+      e.stopPropagation();
+    }
+  },{passive:false});
+  card.addEventListener('touchcancel',()=>{clearTimeout(lpTimer);lpTriggered=false;},{passive:true});
+  // Block click jika berasal dari long-press
+  card.addEventListener('click',e=>{
+    if(lpTriggered){e.stopPropagation();e.preventDefault();lpTriggered=false;}
+  },true);
+}
+
+function selCat(id){cur=id;closeSidebar();render()}
+function setF(f){flt=f;document.querySelectorAll('.fchip').forEach(el=>el.classList.toggle('active',el.dataset.f===f));renderCards()}
+function cpUrl(id){
+  const l=L.find(x=>x.id===id);if(!l)return;
+  if(navigator.clipboard&&window.isSecureContext){
+    navigator.clipboard.writeText(l.url).then(()=>toast('URL disalin','ok')).catch(()=>cpFallback(l.url));
+  } else {
+    cpFallback(l.url);
+  }
+}
+function cpFallback(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');toast('URL disalin','ok')}catch{toast('Gagal menyalin','err')}
+  document.body.removeChild(ta);
+}
+async function editL(id){
+  const l=L.find(x=>x.id===id);if(!l)return;
+  eid=id;document.getElementById('mLT').textContent='Edit Link';
+  document.getElementById('lU').value=l.url;document.getElementById('lTi').value=l.ti;
+  document.getElementById('lN').value=l.note||'';
+  // Set toggle privat DULU sebelum resetTagPicker, supaya isPrivForm() terbaca benar
+  document.getElementById('togP').classList.toggle('on',!!l.p);
+  await resetTagPicker(l.tags||[]);
+  popCatSel(l.p?(l.pcat||''):(l.cat||''));showUP(l.url);openOv('ovL');
+}
+async function delL(id){cfm('Hapus Link?','Link akan dihapus permanen.',async()=>{L=L.filter(l=>l.id!==id);await save();render();toast('Dihapus','err')})}
+async function saveLink(){
+  const url=document.getElementById('lU').value.trim();
+  if(!url){toast('URL tidak boleh kosong','err');return}
+  const ti=document.getElementById('lTi').value.trim()||gDom(url);
+  const note=document.getElementById('lN').value.trim();
+  const catVal=document.getElementById('lC').value;
+  const tagsR=document.getElementById('lTg').value.trim();
+  const tags=tagsR?tagsR.split(',').map(t=>t.trim()).filter(Boolean):[];
+  const prv=document.getElementById('togP').classList.contains('on');
+  if(eid){
+    const i=L.findIndex(l=>l.id===eid);
+    if(i!==-1)L[i]=prv?{...L[i],url,ti,note,pcat:catVal,cat:'',tags,p:true}:{...L[i],url,ti,note,cat:catVal,pcat:'',tags,p:false};
+    toast('Diperbarui','ok');
+  } else {
+    const nl=prv
+      ?{id:gId(),url,ti,note,pcat:catVal,cat:'',tags,p:true,thumb:gThumb(url),ts:Date.now()}
+      :{id:gId(),url,ti,note,cat:catVal,pcat:'',tags,p:false,thumb:gThumb(url),ts:Date.now()};
+    L.unshift(nl);toast('Disimpan','ok');fetchM(url,nl.id);
+  }
+  await save();render();closeOv('ovL');eid=null;
+}
+// ── TAG PICKER ──
+// _extraTags dipisah per mode supaya tidak bocor antar mode
+let _extraTagsNormal=[];
+let _extraTagsPriv=[];
+
+function isPrivForm(){
+  return document.getElementById('togP').classList.contains('on');
+}
+function getAllTags(){
+  const prv=isPrivForm();
+  const set=new Set();
+  // Ambil dari link sesuai mode
+  L.filter(l=>prv?l.p:!l.p).forEach(l=>(l.tags||[]).forEach(t=>set.add(t)));
+  // Tambah tag ekstra persistent sesuai mode
+  (prv?_extraTagsPriv:_extraTagsNormal).forEach(t=>set.add(t));
+  return [...set].sort();
+}
+function getSelectedTags(){
+  return document.getElementById('lTg').value.split(',').map(t=>t.trim()).filter(Boolean);
+}
+function setSelectedTags(tags){
+  document.getElementById('lTg').value=tags.join(', ');
+}
+function renderTagPicker(selected=[]){
+  const allTags=getAllTags();
+  const sel=new Set(selected);
+  const picker=document.getElementById('tagPicker');
+  if(!picker)return;
+  if(!allTags.length){picker.innerHTML='<span style="font-family:var(--fm);font-size:10px;color:var(--text3)">Belum ada tag — tambahkan di bawah</span>';return}
+  picker.innerHTML=allTags.map(t=>`<span class="tpick${sel.has(t)?' on':''}" onclick="toggleTag('${esc(t)}')">${esc(t)}<span class="tpick-del" onclick="deleteTag(event,'${esc(t)}')">×</span></span>`).join('');
+}
+function toggleTag(t){
+  const sel=new Set(getSelectedTags());
+  sel.has(t)?sel.delete(t):sel.add(t);
+  setSelectedTags([...sel]);
+  renderTagPicker([...sel]);
+}
+function deleteTag(e,t){
+  e.stopPropagation();
+  cfm(`Hapus tag "${t}"?`,'Tag akan dihapus dari semua link di mode ini.',()=>{
+    const sel=new Set(getSelectedTags());
+    sel.delete(t);
+    setSelectedTags([...sel]);
+    _extraTagsNormal=_extraTagsNormal.filter(x=>x!==t);
+    _extraTagsPriv=_extraTagsPriv.filter(x=>x!==t);
+    dbSet('lk_tags_normal',_extraTagsNormal);
+    dbSet('lk_tags_priv',_extraTagsPriv);
+    const prv=isPrivForm();
+    L=L.map(l=>{
+      if(prv?l.p:!l.p)return{...l,tags:(l.tags||[]).filter(x=>x!==t)};
+      return l;
+    });
+    save();
+    renderTagPicker([...sel]);
+    toast(`Tag "${t}" dihapus`,'err');
+  });
+}
+async function addNewTag(){
+  const inp=document.getElementById('tagNewI');
+  const t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  const prv=isPrivForm();
+  const bucket=prv?_extraTagsPriv:_extraTagsNormal;
+  if(!bucket.includes(t)){
+    bucket.push(t);
+    // Simpan ke IndexedDB supaya persist meski form ditutup
+    await dbSet(prv?'lk_tags_priv':'lk_tags_normal',bucket);
+  }
+  const sel=new Set(getSelectedTags());
+  sel.add(t);
+  setSelectedTags([...sel]);
+  renderTagPicker([...sel]);
+}
+async function resetTagPicker(selected=[]){
+  // Load tag ekstra dari IndexedDB supaya tidak hilang
+  _extraTagsNormal=(await dbGet('lk_tags_normal'))||[];
+  _extraTagsPriv=(await dbGet('lk_tags_priv'))||[];
+  document.getElementById('tagNewI').value='';
+  setSelectedTags(selected);
+  renderTagPicker(selected);
+}
+
+async function openAddM(){
+  eid=null;document.getElementById('mLT').textContent='Tambah Link';
+  ['lU','lTi','lN','lTg'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('togP').classList.toggle('on',pm);
+  document.getElementById('upw').style.display='none';
+  await resetTagPicker([]);
+  popCatSel('');openOv('ovL');setTimeout(()=>document.getElementById('lU').focus(),180);
+}
+function popCatSel(s){
+  const cats=pm?PC:C;
+  document.getElementById('lC').innerHTML=`<option value="">— Tanpa Kategori —</option>`+cats.map(c=>`<option value="${c.id}"${s===c.id?' selected':''}>${esc(c.n)}</option>`).join('');
+}
+async function togPFn(){
+  const t=document.getElementById('togP');
+  if(!t.classList.contains('on')&&!(await gpin())){toast('Atur PIN dulu di Pengaturan','err');return}
+  t.classList.toggle('on');
+  // Refresh tag picker karena mode privat/normal berubah
+  renderTagPicker(getSelectedTags());
+}
+
+// ── NOTE EXPAND ──
+function toggleNote(e,id){
+  e.stopPropagation();
+  const note=document.getElementById('note-'+id);
+  const arr=document.getElementById('narr-'+id);
+  if(!note)return;
+  note.classList.toggle('exp');
+  arr.classList.toggle('exp');
+}
+
+// ── URL META & THUMBNAIL ──
+function gThumb(url){
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return yt?`https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg`:'';
+}
+
+// Update card thumbnail in DOM directly without full re-render
+function patchThumb(id,thumb){
+  const card=document.querySelector(`.card[data-id="${id}"]`);
+  if(!card||!thumb)return;
+  const ct=card.querySelector('.cthumb');
+  if(!ct)return;
+  // skip if a real thumb was already applied
+  if(ct.dataset.hasThumb)return;
+  ct.dataset.hasThumb='1';
+  ct.innerHTML=`<img src="${thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML=this.parentElement.dataset.fb">`;
+  ct.dataset.fb=ct.dataset.fb||'';
+}
+
+async function fetchM(url,lid){
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+
+  // ── Layer 0: YouTube ──
+  if(yt){
+    try{
+      const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if(r.ok){
+        const d=await r.json();
+        const thumb=`https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg`;
+        updL(lid,{ti:d.title||undefined,thumb});
+        patchThumb(lid,thumb);
+      }
+    }catch{}
+    return;
+  }
+
+  // ── Layer 1: Open Graph image via allorigins proxy ──
+  let ogThumb='', metaTitle='';
+  try{
+    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const r=await fetch(proxy,{signal:AbortSignal.timeout(6000)});
+    if(r.ok){
+      const d=await r.json();
+      const html=d.contents||'';
+      // parse og:image
+      const ogMatch=html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+                 ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+      if(ogMatch&&ogMatch[1])ogThumb=ogMatch[1];
+      // parse og:title or <title> for meta title
+      const ogTitle=html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+                   ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+      const tagTitle=html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      metaTitle=(ogTitle&&ogTitle[1])||(tagTitle&&tagTitle[1])||'';
+      metaTitle=metaTitle.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
+    }
+  }catch{}
+
+  // apply title + OG thumb if found
+  const cur=L.find(l=>l.id===lid)||{};
+  const update={};
+  if(metaTitle&&!cur.ti)update.ti=metaTitle;
+  if(ogThumb){
+    update.thumb=ogThumb;
+    updL(lid,update);
+    patchThumb(lid,ogThumb);
+    return; // done, no need for screenshot
+  } else if(Object.keys(update).length){
+    updL(lid,update);
+  }
+
+  // all layers exhausted — fallback color stays, no update needed
+}
+
+async function updL(id,f){
+  const i=L.findIndex(l=>l.id===id);
+  if(i===-1)return;
+  Object.keys(f).forEach(k=>{if(f[k]!==undefined&&f[k]!=='')L[i][k]=f[k]});
+  await save();
+  renderCards();
+}
+
+let utTm=null;
+function onUrlI(){
+  clearTimeout(utTm);
+  const url=document.getElementById('lU').value.trim();
+  if(!url){document.getElementById('upw').style.display='none';return}
+  showUP(url);utTm=setTimeout(()=>aFetch(url),900);
+}
+function showUP(url){
+  const w=document.getElementById('upw');const d=gDom(url);
+  w.style.display='block';
+  w.innerHTML=`<div class="uprev"><img src="https://www.google.com/s2/favicons?domain=${d}&sz=32" onerror="this.style.display='none'" alt=""><span class="uprev-t">${esc(url)}</span><span class="ftag" id="ftag"><span class="fdot"></span>Fetch</span></div>`;
+}
+async function aFetch(url){
+  const ft=document.getElementById('ftag');
+  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  try{
+    if(yt){
+      const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if(r.ok){const d=await r.json();const ti=document.getElementById('lTi');if(!ti.value)ti.value=d.title||'';if(ft)ft.textContent='✓'}
+    } else {
+      // try allorigins to get OG title
+      const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(6000)});
+      if(r.ok){
+        const d=await r.json();const html=d.contents||'';
+        const ogT=html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
+                 ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+        const tagT=html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const title=((ogT&&ogT[1])||(tagT&&tagT[1])||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
+        const ti=document.getElementById('lTi');if(!ti.value&&title)ti.value=title;
+        if(ft)ft.textContent='✓';
+      }
+    }
+  }catch{if(ft)ft.textContent='–'}
+}
+
+// ── PIN ──
+// rawMode: kalau true, callback dipanggil dengan rawPin (untuk enkripsi), bukan sekadar verified
+function openPin(tit,cb,rawMode=false){pBuf='';pCb=cb;pRaw=rawMode;document.getElementById('pinTit').textContent=tit;document.getElementById('pErr').textContent='';updD('pDots',pBuf);openOv('ovPin')}
+function pi(d){if(pBuf.length>=4)return;pBuf+=d;updD('pDots',pBuf);if(pBuf.length===4)setTimeout(pc,110)}
+function pd(){pBuf=pBuf.slice(0,-1);updD('pDots',pBuf)}
+function pc(){
+  if(pRaw){
+    // Mode enkripsi: langsung kirim rawPin ke callback tanpa verify
+    closeOv('ovPin');const cb=pCb;pCb=null;pRaw=false;if(cb)cb(pBuf);
+    return;
+  }
+  verifyPin(pBuf).then(ok=>{
+    if(ok){closeOv('ovPin');const cb=pCb;pCb=null;if(cb)cb(pBuf)}
+    else{document.getElementById('pErr').textContent='PIN salah';pBuf='';updD('pDots',pBuf);const m=document.querySelector('#ovPin .modal');m.style.animation='shake .28s ease';setTimeout(()=>m.style.animation='',300)}
+  });
+}
+async function openSetPin(){
+  const existing=await gpin();
+  closeOv('ovSet');
+  if(existing){
+    setTimeout(()=>{
+      openPin('Verifikasi PIN Lama',()=>{
+        setTimeout(()=>{
+          spStep=1;spF='';spB='';
+          document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';
+          document.getElementById('spErr').textContent='';
+          updD('spDots',spB);openOv('ovSP');
+        },180);
+      });
+    },180);
+  } else {
+    setTimeout(()=>{
+      spStep=1;spF='';spB='';
+      document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';
+      document.getElementById('spErr').textContent='';
+      updD('spDots',spB);openOv('ovSP');
+    },180);
+  }
+}
+function spi(d){if(spB.length>=4)return;spB+=d;updD('spDots',spB);if(spB.length===4)setTimeout(spc,110)}
+function spd(){spB=spB.slice(0,-1);updD('spDots',spB)}
+async function spc(){
+  if(spStep===1){spF=spB;spB='';spStep=2;document.getElementById('spHint').textContent='Konfirmasi PIN';updD('spDots',spB)}
+  else{if(spB===spF){await spin(spF);closeOv('ovSP');updPinSt();toast('PIN diatur','ok')}else{document.getElementById('spErr').textContent='PIN tidak cocok';spStep=1;spF='';spB='';document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';updD('spDots',spB)}}
+}
+function updD(id,buf){document.querySelectorAll(`#${id} .pdot`).forEach((d,i)=>d.classList.toggle('on',i<buf.length))}
+async function updPinSt(){const el=document.getElementById('pinSt');if(el)el.textContent=(await gpin())?'Sudah diatur':'Belum diatur'}
+
+// ── PRIVATE CATEGORIES ──
+function openPrivCatMgr(){renderPCM();openOv('ovPrivCat')}
+function renderPCM(){
+  const list=document.getElementById('pcml');
+  if(!PC.length){list.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--text3);text-align:center;padding:14px">Belum ada kategori privat</div>';return}
+  list.innerHTML=PC.map(c=>`<div class="cmi"><div class="cmil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>${esc(c.n)}</div><button class="cbtn del" onclick="delPrivCat('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>`).join('');
+}
+async function addPrivCat(){
+  const n=document.getElementById('npcN').value.trim();
+  if(!n){toast('Nama wajib diisi','err');return}
+  PC.push({id:'pc-'+n.toLowerCase().replace(/\s+/g,'-')+'-'+gId().slice(0,4),n});
+  await save();document.getElementById('npcN').value='';document.getElementById('npcE').value='';
+  renderPCM();renderSB();toast('Kategori privat ditambahkan','ok');
+}
+async function delPrivCat(id){
+  cfm('Hapus Kategori Privat?','Link di kategori ini tidak terhapus.',async()=>{
+    PC=PC.filter(c=>c.id!==id);L=L.map(l=>l.pcat===id?{...l,pcat:''}:l);
+    await save();renderPCM();render();toast('Kategori privat dihapus','err');
+  });
+}
+
+// ── CATEGORIES ──
+function openCatMgr(){renderCM();openOv('ovCat')}
+function renderCM(){
+  const list=document.getElementById('cml');
+  if(!C.length){list.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--text3);text-align:center;padding:14px">Belum ada kategori</div>';return}
+  list.innerHTML=C.map(c=>`<div class="cmi"><div class="cmil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>${esc(c.n)}</div><button class="cbtn del" onclick="delCat('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>`).join('');
+}
+async function addCat(){
+  const n=document.getElementById('ncN').value.trim();
+  if(!n){toast('Nama wajib diisi','err');return}
+  C.push({id:n.toLowerCase().replace(/\s+/g,'-')+'-'+gId().slice(0,4),n});
+  await save();document.getElementById('ncN').value='';document.getElementById('ncE').value='';
+  renderCM();renderSB();toast('Kategori ditambahkan','ok');
+}
+async function delCat(id){
+  cfm('Hapus Kategori?','Link di kategori ini tidak terhapus.',async()=>{
+    C=C.filter(c=>c.id!==id);L=L.map(l=>l.cat===id?{...l,cat:''}:l);
+    await save();renderCM();render();toast('Kategori dihapus','err');
+  });
+}
+
+// ── CRYPTO (AES-256-GCM) ──
+async function deriveKey(pin){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),{name:'PBKDF2'},false,['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt:new TextEncoder().encode('linkku-salt-v1'),iterations:100000,hash:'SHA-256'},
+    base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']
+  );
+}
+async function encryptObj(obj,pin){
+  const key=await deriveKey(pin);
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
+  // gabung iv + ciphertext → base64
+  const combined=new Uint8Array(iv.byteLength+enc.byteLength);
+  combined.set(iv,0);combined.set(new Uint8Array(enc),12);
+  return btoa(String.fromCharCode(...combined));
+}
+async function decryptObj(b64,pin){
+  const key=await deriveKey(pin);
+  const combined=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const iv=combined.slice(0,12);
+  const data=combined.slice(12);
+  const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,data);
+  return JSON.parse(new TextDecoder().decode(dec));
+}
+
+// ── DATA ──
+async function exportData(){
+  const pinHash=await gpin();
+  const privLinks=L.filter(l=>l.p);
+  const pubLinks=L.filter(l=>!l.p);
+  if(privLinks.length>0&&pinHash){
+    try{
+      const encryptedPriv=await encryptObj({links:privLinks,cats:PC},pinHash);
+      const payload={L:pubLinks,C,ep:encryptedPriv,ts:Date.now(),v:5};
+      const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(b);
+      a.download=`linkku-${new Date().toISOString().slice(0,10)}.json`;a.click();
+      toast('Export berhasil','ok');
+    }catch{toast('Gagal enkripsi','err')}
+  } else {
+    const payload={L:pubLinks,C,PC,ts:Date.now(),v:5};
+    const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download=`linkku-${new Date().toISOString().slice(0,10)}.json`;a.click();
+    toast('Export berhasil','ok');
+  }
+}
+
+function importData(){document.getElementById('impI').click()}
+function handleImp(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=async ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(!Array.isArray(d.L)&&!Array.isArray(d.links)){toast('Format tidak valid','err');return}
+      const pubLinks=d.L||d.links;
+      if(d.ep){
+        closeOv('ovSet');
+        setTimeout(()=>{
+          openPin('Masukkan PIN untuk import',async(rawPin)=>{
+            try{
+              const priv=await decryptObj(d.ep,await hashPin(rawPin));
+              await spin(rawPin);
+              _doImport([...pubLinks,...(priv.links||[])],d,priv.cats||[]);
+            }catch{toast('Gagal decrypt — PIN salah atau data rusak','err')}
+          },true);
+        },180);
+      } else {
+        _doImport(pubLinks,d,d.PC||[]);
+      }
+    }catch{toast('Gagal membaca file','err')}
+    e.target.value='';
+  };r.readAsText(f);
+}
+async function _doImport(allLinks,d,privCats=[]){
+  cfm('Import Data?',`Import ${allLinks.length} link.`,async()=>{
+    const ex=new Set(L.map(l=>l.id));
+    L=[...allLinks.filter(l=>!ex.has(l.id)),...L];
+    const ec=new Set(C.map(c=>c.id));
+    C=[...C,...(d.C||d.cats||[]).filter(c=>!ec.has(c.id))];
+    const epc=new Set(PC.map(c=>c.id));
+    const incomingPC=[...(d.PC||[]),...privCats];
+    PC=[...PC,...incomingPC.filter(c=>!epc.has(c.id))];
+    await save();render();toast(`${allLinks.length} link diimport`,'ok');
+  },'Import','bpri');
+}
+async function confirmReset(){
+  cfm('Reset Semua Data?','Semua link dan kategori dihapus permanen.',async()=>{
+    L=[];C=[];PC=[];
+    await dbDel('lk_l');await dbDel('lk_c');await dbDel('lk_pc');await dbDel('lk_pin');
+    exitPrivate();render();closeOv('ovSet');toast('Data direset','err');
+  });
+}
+
+// ── MODALS ──
+function openOv(id){document.getElementById(id).classList.add('open')}
+function closeOv(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOv(o.id)}));
+function cfm(t,m,cb,btnLbl='Hapus',btnCls='bdanger'){const btn=document.getElementById('cfmBtn');document.getElementById('cfmTit').textContent=t;document.getElementById('cfmMsg').textContent=m;btn.textContent=btnLbl;btn.className=btnCls;btn.onclick=()=>{cb();closeOv('ovCfm')};openOv('ovCfm')}
+
+// ── TOAST ──
+function toast(msg,type=''){const c=document.getElementById('tc');const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;c.appendChild(el);setTimeout(()=>el.remove(),2400)}
+
+// ── UTILS ──
+function gId(){return Math.random().toString(36).slice(2,8)+Date.now().toString(36)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function gDom(url){try{return new URL(url).hostname.replace('www.','')}catch{return url}}
+function fmtD(ts){const d=Date.now()-ts;if(d<60000)return'Baru';if(d<3600000)return~~(d/60000)+' mnt';if(d<86400000)return~~(d/3600000)+' jam';if(d<604800000)return~~(d/86400000)+' hari';return new Date(ts).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
+
+// ── EVENTS ──
+let sT=null;
+document.getElementById('si').addEventListener('input',function(){clearTimeout(sT);sT=setTimeout(()=>{q=this.value.trim();renderCards()},200)});
+document.getElementById('btnAdd').addEventListener('click',openAddM);
+document.getElementById('btnSet').addEventListener('click',()=>{updPinSt();openOv('ovSet')});
+document.getElementById('btnPT').addEventListener('click',togglePM);
+// ── SIDEBAR ──
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  const bd=document.getElementById('sbBackdrop');
+  bd.classList.add('show');
+  requestAnimationFrame(()=>bd.style.display='block');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  const bd=document.getElementById('sbBackdrop');
+  bd.classList.remove('show');
+  setTimeout(()=>{if(!bd.classList.contains('show'))bd.style.display='none'},230);
+}
+document.getElementById('sbBackdrop').addEventListener('click',closeSidebar);
+document.getElementById('btnMob').addEventListener('click',()=>{
+  const open=document.getElementById('sidebar').classList.contains('open');
+  open?closeSidebar():openSidebar();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.open').forEach(o=>closeOv(o.id))});
+// Private Mode tetap aktif sampai user manually exit
+
+function chkMob(){document.getElementById('btnMob').style.display=window.innerWidth<=660?'flex':'none'}
+window.addEventListener('resize',chkMob);chkMob();
+
+// ── INIT ──
+load().then(()=>{
+  // Restore private mode jika sebelumnya aktif (misal setelah buka link)
+  if(sessionStorage.getItem('lk_pm')==='1'){
+    const savedCur=sessionStorage.getItem('lk_cur')||'private-all';
+    pm=true;cur=savedCur;
+    document.body.classList.add('pm');
+    document.getElementById('navN').style.display='none';
+    document.getElementById('navP').style.display='block';
+    document.getElementById('btnPT').style.color='#c084fc';
+  }
+  render();updPinSt();
+});
+
+// ── SERVICE WORKER ──
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ── ECOSYSTEM BACKUP LISTENER ──
+// Kirim sinyal READY ke parent saat sudah siap
+window.addEventListener('load', () => {
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'APP_READY', app: 'linkku' }, '*');
+  }
+});
+
+// Menerima request backup dari dashboard
+// Link private dikirim dalam bentuk terenkripsi (sama seperti exportData)
+window.addEventListener('message', async (e) => {
+  const allowed = [
+    'https://pwa-ecosystemku.vercel.app',
+    'http://localhost',
+    'http://127.0.0.1',
+  ];
+  if (!allowed.some(o => e.origin.startsWith(o))) return;
+  if (!e.data || e.data.type !== 'REQUEST_BACKUP') return;
+
+  try {
+    const pinHash   = await gpin();
+    const privLinks = L.filter(l => l.p);
+    const pubLinks  = L.filter(l => !l.p);
+
+    let payload;
+    if (privLinks.length > 0 && pinHash) {
+      // Link private — enkripsi dulu seperti exportData()
+      const encryptedPriv = await encryptObj({ links: privLinks, cats: PC }, pinHash);
+      payload = { L: pubLinks, C, ep: encryptedPriv, ts: Date.now(), v: 5 };
+    } else {
+      payload = { L: pubLinks, C, PC, ts: Date.now(), v: 5 };
+    }
+
+    e.source.postMessage({
+      type: 'BACKUP_RESPONSE',
+      app:  'linkku',
+      data: payload,
+    }, e.origin);
+
+  } catch(err) {
+    e.source.postMessage({
+      type:  'BACKUP_RESPONSE',
+      app:   'linkku',
+      error: err.message,
+    }, e.origin);
+  }
+});
+</script>
+</body>
+</html>

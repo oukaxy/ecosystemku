@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#000000"/>
+  <!-- Petir / flash icon -->
+  <path d="M296 80L176 280h120l-80 152 160-216H256L296 80z" fill="#F0EFE9" stroke="none"/>
+</svg>

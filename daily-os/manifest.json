@@ -1,0 +1,20 @@
+{
+  "id": "/daily-os/",
+  "name": "Daily OS",
+  "short_name": "Daily OS",
+  "description": "Habit tracker, to-do, dan statistik harian.",
+  "start_url": "/daily-os/",
+  "scope": "/daily-os/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1A1917",
+  "theme_color": "#1A1917",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
