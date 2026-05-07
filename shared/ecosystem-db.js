@@ -116,8 +116,10 @@ const EcosystemDB = (() => {
       const req = key !== undefined
         ? tx.objectStore(storeName).put(record, key)   // kv store pakai explicit key
         : tx.objectStore(storeName).put(record);       // inline keyPath
-      req.onsuccess = () => resolve();
       req.onerror   = (e) => reject(e.target.error);
+      tx.oncomplete = () => resolve();   // tunggu transaction benar-benar commit
+      tx.onerror    = (e) => reject(e.target.error);
+      tx.onabort    = (e) => reject(e.target.error);
     }));
   }
 
@@ -134,10 +136,12 @@ const EcosystemDB = (() => {
   /** Clear seluruh object store */
   function clear(storeName) {
     return open().then(db => new Promise((resolve, reject) => {
-      const tx = db.transaction(storeName, 'readwrite');
-      tx.objectStore(storeName).clear();
+      const tx  = db.transaction(storeName, 'readwrite');
+      const req = tx.objectStore(storeName).clear();
+      req.onerror   = (e) => reject(e.target.error);
       tx.oncomplete = () => resolve();
       tx.onerror    = (e) => reject(e.target.error);
+      tx.onabort    = (e) => reject(e.target.error);
     }));
   }
 
