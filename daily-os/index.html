@@ -1776,11 +1776,12 @@ async function migrateFromLocalStorage() {
 }
 
 function save() {
-  // Habits & todos → IndexedDB (async, fire-and-forget)
-  idbSet('habits', 'dailyos_habits', habits).catch(e => console.error('[DailyOS] save habits failed:', e));
-  idbSet('todos',  'dailyos_todos',  todos).catch(e => console.error('[DailyOS] save todos failed:', e));
+  // Habits & todos → IndexedDB
+  const p1 = idbSet('habits', 'dailyos_habits', habits).catch(e => console.error('[DailyOS] save habits failed:', e));
+  const p2 = idbSet('todos',  'dailyos_todos',  todos).catch(e => console.error('[DailyOS] save todos failed:', e));
   // XP tetap di localStorage (state ringan)
   localStorage.setItem('dailyos_xp', totalPoints.toString());
+  return Promise.all([p1, p2]);
 }
 
 async function load() {
@@ -2128,7 +2129,7 @@ window.deleteHabit = async function(idx) {
     // tapi history-nya tetap ada sehingga XP & kalender tidak berubah
     habits[idx].archived = true;
     totalPoints = recalculateXP();
-    save();
+    await save();
     renderHabits();
     showAlert('Habit berhasil dihapus.', 'success', 'Terhapus');
   }
@@ -2356,7 +2357,7 @@ window.toggleTodo = function(id, el) {
 
 window.deleteTodo = async function(id) {
   const ok = await showConfirm('Hapus task ini?', 'error', 'Hapus Task');
-  if (ok) { todos = todos.filter(x => x.id !== id); save(); renderTodos(); }
+  if (ok) { todos = todos.filter(x => x.id !== id); await save(); renderTodos(); }
 };
 
 let editTodoId = null;
@@ -2956,7 +2957,7 @@ window.clearDayHistory = async function(ds) {
     }
   });
 
-  save();
+  await save();
   if (currentView === 'stats') { updateStats(); renderCalendar(); }
 
   document.getElementById('calDetail').classList.add('hidden');
@@ -3167,7 +3168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         }
 
-        save();
+        await save();
         renderHabits();
         renderTodos();
         updateXP();
