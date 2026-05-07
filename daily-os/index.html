@@ -645,9 +645,10 @@
       background: rgba(0,0,0,0.3);
       z-index: 300;
       display: none;
+      pointer-events: none;
       backdrop-filter: blur(2px);
     }
-    .modal-overlay.open { display: flex; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; pointer-events: auto; align-items: flex-end; justify-content: center; }
     .modal-sheet {
       background: var(--surface);
       border-radius: 20px 20px 0 0;
@@ -779,11 +780,12 @@
       background: rgba(0,0,0,0.3);
       z-index: 500;
       display: none;
+      pointer-events: none;
       align-items: center; justify-content: center;
       padding: 20px;
       backdrop-filter: blur(2px);
     }
-    .alert-overlay.open { display: flex; }
+    .alert-overlay.open { display: flex; pointer-events: auto; }
     .alert-box {
       background: var(--surface);
       border-radius: var(--radius);
@@ -3037,6 +3039,18 @@ async function resetAll() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
+  // Guard: pastikan EcosystemDB sudah load sebelum lanjut
+  if (typeof EcosystemDB === 'undefined') {
+    console.error('[DailyOS] EcosystemDB tidak tersedia — pastikan /shared/ecosystem-db.js ter-load.');
+    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:24px;">
+      <div>
+        <p style="font-size:18px;font-weight:600;margin-bottom:8px;">Gagal memuat database</p>
+        <p style="color:#888;font-size:14px;">File <code>/shared/ecosystem-db.js</code> tidak ditemukan.<br>Pastikan file sudah ada di server lalu reload.</p>
+        <button onclick="location.reload()" style="margin-top:16px;padding:10px 20px;border-radius:8px;border:none;background:#1A1917;color:#fff;font-size:14px;cursor:pointer;">Coba Reload</button>
+      </div>
+    </div>`;
+    return;
+  }
   await load();
   migrateHistory(); // konversi data lama ke format baru
   updateTopDate();
