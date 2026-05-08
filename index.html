@@ -901,7 +901,7 @@ function requestBackupFromApp(url) {
     }, 15000);
 
     function onMessage(e) {
-      const allowed = ['https://pwa-ecosystemku.vercel.app','http://localhost','http://127.0.0.1'];
+      const allowed = ['https://ecosystemku.vercel.app','http://localhost','http://127.0.0.1'];
       if (!allowed.some(o => e.origin.startsWith(o))) return;
 
       // Tunggu sinyal READY dari app, baru kirim request

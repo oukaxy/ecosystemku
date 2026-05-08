@@ -1,4 +1,4 @@
-const ALLOWED_ORIGIN = "https://oukaxy2.github.io";
+const ALLOWED_ORIGIN = "https://oukaxy.github.io";
 
 export default {
   async fetch(request, env) {

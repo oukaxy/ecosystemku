@@ -6538,12 +6538,12 @@ window.addEventListener('load', () => {
   }
 });
 
-// Menerima request backup dari dashboard (pwa-ecosystemku.vercel.app)
+// Menerima request backup dari dashboard (ecosystemku.vercel.app)
 // Data yang dikirim sudah terenkripsi — tidak ada decrypt di sini
 window.addEventListener('message', async (e) => {
   // Validasi origin — hanya terima dari domain kita sendiri
   const allowed = [
-    'https://pwa-ecosystemku.vercel.app',
+    'https://ecosystemku.vercel.app',
     'http://localhost',
     'http://127.0.0.1',
   ];
