@@ -3205,7 +3205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ok = await showConfirm('Data saat ini akan ditimpa. Lanjutkan?', 'warning', 'Restore Data');
     if (!ok) { e.target.value = ''; return; }
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const data = JSON.parse(ev.target.result);
 
