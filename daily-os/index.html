@@ -3103,8 +3103,13 @@ async function resetAll() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
-  // EcosystemDB dijamin tersedia (asli atau fallback dari blok di atas)
-  console.log('[DailyOS] EcosystemDB ready:', typeof EcosystemDB);
+  // Pastikan EcosystemDB sudah open sebelum load()
+  try {
+    await EcosystemDB.open();
+    console.log('[DailyOS] EcosystemDB opened successfully');
+  } catch (err) {
+    console.error('[DailyOS] EcosystemDB.open() failed:', err);
+  }
   await load();
   migrateHistory(); // konversi data lama ke format baru
   updateTopDate();
@@ -4027,6 +4032,21 @@ function saveNotifSettings() {
   scheduleAllNotifications();
   showAlert('Jadwal notifikasi disimpan!', 'success', 'Tersimpan');
 }
+
+// ===== EXPOSE FUNCTIONS TO WINDOW (inline onclick compatibility) =====
+window.switchView           = switchView;
+window.openHabitModal       = openHabitModal;
+window.saveHabit            = saveHabit;
+window.saveTodo             = saveTodo;
+window.handleCategoryChange = handleCategoryChange;
+window.exportData           = exportData;
+window.exportCSV            = exportCSV;
+window.resetAll             = resetAll;
+window.getAICoach           = getAICoach;
+window.getAIRecommendations = getAIRecommendations;
+window.parseSmartTodo       = parseSmartTodo;
+window.confirmAddRekom      = confirmAddRekom;
+window.confirmAddTodo       = confirmAddTodo;
 
 // Bind notif buttons setelah DOM ready
 document.addEventListener('DOMContentLoaded', () => {
