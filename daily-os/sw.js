@@ -1,6 +1,6 @@
-const CACHE_NAME = 'dailyos-v5';
+const CACHE_NAME = 'dailyos-v6';
 const ASSETS = [
-  './app.html',
+  './index.html',
   './manifest.json',
   './icon.svg',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap',
@@ -43,7 +43,7 @@ self.addEventListener('fetch', event => {
       });
     }).catch(() => {
       if (event.request.destination === 'document') {
-        return caches.match('./app.html');
+        return caches.match('./index.html');
       }
     })
   );
@@ -54,12 +54,12 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
       for (const client of clientList) {
-        if (client.url.includes('app.html') && 'focus' in client) {
+        if (client.url.includes('/daily-os') && 'focus' in client) {
           return client.focus();
         }
       }
       if (clients.openWindow) {
-        return clients.openWindow('./app.html');
+        return clients.openWindow('./index.html');
       }
     })
   );
@@ -76,7 +76,7 @@ self.addEventListener('message', event => {
         badge: './icon.svg',
         vibrate: [200, 100, 200],
         requireInteraction: false,
-        data: { url: './app.html' }
+        data: { url: './index.html' }
       });
     }, delay);
   }
