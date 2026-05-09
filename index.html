@@ -678,10 +678,12 @@
       </div>
       <span class="pwa-name">Vault</span>
     </a>
-    <div class="pwa-item pwa-soon delay-12">
-      <div class="pwa-icon-wrap">🤖</div>
+    <a class="pwa-item delay-12" href="/assistant/">
+      <div class="pwa-icon-wrap">
+        <img src="/assistant/icon-192.png" alt="Assistant" />
+      </div>
       <span class="pwa-name">Assistant</span>
-    </div>
+    </a>
   </div>
 
   <!-- BACKUP -->
@@ -750,6 +752,11 @@ function initHeader(name) {
 async function loadSnapshot() {
   try {
     await EcosystemDB.open();
+
+    // Bersihkan snap-tag lama (menghindari duplikat saat reload)
+    document.querySelectorAll('.snap-tag').forEach(el => el.remove());
+    // Reset badges
+    document.querySelectorAll('.pwa-badge').forEach(el => el.style.display = 'none');
 
     // 1. Profil dari Kronik
     const profileName = await EcosystemDB.kv.kronik.get('profile_name');
