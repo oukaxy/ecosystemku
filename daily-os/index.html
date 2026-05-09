@@ -2793,6 +2793,8 @@ function isHabitScheduled(h, dateStr) {
 function updateStats() {
   const today = getToday();
   const activeHabits = habits.filter(h => !h.archived);
+  // Untuk data historis (streak, avg, kalender), ikutkan archived agar progres lama tetap terhitung
+  const allHabitsWithHistory = habits;
 
   let done = 0, total = 0;
   activeHabits.forEach(h => {
@@ -2902,7 +2904,8 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = getToday();
   let totalAct = 0;
-  const activeHabits = habits.filter(h => !h.archived);
+  // Ikutkan habit yang sudah di-archive supaya history lama tetap muncul di kalender
+  const activeHabits = habits;
 
   for (let i = 0; i < firstDay; i++) {
     const el = document.createElement('div');
