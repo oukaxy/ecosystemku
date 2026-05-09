@@ -1684,6 +1684,70 @@
 </div>
 <script src="/shared/ecosystem-db.js"></script>
 <script>
+// ===== ECOSYSTEMDB FALLBACK =====
+// Jika /shared/ecosystem-db.js gagal load (standalone / belum deploy),
+// pakai IndexedDB native langsung agar app tetap berjalan normal.
+(function() {
+  if (typeof EcosystemDB !== 'undefined') return; // sudah load, skip
+
+  console.warn('[DailyOS] EcosystemDB tidak tersedia — menggunakan IndexedDB fallback.');
+
+  const DB_NAME = 'dailyos_fallback';
+  const DB_VERSION = 1;
+  let _db = null;
+
+  function openDB() {
+    if (_db) return Promise.resolve(_db);
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('habits')) db.createObjectStore('habits');
+        if (!db.objectStoreNames.contains('todos'))  db.createObjectStore('todos');
+        if (!db.objectStoreNames.contains('ideas'))  db.createObjectStore('ideas');
+      };
+      req.onsuccess = e => { _db = e.target.result; resolve(_db); };
+      req.onerror   = e => reject(e.target.error);
+    });
+  }
+
+  function makeStore(storeName) {
+    return {
+      rawSet(key, value) {
+        return openDB().then(db => new Promise((resolve, reject) => {
+          const tx  = db.transaction(storeName, 'readwrite');
+          const req = tx.objectStore(storeName).put(value, key);
+          req.onsuccess = () => resolve(value);
+          req.onerror   = e => reject(e.target.error);
+        }));
+      },
+      rawGet(key) {
+        return openDB().then(db => new Promise((resolve, reject) => {
+          const tx  = db.transaction(storeName, 'readonly');
+          const req = tx.objectStore(storeName).get(key);
+          req.onsuccess = e => resolve(e.target.result ?? null);
+          req.onerror   = e => reject(e.target.error);
+        }));
+      },
+      rawDelete(key) {
+        return openDB().then(db => new Promise((resolve, reject) => {
+          const tx  = db.transaction(storeName, 'readwrite');
+          const req = tx.objectStore(storeName).delete(key);
+          req.onsuccess = () => resolve();
+          req.onerror   = e => reject(e.target.error);
+        }));
+      }
+    };
+  }
+
+  window.EcosystemDB = {
+    habits: makeStore('habits'),
+    todos:  makeStore('todos'),
+    getIdeasInProgress: () => Promise.resolve([])
+  };
+})();
+</script>
+<script>
 // ===== DATA =====
 let habits = [];
 let todos = [];
@@ -3039,18 +3103,8 @@ async function resetAll() {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', async () => {
-  // Guard: pastikan EcosystemDB sudah load sebelum lanjut
-  if (typeof EcosystemDB === 'undefined') {
-    console.error('[DailyOS] EcosystemDB tidak tersedia — pastikan /shared/ecosystem-db.js ter-load.');
-    document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:24px;">
-      <div>
-        <p style="font-size:18px;font-weight:600;margin-bottom:8px;">Gagal memuat database</p>
-        <p style="color:#888;font-size:14px;">File <code>/shared/ecosystem-db.js</code> tidak ditemukan.<br>Pastikan file sudah ada di server lalu reload.</p>
-        <button onclick="location.reload()" style="margin-top:16px;padding:10px 20px;border-radius:8px;border:none;background:#1A1917;color:#fff;font-size:14px;cursor:pointer;">Coba Reload</button>
-      </div>
-    </div>`;
-    return;
-  }
+  // EcosystemDB dijamin tersedia (asli atau fallback dari blok di atas)
+  console.log('[DailyOS] EcosystemDB ready:', typeof EcosystemDB);
   await load();
   migrateHistory(); // konversi data lama ke format baru
   updateTopDate();
