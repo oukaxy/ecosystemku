@@ -44,10 +44,16 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // /shared/ — selalu network-first
+  // /shared/ — network-first, update cache on success
   if (url.pathname.startsWith('/shared/')) {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
+      fetch(e.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(e.request))
     );
     return;
   }
