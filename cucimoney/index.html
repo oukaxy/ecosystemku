@@ -5743,7 +5743,7 @@ async function openAddBookModal() {
 function openTrxDetail(id) {
     const t = getTransaction(id);
     if (!t) return;
-    state.viewingTrxId = id;
+    state.viewingTrxId = t.id; // Use actual ID from the transaction object (preserves type)
 
     const cat = getCategory(t.category_id);
     const acc = getAccount(t.account_id);
@@ -7028,7 +7028,8 @@ function saveAndNext() {
 function editTransaction(id) {
     const trx = getTransaction(id);
     if (!trx) return;
-    state.editingTrxId = id;
+    // Use the actual trx.id (preserves original type: number or string)
+    state.editingTrxId = trx.id;
     
     // Handle transfer: detect via transferPair
     if (trx.transferPair) {
