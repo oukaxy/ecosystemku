@@ -1505,9 +1505,11 @@
         }
         .search-bar input::placeholder { color: var(--text-light); }
 
-        /* Notification */
+        /* Notification — posisi di bawah (di atas nav bar) agar tidak menghalangi tombol */
         .notification {
-            position: absolute; top: 1rem; left: 50%; transform: translateX(-50%);
+            position: absolute;
+            bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+            left: 50%; transform: translateX(-50%);
             padding: 0.75rem 1.25rem;
             border-radius: 0.85rem;
             color: var(--text-main);
@@ -1516,14 +1518,96 @@
             white-space: nowrap;
             animation: notifIn 0.3s cubic-bezier(0.16,1,0.3,1);
             border: 1px solid;
+            pointer-events: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            backdrop-filter: blur(12px);
+            max-width: calc(100% - 2rem);
+            text-align: center;
         }
-        .notification.success { background: rgba(0,191,165,0.15); border-color: rgba(0,191,165,0.4); color: var(--income); }
-        .notification.error { background: rgba(255,83,112,0.15); border-color: rgba(255,83,112,0.4); color: var(--expense); }
-        .notification.warning { background: rgba(255,171,0,0.15); border-color: rgba(255,171,0,0.4); color: #FFAB00; }
+        .notification.success { background: rgba(0,191,165,0.2); border-color: rgba(0,191,165,0.4); color: var(--income); }
+        .notification.error { background: rgba(255,83,112,0.2); border-color: rgba(255,83,112,0.4); color: var(--expense); }
+        .notification.warning { background: rgba(255,171,0,0.2); border-color: rgba(255,171,0,0.4); color: #FFAB00; }
         @keyframes notifIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            from { opacity: 0; transform: translateX(-50%) translateY(10px); }
             to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
+
+        /* ===== CUSTOM DIALOG (ganti prompt/confirm/alert native) ===== */
+        .custom-dialog-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.22s ease;
+        }
+        .custom-dialog-overlay.active { opacity: 1; pointer-events: auto; }
+        .custom-dialog {
+            background: var(--bg-card);
+            border: 1px solid var(--border-strong);
+            border-radius: 1.5rem;
+            width: calc(100% - 3rem);
+            max-width: 340px;
+            transform: scale(0.92);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+            overflow: hidden;
+        }
+        .custom-dialog-overlay.active .custom-dialog { transform: scale(1); }
+        .custom-dialog-icon {
+            text-align: center;
+            font-size: 2.2rem;
+            padding: 1.5rem 1.5rem 0.5rem;
+        }
+        .custom-dialog-title {
+            text-align: center;
+            font-size: 1rem; font-weight: 800;
+            color: var(--text-main);
+            padding: 0.25rem 1.5rem;
+        }
+        .custom-dialog-msg {
+            text-align: center;
+            font-size: 0.85rem; font-weight: 500;
+            color: var(--text-muted);
+            padding: 0.5rem 1.5rem 1.25rem;
+            line-height: 1.5;
+        }
+        .custom-dialog-input {
+            margin: 0 1.5rem 1rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid var(--border-strong);
+            border-radius: 0.85rem;
+            font-size: 0.95rem; font-family: inherit;
+            color: var(--text-main);
+            background: var(--bg-card2);
+            outline: none; width: calc(100% - 3rem);
+            transition: 0.2s;
+        }
+        .custom-dialog-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        .custom-dialog-btns {
+            display: flex;
+            border-top: 1px solid var(--border);
+        }
+        .custom-dialog-btn {
+            flex: 1; padding: 0.95rem;
+            font-size: 0.9rem; font-weight: 700;
+            font-family: inherit;
+            border: none; cursor: pointer;
+            transition: 0.15s;
+            background: transparent;
+        }
+        .custom-dialog-btn:active { opacity: 0.7; }
+        .custom-dialog-btn.cancel { color: var(--text-muted); }
+        .custom-dialog-btn.cancel:active { background: var(--bg-hover); }
+        .custom-dialog-btn.confirm { color: var(--primary); }
+        .custom-dialog-btn.confirm:active { background: var(--primary-dim); }
+        .custom-dialog-btn.danger { color: var(--expense); }
+        .custom-dialog-btn.danger:active { background: var(--expense-dim); }
+        .custom-dialog-btn + .custom-dialog-btn { border-left: 1px solid var(--border); }
 
         /* Book sheet item */
         .book-item {
@@ -3385,6 +3469,16 @@
         <div id="search-results" style="padding:1rem 1.25rem 2rem; overflow-y:auto; flex:1;"></div>
     </div>
 
+    <!-- CUSTOM DIALOG (ganti prompt/confirm/alert native) -->
+    <div class="custom-dialog-overlay" id="custom-dialog-overlay">
+        <div class="custom-dialog">
+            <div class="custom-dialog-icon" id="custom-dialog-icon">💬</div>
+            <div class="custom-dialog-title" id="custom-dialog-title">Konfirmasi</div>
+            <div class="custom-dialog-msg" id="custom-dialog-msg"></div>
+            <input class="custom-dialog-input" id="custom-dialog-input" type="text" placeholder="" autocomplete="off" style="display:none;">
+            <div class="custom-dialog-btns" id="custom-dialog-btns"></div>
+        </div>
+    </div>
 
 
 </div>
@@ -5062,8 +5156,15 @@ function openBudgetDetailSheet() {
 }
 
 /* Hapus master budget aktif */
-function deleteMasterBudget() {
-    if (!confirm('Hapus budget bulan ini?')) return;
+async function deleteMasterBudget() {
+    const ok = await showConfirm({
+        icon: '💰',
+        title: 'Hapus Budget',
+        message: 'Budget bulan ini akan dihapus.',
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
     masterBudgets = masterBudgets.filter(b =>
         !(b.bookId === state.currentBookId &&
           b.month === analyticsState.analysisMonth &&
@@ -5078,9 +5179,10 @@ function deleteMasterBudget() {
 // Legacy stubs (tidak lagi dipakai tapi dibiarkan agar tidak error kalau dipanggil dari tempat lain)
 function saveBudget() { saveMasterBudget(); }
 function editBudget(id) { openMasterBudgetModal(true); }
-function deleteBudget(e, id) {
+async function deleteBudget(e, id) {
     e.stopPropagation();
-    if (!confirm('Hapus budget ini?')) return;
+    const ok = await showConfirm({ icon:'💰', title:'Hapus Budget', message:'Budget ini akan dihapus.', confirmLabel:'Hapus', confirmClass:'danger' });
+    if (!ok) return;
     budgets = budgets.filter(b => b.id !== id);
     markSave(); invalidateMetricsCache(); markDirty();
     renderBudgetTab();
@@ -5196,8 +5298,15 @@ function openMemberManager() {
 }
 
 /* Reset semua data */
-function confirmResetData() {
-    if (!confirm('Reset semua data? Tindakan ini tidak bisa dibatalkan.')) return;
+async function confirmResetData() {
+    const ok = await showConfirm({
+        icon: '🗑️',
+        title: 'Reset Semua Data',
+        message: 'Semua transaksi, akun, kategori, dan budget akan dihapus.<br><b>Tindakan ini tidak bisa dibatalkan.</b>',
+        confirmLabel: 'Reset',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
     seedDefaultData();
     rebuildIndex();
     markSave(); invalidateMetricsCache(); markDirty();
@@ -5449,6 +5558,7 @@ function closeAllModals() {
     document.getElementById('main-overlay').classList.remove('active');
     document.getElementById('date-dialog-overlay')?.classList.remove('active');
     document.getElementById('modal-trx-detail')?.classList.remove('active');
+    document.getElementById('custom-dialog-overlay')?.classList.remove('active');
     state.viewingTrxId = null;
     closeAccountPicker();
     closeCatNameModal();
@@ -5467,11 +5577,87 @@ function openOverlay() {
 
 
 function showNotification(msg, type='success') {
+    // Hapus notifikasi sebelumnya jika ada
+    document.querySelectorAll('.notification').forEach(n => n.remove());
     const el = document.createElement('div');
     el.className = `notification ${type}`;
     el.textContent = msg;
     document.getElementById('app').appendChild(el);
     setTimeout(() => { el.style.animation = 'notifIn 0.3s ease reverse'; setTimeout(()=>el.remove(), 300); }, 2200);
+}
+
+/* ===========================
+   CUSTOM DIALOG SYSTEM
+   Mengganti prompt(), confirm(), alert() native
+=========================== */
+let _dialogResolve = null;
+
+function _showDialog({ icon, title, message, input, placeholder, buttons }) {
+    return new Promise(resolve => {
+        _dialogResolve = resolve;
+        const overlay = document.getElementById('custom-dialog-overlay');
+        document.getElementById('custom-dialog-icon').textContent = icon || '💬';
+        document.getElementById('custom-dialog-title').textContent = title || '';
+        document.getElementById('custom-dialog-msg').innerHTML = message || '';
+        
+        const inputEl = document.getElementById('custom-dialog-input');
+        if (input) {
+            inputEl.style.display = 'block';
+            inputEl.value = '';
+            inputEl.placeholder = placeholder || '';
+            setTimeout(() => inputEl.focus(), 300);
+        } else {
+            inputEl.style.display = 'none';
+        }
+        
+        const btnsEl = document.getElementById('custom-dialog-btns');
+        btnsEl.innerHTML = buttons.map((btn, i) =>
+            `<button class="custom-dialog-btn ${btn.class || ''}" onclick="_resolveDialog(${i})">${btn.label}</button>`
+        ).join('');
+        
+        overlay.classList.add('active');
+    });
+}
+
+function _resolveDialog(btnIndex) {
+    const overlay = document.getElementById('custom-dialog-overlay');
+    overlay.classList.remove('active');
+    const inputVal = document.getElementById('custom-dialog-input').value;
+    if (_dialogResolve) {
+        _dialogResolve({ index: btnIndex, inputValue: inputVal });
+        _dialogResolve = null;
+    }
+}
+
+// Helper: confirm dialog
+async function showConfirm({ icon, title, message, confirmLabel, confirmClass }) {
+    const result = await _showDialog({
+        icon: icon || '⚠️',
+        title: title || 'Konfirmasi',
+        message: message || 'Apakah kamu yakin?',
+        buttons: [
+            { label: 'Batal', class: 'cancel' },
+            { label: confirmLabel || 'Ya', class: confirmClass || 'confirm' }
+        ]
+    });
+    return result.index === 1;
+}
+
+// Helper: prompt dialog
+async function showPrompt({ icon, title, message, placeholder }) {
+    const result = await _showDialog({
+        icon: icon || '✏️',
+        title: title || '',
+        message: message || '',
+        input: true,
+        placeholder: placeholder || '',
+        buttons: [
+            { label: 'Batal', class: 'cancel' },
+            { label: 'Simpan', class: 'confirm' }
+        ]
+    });
+    if (result.index === 0) return null;
+    return result.inputValue?.trim() || null;
 }
 
 function toggleVisibility() {
@@ -5529,13 +5715,18 @@ function selectBook(id) {
     renderApp();
 }
 
-function openAddBookModal() {
-    const name = prompt('Nama buku baru:');
-    if (!name?.trim()) return;
+async function openAddBookModal() {
+    const name = await showPrompt({
+        icon: '📚',
+        title: 'Buku Baru',
+        message: 'Masukkan nama buku:',
+        placeholder: 'Contoh: Bisnis Cafe'
+    });
+    if (!name) return;
     
     const newBook = {
         id: generateId(),
-        name: name.trim(),
+        name: name,
         accountIds: []        // ← Kosong saat dibuat
     };
     
@@ -5659,16 +5850,23 @@ function closeDetailModal() {
     state.viewingTrxId = null;
 }
 
-function deleteFromDetail() {
+async function deleteFromDetail() {
     const id = state.viewingTrxId;
     if (!id) return;
     const t = getTransaction(id);
     if (!t) return;
     const isTransfer = !!t.transferPair;
-    const confirmMsg = isTransfer
-        ? 'Hapus transaksi transfer ini? Kedua sisi transfer (keluar & masuk) akan dihapus.'
-        : 'Hapus transaksi ini?';
-    if (!confirm(confirmMsg)) return;
+    const msg = isTransfer
+        ? 'Kedua sisi transfer (keluar & masuk) akan dihapus.'
+        : 'Transaksi ini akan dihapus.';
+    const ok = await showConfirm({
+        icon: isTransfer ? '⇄' : '🗑️',
+        title: 'Hapus Transaksi',
+        message: msg,
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
 
     const idsToDelete = new Set([id]);
 
@@ -7042,9 +7240,17 @@ function saveAccountNew() {
     }
 }
 
-function deleteAccountFromModal() {
+async function deleteAccountFromModal() {
     if (!state.editingAccountId) return;
-    if (!confirm('Hapus akun ini?')) return;
+    const acc = getAccount(state.editingAccountId);
+    const ok = await showConfirm({
+        icon: '🏦',
+        title: 'Hapus Akun',
+        message: `Akun <b>${acc?.name || ''}</b> akan dihapus dari daftar.<br>Transaksi terkait tidak akan dihapus.`,
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
     
     const deletedId = state.editingAccountId;
     db.accounts = db.accounts.filter(a => a.id !== deletedId);
@@ -7217,11 +7423,13 @@ function importBackupJSON(event) {
         const jumlahTrx = payload.db.transactions.length;
         const jumlahBuku = payload.db.books.length;
 
-        const lanjut = confirm(
-            `Restore backup ini?\n\n` +
-            `📚 ${jumlahBuku} buku  |  💸 ${jumlahTrx} transaksi\n\n` +
-            `⚠️ Semua data saat ini akan digantikan.`
-        );
+        const lanjut = await showConfirm({
+            icon: '📦',
+            title: 'Restore Backup',
+            message: `📚 <b>${jumlahBuku}</b> buku &nbsp;·&nbsp; 💸 <b>${jumlahTrx}</b> transaksi<br><br>Semua data saat ini akan <b>digantikan</b> dengan backup ini.`,
+            confirmLabel: 'Restore',
+            confirmClass: 'danger'
+        });
         if (!lanjut) return;
 
         // Patch wajib: pastikan field opsional ada
