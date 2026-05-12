@@ -1376,10 +1376,17 @@ if('serviceWorker' in navigator){
 
 // ── ECOSYSTEM BACKUP LISTENER ──
 // Kirim sinyal READY ke parent saat sudah siap
-window.addEventListener('load', () => {
+function _sendReady() {
   if (window.parent !== window) {
     window.parent.postMessage({ type: 'APP_READY', app: 'linkku' }, '*');
   }
+}
+window.addEventListener('load', () => {
+  _sendReady();
+  // Kirim ulang beberapa kali untuk antisipasi race condition
+  setTimeout(_sendReady, 300);
+  setTimeout(_sendReady, 800);
+  setTimeout(_sendReady, 1500);
 });
 
 // Menerima request backup dari dashboard
@@ -1411,6 +1418,25 @@ window.addEventListener('message', async (e) => {
       e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', data: payload }, e.origin);
     } catch(err) {
       e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', error: err.message }, e.origin);
+    }
+    return;
+  }
+
+  // ── CLEAR ───────────────────────────────────────────────────
+  if (e.data.type === 'REQUEST_CLEAR') {
+    try {
+      // Hapus linkkuDB sepenuhnya
+      await new Promise((resolve, reject) => {
+        const req = indexedDB.deleteDatabase('linkkuDB');
+        req.onsuccess = resolve;
+        req.onerror   = () => reject(req.error);
+        req.onblocked = () => reject(new Error('DB blocked'));
+      });
+      // Hapus localStorage LinkKu
+      ['linkku_pin_hash', 'linkku_theme', 'linkku_sort'].forEach(k => localStorage.removeItem(k));
+      e.source.postMessage({ type: 'CLEAR_RESPONSE', app: 'linkku' }, e.origin);
+    } catch(err) {
+      e.source.postMessage({ type: 'CLEAR_RESPONSE', app: 'linkku', error: err.message }, e.origin);
     }
     return;
   }
