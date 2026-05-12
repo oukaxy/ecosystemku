@@ -855,7 +855,7 @@
 
     <div class="backup-btns">
       <label class="btn btn-primary" id="btn-restore" style="cursor:pointer">
-        📂 Import ZIP
+        <span id="btn-restore-text">📂 Import ZIP</span>
         <input type="file" id="restore-file-input" accept=".zip" style="display:none" onchange="handleRestoreZip(event)" />
       </label>
       <button class="btn btn-secondary" id="btn-cloud-restore" onclick="cloudRestore()">
@@ -1483,7 +1483,7 @@ async function handleRestoreZip(event) {
   }
 
   const btn = document.getElementById('btn-restore');
-  btn.textContent = '⏳ Membaca ZIP...';
+  document.getElementById('btn-restore-text').textContent = '⏳ Membaca ZIP...';
   btn.disabled = true;
 
   try {
@@ -1535,7 +1535,7 @@ async function handleRestoreZip(event) {
     alert('Gagal membaca file ZIP: ' + e.message);
     console.error(e);
   } finally {
-    btn.textContent = '📂 Import ZIP';
+    document.getElementById('btn-restore-text').textContent = '📂 Import ZIP';
     btn.disabled = false;
   }
 }
@@ -1596,7 +1596,8 @@ function sendRestoreToApp(url, data, mode, timeoutMs = 20000) {
 // ── Eksekusi restore ──────────────────────────────────────────
 async function _doRestore(data, mode) {
   const btn = document.getElementById('btn-restore');
-  btn.disabled = true;
+  btn.style.pointerEvents = 'none';
+  btn.style.opacity = '0.6';
   _showRestoreProgress(true);
 
   try {
@@ -1727,7 +1728,7 @@ async function _doRestore(data, mode) {
     // ── LinkKu (via iframe postMessage) ────────────────────
     if (data.linkku) {
       _setRestoreStatus('linkku', 'LinkKu', 'loading');
-      btn.textContent = '⏳ Memulihkan LinkKu...';
+      document.getElementById('btn-restore-text').textContent = '⏳ Memulihkan LinkKu...';
       try {
         const result = await sendRestoreToApp('/linkku/', data.linkku, mode);
         _setRestoreStatus('linkku', 'LinkKu', 'ok');
@@ -1744,8 +1745,8 @@ async function _doRestore(data, mode) {
     document.getElementById('restore-last').textContent =
       failCount === 0 && warnCount === 0 ? 'Restore berhasil ✅' : 'Selesai (ada peringatan) ⚠️';
 
-    btn.textContent = failCount === 0 && warnCount === 0 ? '✅ Berhasil!' : '⚠️ Selesai';
-    setTimeout(() => { btn.textContent = '📂 Import ZIP'; }, 4000);
+    document.getElementById('btn-restore-text').textContent = failCount === 0 && warnCount === 0 ? '✅ Berhasil!' : '⚠️ Selesai';
+    setTimeout(() => { document.getElementById('btn-restore-text').textContent = '📂 Import ZIP'; }, 4000);
 
     // Reload snapshot setelah restore
     setTimeout(() => {
@@ -1756,7 +1757,7 @@ async function _doRestore(data, mode) {
   } catch(e) {
     alert('Gagal restore: ' + e.message);
     console.error(e);
-    btn.textContent = '📂 Import ZIP';
+    document.getElementById('btn-restore-text').textContent = '📂 Import ZIP';
   } finally {
     btn.disabled = false;
   }
