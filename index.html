@@ -903,6 +903,18 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/shared/ecosystem-db.js"></script>
 <script>
+// ── Unregister SW lama yang scope-nya terlalu luas ───────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => {
+      if (reg.scope === location.origin + '/' || reg.scope === location.origin) {
+        console.log('[Dashboard] Unregister SW:', reg.scope);
+        reg.unregister();
+      }
+    });
+  });
+}
+
 // ── Helpers ──────────────────────────────────────────────────
 function todayStr() {
   return new Date().toISOString().split('T')[0];
@@ -1460,9 +1472,11 @@ function closeRestoreModal() {
 
 async function confirmRestore(mode) {
   // mode: 'merge' | 'replace'
+  // Simpan data dulu SEBELUM closeRestoreModal() karena closeRestoreModal set _pendingRestoreData = null
+  const data = _pendingRestoreData;
   closeRestoreModal();
-  if (!_pendingRestoreData) return;
-  await _doRestore(_pendingRestoreData, mode);
+  if (!data) return;
+  await _doRestore(data, mode);
 }
 
 // ── Trigger file picker ───────────────────────────────────────
@@ -1473,9 +1487,6 @@ function triggerRestoreZip() {
 
 // ── Handle file ZIP dipilih ───────────────────────────────────
 async function handleRestoreZip(event) {
-  // DEBUG: konfirmasi function terpanggil
-  alert('[DEBUG] handleRestoreZip terpanggil. File: ' + (event.target.files[0]?.name || 'tidak ada'));
-
   const file = event.target.files[0];
   if (!file) return;
 
@@ -1983,7 +1994,6 @@ function cloudBackup() {
 
 // ── Cloud Restore ─────────────────────────────────────────────
 function cloudRestore() {
-  alert('[DEBUG] cloudRestore terpanggil. google defined: ' + (typeof google !== 'undefined') + ', google.accounts: ' + !!(typeof google !== 'undefined' && google.accounts));
   if (typeof google === 'undefined' || !google.accounts) {
     alert('Google Sign-In belum tersedia. Pastikan koneksi internet aktif lalu refresh halaman.');
     return;
