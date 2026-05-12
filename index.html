@@ -1476,6 +1476,12 @@ async function handleRestoreZip(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Debug: pastikan JSZip tersedia
+  if (typeof JSZip === 'undefined') {
+    alert('JSZip belum tersedia. Pastikan koneksi internet aktif lalu refresh halaman.');
+    return;
+  }
+
   const btn = document.getElementById('btn-restore');
   btn.textContent = '⏳ Membaca ZIP...';
   btn.disabled = true;
@@ -1973,6 +1979,10 @@ function cloudBackup() {
 
 // ── Cloud Restore ─────────────────────────────────────────────
 function cloudRestore() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    alert('Google Sign-In belum tersedia. Pastikan koneksi internet aktif lalu refresh halaman.');
+    return;
+  }
   ensureGoogleAuth(async () => {
     const btn = document.getElementById('btn-cloud-restore');
     btn.textContent = '⏳ Memuat...';
