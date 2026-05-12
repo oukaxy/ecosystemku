@@ -505,6 +505,117 @@
       border-radius: 4px;
     }
 
+    /* ── Restore Section ─────────────────────────────────────── */
+    .restore-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      margin-top: 8px;
+    }
+
+    .restore-progress {
+      display: none;
+      margin-bottom: 12px;
+    }
+
+    /* ── Modal ────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px calc(32px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .modal-overlay.active .modal { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--text-3);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+      opacity: 0.4;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.15s ease, background 0.15s ease;
+      background: var(--bg-card-2);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+    .modal-btn-icon { font-size: 20px; }
+    .modal-btn-label { font-size: 12px; font-weight: 600; }
+    .modal-btn-desc { font-size: 10px; opacity: 0.7; text-align: center; line-height: 1.3; }
+
+    .modal-cancel {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: var(--text-3);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     /* ── Loading skeleton ─────────────────────────────────────── */
     .skeleton {
       background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
@@ -724,6 +835,56 @@
       <button class="btn btn-secondary" disabled>
         ☁️ Cloud <span class="btn-coming-soon">Soon</span>
       </button>
+    </div>
+  </div>
+
+  <!-- RESTORE -->
+  <div class="section-label delay-12">Restore data</div>
+
+  <div class="restore-card delay-12">
+    <div class="backup-header">
+      <span class="backup-title">Pulihkan data</span>
+      <span class="backup-last" id="restore-last">Pilih sumber backup</span>
+    </div>
+
+    <!-- Per-app status restore (hanya tampil saat restore berjalan) -->
+    <div class="restore-progress" id="restore-progress">
+      <div style="font-size:11px; color:var(--text-3); margin-bottom:8px; font-weight:500;">Status per aplikasi:</div>
+      <div id="restore-status-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+    </div>
+
+    <div class="backup-btns">
+      <button class="btn btn-primary" id="btn-restore" onclick="triggerRestoreZip()">
+        📂 Import ZIP
+      </button>
+      <button class="btn btn-secondary" disabled>
+        ☁️ Restore Cloud <span class="btn-coming-soon">Soon</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Hidden file input untuk restore ZIP -->
+  <input type="file" id="restore-file-input" accept=".zip" style="display:none" onchange="handleRestoreZip(event)" />
+
+  <!-- Modal pilih metode restore -->
+  <div class="modal-overlay" id="restore-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Pilih metode restore</div>
+      <div class="modal-sub" id="restore-modal-sub">Memuat info backup...</div>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="confirmRestore('merge')">
+          <span class="modal-btn-icon">🔀</span>
+          <span class="modal-btn-label">Gabung</span>
+          <span class="modal-btn-desc">Tambah data baru, skip duplikat</span>
+        </button>
+        <button class="modal-btn primary" onclick="confirmRestore('replace')">
+          <span class="modal-btn-icon">🔄</span>
+          <span class="modal-btn-label">Ganti semua</span>
+          <span class="modal-btn-desc">Hapus data lama, ganti dengan backup</span>
+        </button>
+      </div>
+      <button class="modal-cancel" onclick="closeRestoreModal()">Batal</button>
     </div>
   </div>
 
@@ -1253,6 +1414,342 @@ async function confirmClearData() {
     loadSnapshot();
   } catch(e) {
     alert('Gagal hapus data: ' + e.message);
+  }
+}
+
+// ── Restore status UI ────────────────────────────────────────
+const _restoreStatus = {};
+
+function _setRestoreStatus(appId, label, state) {
+  _restoreStatus[appId] = state;
+  const list = document.getElementById('restore-status-list');
+  let row = document.getElementById('rstatus-' + appId);
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'rstatus-' + appId;
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:11px;';
+    list.appendChild(row);
+  }
+  const icons  = { loading: '⏳', ok: '✅', warn: '⚠️', error: '❌', skip: '⏭️' };
+  const colors = { loading: 'var(--text-3)', ok: 'var(--green)', warn: 'var(--amber)', error: 'var(--red)', skip: 'var(--text-3)' };
+  const labels = { loading: 'memulihkan...', ok: 'OK', warn: 'partial', error: 'gagal', skip: 'dilewati' };
+  row.innerHTML = `
+    <span style="color:var(--text-2)">${label}</span>
+    <span style="color:${colors[state]};font-weight:600">${icons[state]} ${labels[state]}</span>
+  `;
+}
+
+function _showRestoreProgress(show) {
+  document.getElementById('restore-progress').style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('restore-status-list').innerHTML = '';
+    Object.keys(_restoreStatus).forEach(k => delete _restoreStatus[k]);
+  }
+}
+
+// ── Modal restore ─────────────────────────────────────────────
+let _pendingRestoreData = null; // data ZIP yang sudah di-parse, tunggu pilihan user
+
+function closeRestoreModal() {
+  document.getElementById('restore-modal').classList.remove('active');
+  _pendingRestoreData = null;
+}
+
+async function confirmRestore(mode) {
+  // mode: 'merge' | 'replace'
+  closeRestoreModal();
+  if (!_pendingRestoreData) return;
+  await _doRestore(_pendingRestoreData, mode);
+}
+
+// ── Trigger file picker ───────────────────────────────────────
+function triggerRestoreZip() {
+  document.getElementById('restore-file-input').value = '';
+  document.getElementById('restore-file-input').click();
+}
+
+// ── Handle file ZIP dipilih ───────────────────────────────────
+async function handleRestoreZip(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const btn = document.getElementById('btn-restore');
+  btn.textContent = '⏳ Membaca ZIP...';
+  btn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    // Baca semua file JSON dalam ZIP
+    const data = {};
+    for (const [name, zipEntry] of Object.entries(zip.files)) {
+      if (zipEntry.dir || !name.endsWith('.json') || name === '_manifest.json') continue;
+      const text = await zipEntry.async('string');
+      try {
+        const parsed = JSON.parse(text);
+        // Identifikasi app dari nama file
+        if (name.startsWith('daily-os'))   data.dailyos   = parsed;
+        else if (name.startsWith('ideku')) data.ideku     = parsed;
+        else if (name.startsWith('kronik'))data.kronik    = parsed;
+        else if (name.startsWith('cucimoney')) data.cucimoney = parsed;
+        else if (name.startsWith('linkku'))data.linkku    = parsed;
+      } catch(e) {
+        console.warn('[Restore] Gagal parse:', name, e.message);
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      alert('File ZIP tidak mengandung data backup yang valid.');
+      return;
+    }
+
+    // Tampilkan info di modal
+    const appNames = [];
+    if (data.dailyos)   appNames.push('Daily OS');
+    if (data.ideku)     appNames.push('IdeKu');
+    if (data.kronik)    appNames.push('Kronik');
+    if (data.cucimoney) appNames.push('CuciMoney+');
+    if (data.linkku)    appNames.push('LinkKu');
+
+    // Ekstrak tanggal dari nama file
+    const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
+    const dateLabel = dateMatch ? dateMatch[1] : file.name;
+
+    document.getElementById('restore-modal-sub').innerHTML =
+      `Backup dari <strong>${dateLabel}</strong><br>Berisi: ${appNames.join(', ')}`;
+
+    _pendingRestoreData = data;
+    document.getElementById('restore-modal').classList.add('active');
+
+  } catch(e) {
+    alert('Gagal membaca file ZIP: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '📂 Import ZIP';
+    btn.disabled = false;
+  }
+}
+
+// ── Kirim data restore ke app via iframe postMessage ──────────
+function sendRestoreToApp(url, data, mode, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+
+    let resolved = false;
+    let loadFallbackTimer = null;
+
+    const timeout = setTimeout(() => {
+      if (resolved) return;
+      cleanup();
+      reject(new Error('Timeout'));
+    }, timeoutMs);
+
+    function onMessage(e) {
+      if (resolved) return;
+      if (e.origin !== window.location.origin) return;
+
+      if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
+        clearTimeout(loadFallbackTimer);
+        iframe.contentWindow.postMessage({ type: 'REQUEST_RESTORE', data, mode }, window.location.origin);
+        return;
+      }
+
+      if (!e.data || e.data.type !== 'RESTORE_RESPONSE') return;
+      resolved = true;
+      cleanup();
+      if (e.data.error) reject(new Error(e.data.error));
+      else resolve({ restored: e.data.restored, skipped: e.data.skipped });
+    }
+
+    function cleanup() {
+      clearTimeout(timeout);
+      clearTimeout(loadFallbackTimer);
+      window.removeEventListener('message', onMessage);
+      setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 200);
+    }
+
+    iframe.addEventListener('load', () => {
+      loadFallbackTimer = setTimeout(() => {
+        if (resolved) return;
+        try { iframe.contentWindow.postMessage({ type: 'REQUEST_RESTORE', data, mode }, window.location.origin); }
+        catch(e) {}
+      }, 2000);
+    });
+
+    window.addEventListener('message', onMessage);
+    document.body.appendChild(iframe);
+  });
+}
+
+// ── Eksekusi restore ──────────────────────────────────────────
+async function _doRestore(data, mode) {
+  const btn = document.getElementById('btn-restore');
+  btn.disabled = true;
+  _showRestoreProgress(true);
+
+  try {
+    await EcosystemDB.open();
+
+    // ── Daily OS ────────────────────────────────────────────
+    if (data.dailyos) {
+      _setRestoreStatus('dailyos', 'Daily OS', 'loading');
+      try {
+        const raw = data.dailyos;
+        const habits = Array.isArray(raw) ? raw : (raw.habits ?? []);
+        const todos  = raw.todos ?? [];
+
+        if (mode === 'replace') {
+          await EcosystemDB.habits.save(habits);
+          await EcosystemDB.todos.save(todos);
+        } else {
+          // Merge habits
+          const existing = await EcosystemDB.habits.getAll();
+          const existIds = new Set(existing.map(h => h.id || h._key));
+          const newH = habits.filter(h => !existIds.has(h.id || h._key));
+          await EcosystemDB.habits.save([...existing, ...newH]);
+          // Merge todos
+          const existingT = await EcosystemDB.todos.getAll();
+          const existTIds = new Set(existingT.map(t => t.id));
+          const newT = todos.filter(t => !existTIds.has(t.id));
+          await EcosystemDB.todos.save([...existingT, ...newT]);
+        }
+
+        // Restore localStorage extras
+        if (raw.localStorage) {
+          if (raw.localStorage.dailyos_xp) localStorage.setItem('dailyos_xp', raw.localStorage.dailyos_xp);
+          if (raw.localStorage.dailyos_coach_memory) localStorage.setItem('dailyos_coach_memory', JSON.stringify(raw.localStorage.dailyos_coach_memory));
+        }
+        _setRestoreStatus('dailyos', 'Daily OS', 'ok');
+      } catch(e) {
+        console.error('[Restore] Daily OS:', e);
+        _setRestoreStatus('dailyos', 'Daily OS', 'error');
+      }
+    }
+
+    // ── IdeKu ──────────────────────────────────────────────
+    if (data.ideku) {
+      _setRestoreStatus('ideku', 'IdeKu', 'loading');
+      try {
+        const raw   = data.ideku;
+        const ideas = Array.isArray(raw) ? raw : (raw.ideas ?? []);
+
+        if (mode === 'replace') {
+          await EcosystemDB.clear('ideas');
+          await Promise.all(ideas.map(i => EcosystemDB.ideas.put(i)));
+        } else {
+          const existing = await EcosystemDB.ideas.getAll();
+          const existIds = new Set(existing.map(i => i.id));
+          const newIdeas = ideas.filter(i => !existIds.has(i.id));
+          await Promise.all(newIdeas.map(i => EcosystemDB.ideas.put(i)));
+        }
+
+        if (raw.localStorage?.['ideku-categories']) {
+          localStorage.setItem('ideku-categories', JSON.stringify(raw.localStorage['ideku-categories']));
+        }
+        _setRestoreStatus('ideku', 'IdeKu', 'ok');
+      } catch(e) {
+        console.error('[Restore] IdeKu:', e);
+        _setRestoreStatus('ideku', 'IdeKu', 'error');
+      }
+    }
+
+    // ── Kronik ─────────────────────────────────────────────
+    if (data.kronik) {
+      _setRestoreStatus('kronik', 'Kronik', 'loading');
+      try {
+        const raw     = data.kronik;
+        const entries = Array.isArray(raw) ? raw : (raw.entries ?? []);
+
+        if (mode === 'replace') {
+          await EcosystemDB.journal.putAll(entries, true);
+        } else {
+          const existing = await EcosystemDB.journal.getAll();
+          const existIds = new Set(existing.map(e => e.id));
+          const newEntries = entries.filter(e => !existIds.has(e.id));
+          await EcosystemDB.journal.putAll([...existing, ...newEntries], true);
+        }
+
+        // Restore profile Kronik
+        if (raw.profile) {
+          if (raw.profile.profile_name)   await EcosystemDB.kv.kronik.set('profile_name',   raw.profile.profile_name);
+          if (raw.profile.profile_avatar) await EcosystemDB.kv.kronik.set('profile_avatar', raw.profile.profile_avatar);
+        }
+        _setRestoreStatus('kronik', 'Kronik', 'ok');
+      } catch(e) {
+        console.error('[Restore] Kronik:', e);
+        _setRestoreStatus('kronik', 'Kronik', 'error');
+      }
+    }
+
+    // ── CuciMoney+ ─────────────────────────────────────────
+    if (data.cucimoney) {
+      _setRestoreStatus('cucimoney', 'CuciMoney+', 'loading');
+      try {
+        const raw = data.cucimoney;
+
+        if (mode === 'replace') {
+          await EcosystemDB.kv.finances.set('db',            raw.db            ?? {});
+          await EcosystemDB.kv.finances.set('budgets',       raw.budgets       ?? []);
+          await EcosystemDB.kv.finances.set('masterBudgets', raw.masterBudgets ?? []);
+        } else {
+          // Merge transaksi & akun — skip duplikat by id
+          const existingDb = await EcosystemDB.kv.finances.get('db') ?? { accounts: [], transactions: [] };
+          const existAccIds = new Set((existingDb.accounts || []).map(a => a.id));
+          const existTxIds  = new Set((existingDb.transactions || []).map(t => t.id));
+          const newAccounts = (raw.db?.accounts || []).filter(a => !existAccIds.has(a.id));
+          const newTxs      = (raw.db?.transactions || []).filter(t => !existTxIds.has(t.id));
+          const mergedDb = {
+            ...existingDb,
+            accounts:     [...(existingDb.accounts || []),     ...newAccounts],
+            transactions: [...(existingDb.transactions || []), ...newTxs],
+          };
+          await EcosystemDB.kv.finances.set('db', mergedDb);
+        }
+        _setRestoreStatus('cucimoney', 'CuciMoney+', 'ok');
+      } catch(e) {
+        console.error('[Restore] CuciMoney+:', e);
+        _setRestoreStatus('cucimoney', 'CuciMoney+', 'error');
+      }
+    }
+
+    // ── LinkKu (via iframe postMessage) ────────────────────
+    if (data.linkku) {
+      _setRestoreStatus('linkku', 'LinkKu', 'loading');
+      btn.textContent = '⏳ Memulihkan LinkKu...';
+      try {
+        const result = await sendRestoreToApp('/linkku/', data.linkku, mode);
+        _setRestoreStatus('linkku', 'LinkKu', 'ok');
+      } catch(e) {
+        console.warn('[Restore] LinkKu:', e.message);
+        _setRestoreStatus('linkku', 'LinkKu', 'warn');
+      }
+    }
+
+    // ── Selesai ─────────────────────────────────────────────
+    const failCount = Object.values(_restoreStatus).filter(s => s === 'error').length;
+    const warnCount = Object.values(_restoreStatus).filter(s => s === 'warn').length;
+
+    document.getElementById('restore-last').textContent =
+      failCount === 0 && warnCount === 0 ? 'Restore berhasil ✅' : 'Selesai (ada peringatan) ⚠️';
+
+    btn.textContent = failCount === 0 && warnCount === 0 ? '✅ Berhasil!' : '⚠️ Selesai';
+    setTimeout(() => { btn.textContent = '📂 Import ZIP'; }, 4000);
+
+    // Reload snapshot setelah restore
+    setTimeout(() => {
+      loadSnapshot();
+      _showRestoreProgress(false);
+    }, 3000);
+
+  } catch(e) {
+    alert('Gagal restore: ' + e.message);
+    console.error(e);
+    btn.textContent = '📂 Import ZIP';
+  } finally {
+    btn.disabled = false;
   }
 }
 
