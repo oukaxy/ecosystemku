@@ -1237,9 +1237,11 @@ function normalizeDailyOsTodo(todo) {
   const normalized = { ...(todo || {}) };
   normalized.createdAt = toIsoString(normalized.createdAt || normalized.addedAt, null);
   normalized.updatedAt = toIsoString(normalized.updatedAt || normalized.modifiedAt || normalized.createdAt, normalized.createdAt);
+  // completedAt hanya diisi dari field yang memang mencatat waktu selesai
+  // TIDAK fallback ke updatedAt — updatedAt bisa berubah kapan saja tanpa todo selesai
   normalized.completedAt = normalized.completedAt
     ? toIsoString(normalized.completedAt, null)
-    : (normalized.done ? toIsoString(normalized.doneAt || normalized.finishedAt || normalized.updatedAt, null) : null);
+    : (normalized.done ? toIsoString(normalized.doneAt || normalized.finishedAt, null) : null);
   normalized.archivedAt = normalized.archivedAt || null;
   normalized.isArchived = isArchivedRecord(normalized);
   return normalized;
@@ -1265,8 +1267,11 @@ function getHabitCompletionsOnDate(habit, dateStr) {
 function isTodoCompletedOnDate(todo, dateStr) {
   if (!todo) return false;
   const completedAt = todo.completedAt || todo.doneAt || todo.finishedAt || null;
-  if (completedAt) return completedAt.slice(0, 10) === dateStr;
-  return todo.done === true;
+  // Harus ada completedAt untuk bisa cek tanggal
+  // Fallback todo.done === true tanpa tanggal dihapus — terlalu broad,
+  // menyebabkan semua todo yang pernah done dianggap selesai di hari manapun
+  if (!completedAt) return false;
+  return completedAt.slice(0, 10) === dateStr;
 }
 
 function getYesterdayCompletedTodos(data, dateStr) {
@@ -1752,9 +1757,21 @@ function importData(event) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     try {
-      const imported = JSON.parse(e.target.result);
-      if (!Array.isArray(imported)) throw new Error('Format tidak valid');
-      const normalizedImported = normalizeJournalEntries(imported);
+      const parsed = JSON.parse(e.target.result);
+
+      // Terima dua format:
+      // 1. Array langsung (export native Kronik)          → [ {...}, ... ]
+      // 2. Object wrapper (backup dashboard ecosystemku)  → { entries: [...], profile: {...}, ... }
+      let rawEntries;
+      if (Array.isArray(parsed)) {
+        rawEntries = parsed;
+      } else if (parsed && Array.isArray(parsed.entries)) {
+        rawEntries = parsed.entries;
+      } else {
+        throw new Error('Format tidak valid');
+      }
+
+      const normalizedImported = normalizeJournalEntries(rawEntries);
       const existingIds = new Set(entries.map(e => e.id));
       const newEntries  = normalizedImported.filter(e => e.id && !existingIds.has(e.id));
       // Prepend new entries with correct order
@@ -1910,9 +1927,20 @@ function parseData(data) {
     vitalScores.st += completions * 0.5;
   });
 
-  const todoDone  = todos.filter(t => t.done).length;
-  const todoTotal = todos.length;
-  const urgentDone = todos.filter(t => t.done && t.priority === 'urgent').length;
+  // Hitung todo selesai dalam 30 hari terakhir (bukan semua todo yang pernah done)
+  const cutoffDate = new Date(today); cutoffDate.setDate(today.getDate() - 30);
+  const cutoffStr  = cutoffDate.toISOString().slice(0, 10);
+  const todoDone   = todos.filter(t => {
+    const ca = t.completedAt || t.doneAt || t.finishedAt || null;
+    if (ca) return ca.slice(0, 10) >= cutoffStr;
+    return false; // tanpa tanggal tidak dihitung
+  }).length;
+  const todoTotal  = todos.length;
+  const urgentDone = todos.filter(t => {
+    const ca = t.completedAt || t.doneAt || t.finishedAt || null;
+    if (!ca) return false;
+    return ca.slice(0, 10) >= cutoffStr && t.priority === 'urgent';
+  }).length;
   scores.Ketangkasan += todoDone * 4;
   scores.Kecerdasan  += todoDone * 2;
   scores.Karisma     += urgentDone * 3;
