@@ -938,16 +938,17 @@
         .kb-note-input {
             width: 100%; height: 34px;
             background: var(--bg-card2);
-            border: 1px solid var(--border-strong);
-            border-radius: 0.55rem;
+            border: 1.5px solid var(--border-strong);
+            border-radius: 0.65rem;
             color: var(--text-main);
             font-size: 0.82rem; font-family: inherit;
+            font-weight: 500;
             padding: 0 0.7rem;
             outline: none;
-            transition: border-color 0.15s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .kb-note-input::placeholder { color: var(--text-light); font-size: 0.78rem; }
-        .kb-note-input:focus { border-color: var(--primary); }
+        .kb-note-input::placeholder { color: var(--text-light); font-size: 0.78rem; font-weight: 400; }
+        .kb-note-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-dim); }
         /* Number grid 4×4 — uniform height rows */
         .kb-grid {
             display: grid; grid-template-columns: repeat(4, 1fr);
@@ -1613,7 +1614,9 @@
         .book-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 0.9rem 1.5rem;
-            cursor: pointer; transition: 0.2s;
+            cursor: pointer; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+            background: var(--bg);
+            position: relative;
         }
         .book-item:active { background: var(--bg-hover); }
         .book-item-left { display: flex; align-items: center; gap: 0.9rem; }
@@ -1621,9 +1624,32 @@
             width: 40px; height: 40px; border-radius: 0.85rem;
             background: var(--primary-dim); color: var(--primary);
             display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
         .book-item-name { font-size: 0.95rem; font-weight: 700; color: var(--text-main); }
         .book-item-count { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+
+        /* Swipe-to-delete wrapper for book items */
+        .book-swipe-wrap {
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .book-swipe-wrap .book-item { border-bottom: none; }
+        .book-delete-bg {
+            position: absolute;
+            top: 0; right: 0; bottom: 0;
+            width: 90px;
+            background: var(--expense);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+            gap: 0.2rem;
+            color: #fff;
+            font-size: 0.75rem; font-weight: 800;
+            z-index: 0;
+            cursor: pointer;
+        }
+        .book-delete-bg:active { background: #E0405A; }
 
         /* Typography utilities */
         .title { font-size: 1.1rem; font-weight: 800; color: var(--text-main); }
@@ -1841,12 +1867,38 @@
             display: flex; align-items: center;
             padding: 0.9rem 1.25rem;
             border-bottom: 1px solid var(--border);
-            cursor: pointer; transition: 0.15s;
+            cursor: pointer; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
             gap: 1rem;
+            position: relative;
+            background: var(--bg);
+            z-index: 1;
         }
         .cat-list-item:active { background: var(--bg-hover); }
         .cat-list-item.selected-item { background: var(--primary-dim); }
         .cat-list-item.selected-item .cat-list-item-name { color: var(--primary); }
+
+        /* Swipe-to-delete wrapper */
+        .cat-list-swipe-wrap {
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .cat-list-swipe-wrap .cat-list-item {
+            border-bottom: none; /* border is on wrapper now */
+        }
+        .cat-list-delete-bg {
+            position: absolute;
+            top: 0; right: 0; bottom: 0;
+            width: 90px;
+            background: var(--expense);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 0.78rem; font-weight: 800;
+            gap: 0.3rem;
+            z-index: 0;
+            cursor: pointer;
+        }
+        .cat-list-delete-bg:active { background: #E0405A; }
         .cat-list-item-emoji {
             width: 40px; height: 40px;
             display: flex; align-items: center; justify-content: center;
@@ -1970,8 +2022,8 @@
         .cat-create-icon-search:focus { border-color: var(--primary); }
         .cat-create-icon-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 0.6rem;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
         }
         .cat-create-icon-item {
             aspect-ratio: 1;
@@ -1984,6 +2036,16 @@
         }
         .cat-create-icon-item:active { background: var(--bg-hover); transform: scale(0.93); }
         .cat-create-icon-item.selected { border-color: var(--primary); background: var(--primary-dim); }
+        /* Emoji group section label */
+        .emoji-group-label {
+            grid-column: 1 / -1;
+            font-size: 0.7rem; font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.5rem 0 0.1rem;
+            margin-top: 0.25rem;
+        }
 
         /* Save button */
         .cat-create-save-wrap {
@@ -2035,13 +2097,35 @@
         .member-list-item {
             display: flex; align-items: center;
             padding: 0.9rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer; transition: 0.15s;
+            border-bottom: none;
+            cursor: pointer; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
             gap: 1rem;
+            background: var(--bg);
+            position: relative;
         }
         .member-list-item:active { background: var(--bg-hover); }
         .member-list-item.selected-item { background: var(--primary-dim); }
         .member-list-item.selected-item .member-item-name { color: var(--primary); }
+
+        /* Swipe-to-delete wrapper for member items */
+        .member-swipe-wrap {
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .member-delete-bg {
+            position: absolute;
+            top: 0; right: 0; bottom: 0;
+            width: 90px;
+            background: var(--expense);
+            display: flex; align-items: center; justify-content: center;
+            gap: 0.3rem;
+            color: #fff;
+            font-size: 0.78rem; font-weight: 800;
+            z-index: 0;
+            cursor: pointer;
+        }
+        .member-delete-bg:active { background: #E0405A; }
         .member-item-avatar {
             width: 42px; height: 42px;
             display: flex; align-items: center; justify-content: center;
@@ -2109,6 +2193,9 @@
         .member-emoji-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 0.5rem;
+        }
+        .member-emoji-grid .emoji-group-label {
+            grid-column: 1 / -1;
         }
         .member-emoji-item {
             aspect-ratio: 1;
@@ -3227,10 +3314,7 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
                     <span class="kb-top-btn kb-acc-label" id="kb-acc-label" style="font-size:0.55rem;font-weight:700;color:var(--text-main);border:none;height:auto;padding:0;cursor:pointer;">Pilih</span>
                 </div>
-                <div class="kb-note-input-wrap">
-                    <input class="kb-note-input" id="kb-note-input" type="text" placeholder="Catatan..." maxlength="100" oninput="onKbNoteInput(this.value)" autocomplete="off">
-                </div>
-                <div class="kb-amount-display-wrap" style="min-width:100px;border-right:none;">
+                <div class="kb-amount-display-wrap" style="min-width:100px;border-right:none;flex:1;">
                     <div class="nota-amount-display out" id="nota-amount">0</div>
                 </div>
             </div>
@@ -3499,20 +3583,18 @@ const ACCOUNT_TYPES = [
     { id: 'credit',     label: 'Kredit',    icon: '💳', category: 'Kredit' },
     { id: 'investment', label: 'Investasi', icon: '📈', category: 'Investasi' },
 ];
-const ACC_ICON_POOL = [
-    // Keuangan & Bank
-    '💵','💴','💶','💷','💰','💳','🏦','🏧','💸','🪙','💎','📈','📉','📊','💼','🏪','🏬','🛒',
-    // Digital & Tech
-    '📱','💻','🖥️','⌨️','🖱️','📡','🔌','🔋','💾','📲',
-    // Dompet & Tempat penyimpanan
-    '👛','👜','💼','🎒','🗃️','🗂️','📦','🏠','🏡','🏘️','🏗️',
-    // Transport
-    '🚗','🚕','🛵','🚲','✈️','🚢','🚀','🚌','🏎️',
-    // Makanan & Gaya hidup
-    '☕','🍔','🛍️','🎮','🎬','🎵','🎸','🏋️','⚽','🏀',
-    // Alam & lainnya
-    '🌟','⭐','🌙','☀️','🌈','🌊','🔥','❤️','🎯','🎁','🔑','🗝️','🔐','📌',
+const ACC_ICON_GROUPS = [
+    { label: '💰 Uang & Bank', emojis: ['💵','💴','💶','💷','💰','💸','🪙','💳','🏧','🏦','💹','📈','📉','📊','🤑','💎','🏆'] },
+    { label: '📱 Digital & E-Wallet', emojis: ['📱','💻','🖥️','📲','📡','🔌','🔋','💾','🌐','⚡','🛒','🏪','🏬'] },
+    { label: '👜 Dompet & Tas', emojis: ['👛','👜','🎒','🧳','💼','🗃️','🗂️','📦','📁','🗄️'] },
+    { label: '🏠 Properti & Aset', emojis: ['🏠','🏡','🏢','🏣','🏦','🏨','🏪','🏫','🏬','🏭','🏯','🏰','🏗️','🏘️','🌆','🌇','🌃'] },
+    { label: '🚗 Kendaraan', emojis: ['🚗','🚕','🚙','🏎️','🛻','🚌','🛵','🏍️','🚲','✈️','🚢','🚁','🚀','⛵','🛥️','⛽'] },
+    { label: '💼 Bisnis & Kerja', emojis: ['💼','📋','📊','📈','🗂️','📌','📝','🖊️','✏️','🔑','🗝️','🔐','🏷️','📜','🧾','🤝','👔'] },
+    { label: '🎯 Tabungan & Tujuan', emojis: ['🎯','🐷','🏆','🥇','🎖️','🌟','⭐','💫','✨','🎪','🎁','🎀','🎗️','🏅'] },
+    { label: '🌟 Simbol & Lainnya', emojis: ['🌟','⭐','🌙','☀️','🌈','🌊','🔥','❄️','🌸','🌺','🌻','🌹','💐','🍀','🌿','🪴','🌲','🎋','🎍','🔮','💠','🔷','🔶','❤️','🧡','💛','💚','💙','💜','🤍','🖤'] },
 ];
+
+const ACC_ICON_POOL = ACC_ICON_GROUPS.flatMap(g => g.emojis);
 let accIconPickerOpen = false;
 function getAccIcon(acc) {
     if (!acc) return '💰';
@@ -3861,7 +3943,7 @@ function _indexRemove(t) {
     const k = _indexKey(t.bookId, d.getFullYear(), d.getMonth());
     const arr = _trxIndex.get(k);
     if (arr) {
-        const i = arr.findIndex(x => String(x.id) === String(t.id));
+        const i = arr.indexOf(t);
         if (i !== -1) arr.splice(i, 1);
     }
 }
@@ -5675,20 +5757,29 @@ function openBookSheet() {
     db.books.forEach(b => {
         const count = getTrxForBook(b.id).length;
         const active = b.id === state.currentBookId;
-        html += `<div class="book-item" onclick="selectBook('${b.id}')">
-            <div class="book-item-left">
-                <div class="book-item-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        const canDelete = db.books.length > 1 && !active;
+        html += `
+        <div class="book-swipe-wrap" data-book-id="${b.id}">
+            ${canDelete ? `<div class="book-delete-bg" onclick="deleteBook('${b.id}')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Hapus
+            </div>` : ''}
+            <div class="book-item" onclick="selectBook('${b.id}')">
+                <div class="book-item-left">
+                    <div class="book-item-icon" style="${active ? '' : 'background:var(--bg-card2);color:var(--text-muted);'}">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </div>
+                    <div>
+                        <div class="book-item-name">${b.name}</div>
+                        <div class="book-item-count">${count} transaksi</div>
+                    </div>
                 </div>
-                <div>
-                    <div class="book-item-name">${b.name}</div>
-                    <div class="book-item-count">${count} transaksi</div>
-                </div>
+                ${active ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
             </div>
-            ${active ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
         </div>`;
     });
     document.getElementById('book-list-sheet').innerHTML = html;
+    initBookSwipeDelete(document.getElementById('book-list-sheet'));
     document.getElementById('sheet-book').classList.add('active');
     _pushModalState('sheet-book');
     openOverlay();
@@ -5713,6 +5804,129 @@ function selectBook(id) {
     markDirty();
     markSave();
     renderApp();
+}
+
+function initBookSwipeDelete(container) {
+    if (!container) return;
+    let activeSwipe = null;
+    const THRESHOLD = 50;
+    const OPEN_X = -90;
+
+    container.querySelectorAll('.book-swipe-wrap').forEach(wrap => {
+        const item = wrap.querySelector('.book-item');
+        if (!item) return;
+        // Buku aktif atau satu-satunya: tidak bisa di-swipe
+        const bookId = wrap.dataset.bookId;
+        const canDelete = db.books.length > 1 && String(bookId) !== String(state.currentBookId);
+        if (!canDelete) return;
+
+        let startX = 0, startY = 0, currentX = 0, swiping = false, moved = false;
+
+        item.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            currentX = 0; swiping = false; moved = false;
+            item.style.transition = 'none';
+        }, { passive: true });
+
+        item.addEventListener('touchmove', e => {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            if (!moved) {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    moved = true;
+                    swiping = Math.abs(dx) > Math.abs(dy);
+                }
+            }
+            if (!swiping) return;
+            e.preventDefault();
+            if (activeSwipe && activeSwipe !== wrap) _closeBookSwipe(activeSwipe);
+            currentX = Math.min(0, Math.max(OPEN_X - 20, dx));
+            item.style.transform = `translateX(${currentX}px)`;
+        }, { passive: false });
+
+        item.addEventListener('touchend', () => {
+            if (!swiping) {
+                if (activeSwipe && activeSwipe !== wrap) _closeBookSwipe(activeSwipe);
+                return;
+            }
+            item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+            if (currentX < -THRESHOLD) {
+                item.style.transform = `translateX(${OPEN_X}px)`;
+                activeSwipe = wrap;
+            } else {
+                item.style.transform = 'translateX(0)';
+                if (activeSwipe === wrap) activeSwipe = null;
+            }
+        });
+    });
+
+    container.addEventListener('touchstart', e => {
+        if (!activeSwipe) return;
+        const tappedWrap = e.target.closest('.book-swipe-wrap');
+        if (tappedWrap !== activeSwipe) { _closeBookSwipe(activeSwipe); activeSwipe = null; }
+    }, { passive: true });
+}
+
+function _closeBookSwipe(wrap) {
+    if (!wrap) return;
+    const item = wrap.querySelector('.book-item');
+    if (item) {
+        item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+        item.style.transform = 'translateX(0)';
+    }
+}
+
+async function deleteBook(id) {
+    const book = db.books.find(b => String(b.id) === String(id));
+    if (!book) return;
+
+    // Safety guards
+    if (db.books.length <= 1) {
+        showNotification('Minimal harus ada 1 buku', 'warning');
+        return;
+    }
+    if (String(book.id) === String(state.currentBookId)) {
+        showNotification('Tidak bisa hapus buku yang sedang aktif', 'warning');
+        return;
+    }
+
+    const trxCount = getTrxForBook(book.id).length;
+    let message = `Buku <b>${book.name}</b> akan dihapus.`;
+    if (trxCount > 0) {
+        message += `<br><br>Semua <b>${trxCount} transaksi</b> di buku ini akan ikut terhapus permanen.`;
+    }
+
+    const ok = await showConfirm({
+        icon: '📚',
+        title: 'Hapus Buku',
+        message,
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
+
+    // Delete all transactions belonging to this book
+    const deletedTrxIds = new Set(getTrxForBook(book.id).map(t => t.id));
+    deletedTrxIds.forEach(tid => {
+        const t = getTransaction(tid);
+        if (t) { reverseAccountBalance(t); _indexRemove(t); }
+    });
+    db.transactions = db.transactions.filter(t => !deletedTrxIds.has(t.id));
+
+    // Delete budgets for this book
+    masterBudgets = masterBudgets.filter(mb => String(mb.bookId) !== String(id));
+
+    // Remove the book
+    db.books = db.books.filter(b => String(b.id) !== String(id));
+
+    invalidateMetricsCache();
+    markDirty(); markSave();
+
+    // Re-render book list in sheet (without closing it)
+    openBookSheet();
+    renderApp();
+    showNotification(`Buku "${book.name}" dihapus`, 'warning');
 }
 
 async function openAddBookModal() {
@@ -6002,7 +6216,12 @@ function onKbNoteInputT(val) {
 function syncNoteInputs() {
     const v = state.trxDesc || '';
     const n = document.getElementById('kb-note-input');
-    if (n) n.value = v;
+    if (!n) return;
+    n.value = v;
+    // Update placeholder to show what the title will default to
+    const cat = getCategory(state.trxCategoryId);
+    const defaultTitle = cat?.name || 'Transaksi';
+    n.placeholder = `Catatan (default: ${defaultTitle})`;
 }
 
 /* Wallet full-screen modal */
@@ -6118,6 +6337,7 @@ function renderCatGrid() {
 function selectCat(id) {
     state.trxCategoryId = id;
     renderCatGrid();
+    syncNoteInputs(); // update placeholder to reflect new category name
 }
 
 /* ===== CUSTOM KEYBOARD ===== */
@@ -6275,44 +6495,61 @@ function closeAccountPicker() {
 }
 
 /* ===== CATEGORY ICON POOL ===== */
-const CAT_EMOJI_POOL = [
-    // Makanan
-    '🍔','🍜','🍱','🥩','🍣','🥫','🐟','🦀','🍦','🍞','🍟','🧁','🥩','🥗','🌮','🍫','🚚','🥟','🍡','🍒','🧊','🌯','🥚','🍕',
-    // Minuman
-    '☕','🍵','🧃','🍺','🥤','🍶','🧋',
-    // Transport
-    '🚗','🚌','✈️','🚲','🛵','🚕','🛺',
-    // Belanja
-    '🛍️','👗','👠','👜','🕶️','⌚','💍',
-    // Hiburan
-    '🎮','🎬','🎵','🎲','🎸','🎪','🎭',
-    // Kesehatan
-    '💊','🏥','🩺','🧬','💉','🩹','🏋️',
-    // Pendidikan
-    '📚','🎓','✏️','📖','🔬','🖊️','📐',
-    // Tagihan
-    '⚡','💡','🌊','📡','📱','🖥️','🔌',
-    // Keuangan
-    '💰','💵','💳','🏦','📈','📉','💼',
-    // Rumah
-    '🏠','🛋️','🧹','🔨','🛁','🪴','🏡',
-    // Lainnya
-    '📌','🎁','❤️','⭐','🌟','🔑','📦','🗓️','📎','🧲','🎯','🔔','🧸','🛒','💄','✂️','🪮','📦','🎒','🧺'
+const CAT_EMOJI_GROUPS = [
+    { label: '🍽️ Makanan', emojis: ['🍔','🍟','🌮','🌯','🍕','🍣','🍱','🍜','🍝','🍛','🍲','🥩','🥗','🥘','🍗','🍖','🥚','🍳','🥞','🧇','🥓','🍞','🥖','🥨','🧀','🥪','🌭','🍿','🥙','🫔','🧆','🥫','🥟','🍡','🫕','🍢','🫙'] },
+    { label: '🍰 Dessert & Snack', emojis: ['🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🍮','🍭','🍬','🍫','🍯','🍡','🍢','🍣','🫘','🌰','🥜','🍿','🧃'] },
+    { label: '🥤 Minuman', emojis: ['☕','🍵','🧉','🧋','🥤','🍺','🍻','🥂','🍷','🍸','🍹','🍶','🥃','🧊','🫖','🍾','🧃'] },
+    { label: '🚗 Transportasi', emojis: ['🚗','🚕','🚙','🏎️','🚌','🚎','🚐','🚑','🚒','🛵','🏍️','🚲','🛴','🛺','🚡','🚂','🚢','✈️','🚁','🛻','⛽','🅿️','🚦'] },
+    { label: '🛍️ Belanja & Fashion', emojis: ['🛍️','🛒','👗','👘','🥻','👙','👚','👛','👜','👝','🎒','🧳','👒','🧢','⛑️','👟','👠','👡','👢','🥿','🧤','🧣','🧥','💍','💎','⌚','🕶️','💄','🪭','💅'] },
+    { label: '🎮 Hiburan', emojis: ['🎮','🕹️','🎲','🎯','🎳','🎰','🎪','🎭','🎬','🎥','📺','🎵','🎶','🎸','🎹','🎷','🎺','🥁','🎻','🎤','🎧','🎨','🖌️','🎠','🎡','🎢','🎟️','🎫','🎦','🃏','🀄','🎴','♟️'] },
+    { label: '⚽ Olahraga', emojis: ['⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🎱','🏓','🏸','🥊','🥋','🤺','⛷️','🏋️','🤸','🧘','🏊','🚴','🧗','🏇','⛳','🏹','🎿','🛷','🤿'] },
+    { label: '💊 Kesehatan', emojis: ['💊','🩺','🏥','🩹','💉','🩻','🧬','🧪','🩸','🫀','🫁','🦷','🦴','👁️','💪','🧠','🧴','🪥','🧹','🫧'] },
+    { label: '📚 Pendidikan', emojis: ['📚','📖','📝','✏️','🖊️','🖋️','📓','📔','📒','📕','📗','📘','📙','📑','🗒️','📐','📏','📌','📎','🔬','🔭','🧮','🎓','🏫','✂️','🖇️'] },
+    { label: '⚡ Tagihan & Utilitas', emojis: ['⚡','💡','💧','🌊','🔥','🌡️','📡','📶','📱','🖥️','💻','🖨️','🖱️','⌨️','🔌','🔋','🔦','🪫','📺','📻','☎️','📞','🔇','🔈','🔉','🔊'] },
+    { label: '🏠 Rumah & Properti', emojis: ['🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','⛺','🛖','🛋️','🪑','🛁','🚿','🪠','🔨','🪚','⚒️','🛠️','🔧','🪛','🪤','🧰','🧹','🪣','🧺','🪴','🏗️'] },
+    { label: '💰 Keuangan & Investasi', emojis: ['💰','💵','💴','💶','💷','💸','💳','🪙','🏧','💹','📈','📉','📊','💼','🏦','🤑','💎','🏆','🎖️','🥇'] },
+    { label: '✈️ Perjalanan & Wisata', emojis: ['✈️','🌍','🌎','🌏','🗺️','🧭','🏖️','🏕️','🗻','🏔️','🌋','🏝️','🛫','🛬','🛳️','🚢','🗼','🗽','⛩️','🎡','🎢','🎠','🏟️','⛪','🕌','🕍','🛕','📸','🧳'] },
+    { label: '👶 Anak & Keluarga', emojis: ['👶','🧒','👦','👧','🧑','👨','👩','🧔','👴','👵','👨‍👩‍👧','👨‍👩‍👦','🧸','🪆','🎈','🎀','🎁','🍼','🪀','🪁','⛸️','🛝'] },
+    { label: '🐾 Hewan Peliharaan', emojis: ['🐶','🐱','🐠','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐧','🦜','🐣','🌸','🌺','🌻','🌹','🪨'] },
+    { label: '💼 Pekerjaan & Bisnis', emojis: ['💼','🗂️','📁','📂','📋','📊','📈','📉','🗃️','📇','📌','🖊️','📝','🖥️','💻','📠','📟','🏢','🤝','👔','🪪','📜','🧾','🏷️'] },
+    { label: '🎉 Sosial & Hadiah', emojis: ['🎉','🎊','🎈','🎁','🎀','🎗️','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💝','💖','💗','💓','💞','💕','💟','❣️','🌹','💐','🕯️','🎂','🥳'] },
+    { label: '🕌 Ibadah & Donasi', emojis: ['🕌','⛪','🛕','🕍','🙏','📿','☪️','✝️','🕊️','❤️','🤲','🫶','💝','🌙','⭐','🌟'] },
+    { label: '✂️ Perawatan Diri', emojis: ['💈','✂️','🪮','💄','💅','🪥','🧴','🧷','🪞','🛁','🚿','🧼','🪒','🧻','👓','💍','⌚','🧖','🧘'] },
+    { label: '🌱 Lingkungan & Alam', emojis: ['🌱','🌿','🍀','🌲','🌳','🌴','🪴','🌻','🌺','🌸','🍃','🍂','🍁','🌾','☀️','🌤️','⛅','🌧️','❄️','🌈','🌊','🔥','🌍','♻️'] },
+    { label: '📦 Lainnya', emojis: ['📦','🔑','🗝️','🔐','🔒','🔓','🎯','🧩','🧲','🪝','⚙️','🔩','📌','📍','🗓️','📅','⏰','⌛','⏳','🔔','🔕','📣','📢','💬','🗨️','🏷️','🧾','🛡️','⚖️','🚩'] },
 ];
 
-const CAT_EMOJI_LABELS = {
-    '🍔':'makanan burger','🍜':'mie ramen','🍱':'bento lunch','🥩':'daging','🍣':'sushi','🥫':'kaleng','🐟':'ikan','🦀':'kepiting','🍦':'es krim','🍞':'roti','🍟':'kentang goreng','🧁':'kue','🥗':'salad','🌮':'taco','🍫':'coklat','🚚':'truk','🥟':'dimsum','🍡':'mochi','🍒':'ceri','🧊':'es','🌯':'wrap','🥚':'telur','🍕':'pizza',
-    '☕':'kopi','🍵':'teh','🧃':'jus','🍺':'minuman','🥤':'minuman','🍶':'sake','🧋':'boba',
-    '🚗':'mobil transport','🚌':'bus','✈️':'pesawat','🚲':'sepeda','🛵':'motor','🚕':'taksi','🛺':'becak',
-    '🛍️':'belanja','👗':'baju pakaian','👠':'sepatu','👜':'tas','🕶️':'kacamata','⌚':'jam','💍':'cincin',
-    '🎮':'game hiburan','🎬':'film','🎵':'musik','🎲':'permainan','🎸':'gitar','🎪':'hiburan','🎭':'pertunjukan',
-    '💊':'obat kesehatan','🏥':'rumah sakit','🩺':'dokter','🧬':'medis','💉':'vaksin','🩹':'plester','🏋️':'olahraga gym',
-    '📚':'buku pendidikan','🎓':'sekolah','✏️':'pensil','📖':'baca','🔬':'sains','🖊️':'pena','📐':'penggaris',
-    '⚡':'listrik','💡':'lampu','🌊':'air','📡':'internet','📱':'hp','🖥️':'komputer','🔌':'kabel',
-    '💰':'uang','💵':'uang','💳':'kartu','🏦':'bank','📈':'investasi','📉':'saham','💼':'kerja gaji',
-    '🏠':'rumah','🛋️':'sofa','🧹':'bersih','🔨':'perbaikan','🛁':'mandi','🪴':'tanaman','🏡':'rumah',
-    '📌':'lainnya','🎁':'hadiah','❤️':'bantuan sedekah','⭐':'bintang','🌟':'spesial','🔑':'kunci','📦':'paket','🗓️':'jadwal','📎':'klip','🧲':'magnet','🎯':'target','🔔':'notifikasi','🧸':'mainan','🛒':'belanja keranjang','💄':'kosmetik','✂️':'gunting cukur','🪮':'cukur rambut','🎒':'tas sekolah','🧺':'laundry'
-};
+// Flat pool untuk backward compat (search)
+const CAT_EMOJI_POOL = CAT_EMOJI_GROUPS.flatMap(g => g.emojis);
+
+const CAT_EMOJI_LABELS = {};
+CAT_EMOJI_GROUPS.forEach(g => {
+    g.emojis.forEach(e => {
+        // label = nama grup (tanpa emoji prefix) + emoji sendiri sebagai keyword
+        CAT_EMOJI_LABELS[e] = g.label.replace(/^[^\s]+\s/, '').toLowerCase();
+    });
+});
+// Tambah keyword spesifik per emoji untuk search lebih akurat
+Object.assign(CAT_EMOJI_LABELS, {
+    '🍔':'makanan burger','🍟':'kentang goreng','🌮':'taco','🌯':'wrap','🍕':'pizza','🍣':'sushi','🍱':'bento','🍜':'mie ramen','🍝':'pasta','🍛':'kari','🍲':'sup','🥩':'daging','🥗':'salad','🥘':'tumis','🍗':'ayam','🍖':'sate','🥚':'telur','🍞':'roti','🥪':'sandwich','🌭':'hotdog','🥫':'kaleng','🥟':'dimsum',
+    '🍦':'es krim','🧁':'kue cupcake','🍰':'kue tart','🍫':'coklat','🍬':'permen','🍭':'lolipop','🍩':'donat',
+    '☕':'kopi','🍵':'teh','🧋':'boba','🥤':'minuman soda','🍺':'bir','🍷':'anggur wine',
+    '🚗':'mobil','🚕':'taksi','🛵':'motor','🚲':'sepeda','✈️':'pesawat','🚢':'kapal','🚌':'bus','⛽':'bensin bbm',
+    '👗':'baju pakaian','👟':'sepatu','👜':'tas','🎒':'ransel','💍':'cincin perhiasan','⌚':'jam tangan','🕶️':'kacamata','💄':'kosmetik',
+    '🎮':'game hiburan','🎬':'film bioskop','🎵':'musik lagu','🎸':'gitar','🎧':'headphone','🎨':'seni lukis',
+    '⚽':'bola olahraga','🏋️':'gym fitness','🧘':'yoga meditasi','🏊':'renang',
+    '💊':'obat','🏥':'rumah sakit','🩺':'dokter','💉':'vaksin suntik','🧪':'lab',
+    '📚':'buku pelajaran','🎓':'sekolah kuliah','✏️':'pensil tulis','🔬':'riset sains',
+    '⚡':'listrik','💧':'air','📱':'hp ponsel','🖥️':'komputer','🔌':'kabel charger','🔋':'baterai',
+    '🏠':'rumah','🛋️':'sofa furnitur','🔨':'perbaikan renovasi','🪴':'tanaman','🧹':'bersih-bersih',
+    '💰':'uang cash','💳':'kartu kredit','🏦':'bank','📈':'investasi saham','💼':'bisnis kerja',
+    '✈️':'pesawat travel','🗺️':'peta perjalanan','🏖️':'pantai liburan','🏕️':'camping',
+    '🎉':'pesta','🎁':'hadiah','❤️':'bantuan donasi sedekah','🙏':'ibadah doa','🕌':'masjid',
+    '✂️':'cukur rambut','💈':'salon barbershop','🧴':'skincare','🪥':'sikat gigi',
+    '🌱':'lingkungan hijau','♻️':'daur ulang','☀️':'energi surya',
+    '📦':'paket pengiriman','🔑':'kunci','🎯':'target','⚙️':'mesin servis','🗓️':'jadwal acara','🔔':'notifikasi langganan',
+});
+
 
 let catCreateSelectedEmoji = '📌';
 
@@ -6320,14 +6557,22 @@ function renderCatIconGrid(filter) {
     const grid = document.getElementById('cat-icon-grid');
     if (!grid) return;
     const q = (filter || '').toLowerCase();
-    const filtered = q
-        ? CAT_EMOJI_POOL.filter(e => (CAT_EMOJI_LABELS[e] || '').includes(q))
-        : CAT_EMOJI_POOL;
-    grid.innerHTML = filtered.map(e => `
-        <div class="cat-create-icon-item ${catCreateSelectedEmoji === e ? 'selected' : ''}" onclick="selectCatIcon('${e}')">
-            ${e}
-        </div>
-    `).join('');
+
+    if (q) {
+        // Mode search: flat, tanpa label grup
+        const filtered = CAT_EMOJI_POOL.filter(e =>
+            (CAT_EMOJI_LABELS[e] || '').includes(q) || e === q
+        );
+        grid.innerHTML = filtered.length
+            ? filtered.map(e => `<div class="cat-create-icon-item ${catCreateSelectedEmoji === e ? 'selected' : ''}" onclick="selectCatIcon('${e}')">${e}</div>`).join('')
+            : `<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:0.85rem;padding:1rem;">Tidak ditemukan</div>`;
+    } else {
+        // Mode normal: tampilkan per grup dengan label
+        grid.innerHTML = CAT_EMOJI_GROUPS.map(g => `
+            <div class="emoji-group-label">${g.label}</div>
+            ${g.emojis.map(e => `<div class="cat-create-icon-item ${catCreateSelectedEmoji === e ? 'selected' : ''}" onclick="selectCatIcon('${e}')">${e}</div>`).join('')}
+        `).join('');
+    }
 }
 
 function selectCatIcon(emoji) {
@@ -6350,14 +6595,21 @@ function renderCatListModal() {
     const scroll = document.getElementById('cat-list-scroll');
     if (!scroll) return;
     scroll.innerHTML = cats.map(c => `
-        <div class="cat-list-item ${state.trxCategoryId == c.id ? 'selected-item' : ''}" data-cat-id="${c.id}">
-            <div class="cat-list-item-emoji" onclick="selectCatFromList('${c.id}')">${c.emoji || '📌'}</div>
-            <div class="cat-list-item-name" onclick="selectCatFromList('${c.id}')">${c.name}</div>
-            <div class="cat-list-drag" data-drag-handle>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        <div class="cat-list-swipe-wrap" data-cat-id="${c.id}">
+            <div class="cat-list-delete-bg" onclick="deleteCategorySwipe('${c.id}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Hapus
+            </div>
+            <div class="cat-list-item ${state.trxCategoryId == c.id ? 'selected-item' : ''}" data-cat-id="${c.id}">
+                <div class="cat-list-item-emoji" onclick="selectCatFromList('${c.id}')">${c.emoji || '📌'}</div>
+                <div class="cat-list-item-name" onclick="selectCatFromList('${c.id}')">${c.name}</div>
+                <div class="cat-list-drag" data-drag-handle>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                </div>
             </div>
         </div>
     `).join('');
+    initCatSwipeDelete(scroll);
     initCatDragDrop(scroll, type);
 }
 
@@ -6369,21 +6621,21 @@ function initCatDragDrop(container, type) {
     let currentTouchY = 0;
     let rafId = null;
     let itemHeight = 0;
-    let orderedIds = [];   // canonical order of ids (mirrors DOM)
+    let orderedIds = [];
     let draggingId = null;
 
-    // Add transition to all items for smooth gap animation
+    // Items are now .cat-list-swipe-wrap (the full row unit)
+    function getItems() {
+        return Array.from(container.querySelectorAll('.cat-list-swipe-wrap'));
+    }
+
     function styleItems(exclude) {
-        Array.from(container.querySelectorAll('.cat-list-item')).forEach(el => {
+        getItems().forEach(el => {
             if (el !== exclude) {
                 el.style.transition = 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
                 el.style.willChange = 'transform';
             }
         });
-    }
-
-    function getItems() {
-        return Array.from(container.querySelectorAll('.cat-list-item'));
     }
 
     function onTouchStart(e) {
@@ -6392,26 +6644,28 @@ function initCatDragDrop(container, type) {
         e.preventDefault();
         e.stopPropagation();
 
-        dragging = handle.closest('.cat-list-item');
+        // Drag unit = the swipe wrapper
+        dragging = handle.closest('.cat-list-swipe-wrap');
+        if (!dragging) return;
         draggingId = dragging.dataset.catId;
         itemHeight = dragging.offsetHeight;
         touchStartY = e.touches[0].clientY;
         currentTouchY = touchStartY;
 
-        // Snapshot order
         orderedIds = getItems().map(el => el.dataset.catId);
 
         const rect = dragging.getBoundingClientRect();
         cloneStartTop = rect.top;
 
-        // Build clone
-        dragClone = dragging.cloneNode(true);
+        // Clone the inner .cat-list-item for the floating drag ghost
+        const innerItem = dragging.querySelector('.cat-list-item');
+        dragClone = (innerItem || dragging).cloneNode(true);
         dragClone.style.cssText = `
             position: fixed;
             left: ${rect.left}px;
             top: ${rect.top}px;
             width: ${rect.width}px;
-            height: ${rect.height}px;
+            height: ${itemHeight}px;
             z-index: 9999;
             background: var(--bg-card2);
             border: 1px solid var(--primary);
@@ -6436,30 +6690,25 @@ function initCatDragDrop(container, type) {
         if (!dragging) return;
 
         const dy = currentTouchY - touchStartY;
-
-        // Move clone
         dragClone.style.top = (cloneStartTop + dy) + 'px';
 
-        // Determine target index from clone center position
         const cloneCenter = cloneStartTop + dy + itemHeight / 2;
         const containerRect = container.getBoundingClientRect();
         const relativeCenter = cloneCenter - containerRect.top + container.scrollTop;
         const draggingOriginalIndex = orderedIds.indexOf(draggingId);
         const targetIndex = Math.max(0, Math.min(orderedIds.length - 1, Math.floor(relativeCenter / itemHeight)));
 
-        // Reorder orderedIds if target changed
         if (targetIndex !== draggingOriginalIndex) {
             const newOrder = [...orderedIds];
             newOrder.splice(draggingOriginalIndex, 1);
             newOrder.splice(targetIndex, 0, draggingId);
             orderedIds = newOrder;
 
-            // Apply transforms to items (no DOM reorder — just shift via translateY)
             const allItems = getItems();
             allItems.forEach(el => {
                 const id = el.dataset.catId;
                 if (id === draggingId) return;
-                const origIdx = getItems().indexOf(el); // original DOM position
+                const origIdx = allItems.indexOf(el);
                 const newIdx = orderedIds.indexOf(id);
                 const shift = (newIdx - origIdx) * itemHeight;
                 el.style.transform = `translateY(${shift}px)`;
@@ -6479,7 +6728,6 @@ function initCatDragDrop(container, type) {
         if (!dragging) return;
         cancelAnimationFrame(rafId);
 
-        // Reset all item transforms
         getItems().forEach(el => {
             el.style.transition = '';
             el.style.transform = '';
@@ -6492,13 +6740,13 @@ function initCatDragDrop(container, type) {
         dragClone = null;
         container.style.userSelect = '';
 
-        // Reorder DOM to match orderedIds
+        // Reorder DOM wrappers
         orderedIds.forEach(id => {
-            const el = container.querySelector(`[data-cat-id="${id}"]`);
+            const el = container.querySelector(`.cat-list-swipe-wrap[data-cat-id="${id}"]`);
             if (el) container.appendChild(el);
         });
 
-        // Persist to db
+        // Persist reorder to db
         const reordered = orderedIds.map(id => db.categories.find(c => String(c.id) === id)).filter(Boolean);
         const affected = new Set(reordered.map(c => c.id));
         const rest = db.categories.filter(c => !affected.has(c.id));
@@ -6596,13 +6844,17 @@ function saveNewCategory() {
 
 /* Member picker (placeholder) */
 /* ===== MEMBER MODAL ===== */
-const MEMBER_EMOJIS = [
-    '😄','😎','🤩','🥳','😇','🤗','😍','🤓',
-    '👦','👧','👨','👩','🧔','👴','👵','🧒',
-    '🧑‍💼','👩‍💼','🧑‍🍳','👩‍🍳','🧑‍🎓','👩‍🎓','🧑‍🎤','👩‍🎤',
-    '🐶','🐱','🐻','🐼','🐨','🦊','🐸','🐧',
-    '🏠','🌟','❤️','💎','🎯','🎮','🚀','🌈'
+const MEMBER_EMOJI_GROUPS = [
+    { label: '😄 Ekspresi', emojis: ['😄','😎','🤩','🥳','😇','🤗','😍','🤓','😊','🥰','😏','🤭','😆','😅','🤪','😋','🤩','🧐','🫡','🥸','😌','🤤','🤑'] },
+    { label: '🧑 Orang Dewasa', emojis: ['👦','👧','🧒','🧑','👨','👩','🧔','🧔‍♀️','👨‍🦱','👩‍🦱','👨‍🦰','👩‍🦰','👨‍🦳','👩‍🦳','👨‍🦲','👩‍🦲','👴','👵','🧓'] },
+    { label: '👶 Anak & Bayi', emojis: ['👶','🧒','👦','👧','🍼','🎠','🪀','🧸','🎈','🌈'] },
+    { label: '💼 Profesi', emojis: ['🧑‍💼','👩‍💼','👨‍💼','🧑‍🍳','👩‍🍳','👨‍🍳','🧑‍🎓','👩‍🎓','👨‍🎓','🧑‍🎤','👩‍🎤','👨‍🎤','🧑‍🏫','👩‍🏫','👨‍🏫','🧑‍⚕️','👩‍⚕️','👨‍⚕️','🧑‍🔧','👩‍🔧','👨‍🔧','🧑‍🌾','👩‍🌾','👨‍🌾','🧑‍💻','👩‍💻','👨‍💻','🧑‍🚀','👩‍🚀','👨‍🚀','💂','🕵️','🥷'] },
+    { label: '👨‍👩 Keluarga', emojis: ['👨‍👩‍👧','👨‍👩‍👦','👪','👫','👬','👭','🤝','💑','💏','🫂','❤️','👐','🙌'] },
+    { label: '🐶 Hewan', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐸','🐧','🐦','🦜','🐠','🐡','🦋','🐙','🦈','🐬','🐳','🦭','🐊'] },
+    { label: '🚀 Objek & Simbol', emojis: ['🏠','🌟','⭐','💫','✨','🎯','🎮','🚀','🌈','🌙','☀️','🔥','💎','🏆','🥇','🎖️','🏅','🎪','🎠','🎡','🎢','🛸','🌍','🗺️','🧭'] },
 ];
+
+const MEMBER_EMOJIS = MEMBER_EMOJI_GROUPS.flatMap(g => g.emojis);
 
 let editingMemberId = null;
 let memberCreateEmoji = '😄';
@@ -6654,24 +6906,40 @@ function renderMemberList() {
     const members = db.members || [];
     const isEdit = memberModalMode === 'edit';
 
-    scroll.innerHTML = members.map(m => `
-        <div class="member-list-item ${!isEdit && state.trxMemberId === m.id ? 'selected-item' : ''}"
-             data-member-id="${m.id}"
-             onclick="${isEdit ? `openMemberEdit('${m.id}')` : `selectMember('${m.id}')`}">
-            <div class="member-item-avatar">${m.emoji || '😄'}</div>
-            <div class="member-item-name">${m.name}</div>
-            ${isEdit
-                ? `<div class="member-item-drag" data-drag-handle>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
-                   </div>`
-                : (state.trxMemberId === m.id
-                    ? `<div class="member-item-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`
-                    : `<div style="width:18px"></div>`)
-            }
-        </div>
-    `).join('');
+    scroll.innerHTML = members.map(m => {
+        const canDelete = isEdit && m.id !== 'm1';
+        const inner = `
+            <div class="member-list-item ${!isEdit && state.trxMemberId === m.id ? 'selected-item' : ''}"
+                 data-member-id="${m.id}"
+                 onclick="${isEdit ? `openMemberEdit('${m.id}')` : `selectMember('${m.id}')`}">
+                <div class="member-item-avatar">${m.emoji || '😄'}</div>
+                <div class="member-item-name">${m.name}</div>
+                ${isEdit
+                    ? `<div class="member-item-drag" data-drag-handle>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                       </div>`
+                    : (state.trxMemberId === m.id
+                        ? `<div class="member-item-check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>`
+                        : `<div style="width:18px"></div>`)
+                }
+            </div>`;
 
-    if (isEdit) initMemberDragDrop(scroll);
+        if (canDelete) {
+            return `<div class="member-swipe-wrap" data-member-id="${m.id}">
+                <div class="member-delete-bg" onclick="deleteMemberSwipe('${m.id}')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    Hapus
+                </div>
+                ${inner}
+            </div>`;
+        }
+        return `<div class="member-swipe-wrap" data-member-id="${m.id}">${inner}</div>`;
+    }).join('');
+
+    if (isEdit) {
+        initMemberSwipeDelete(scroll);
+        initMemberDragDrop(scroll);
+    }
 }
 
 function selectMember(id) {
@@ -6734,8 +7002,9 @@ function selectMemberEmoji(emoji) {
 function renderMemberEmojiGrid() {
     const grid = document.getElementById('member-emoji-grid');
     if (!grid) return;
-    grid.innerHTML = MEMBER_EMOJIS.map(e => `
-        <div class="member-emoji-item ${memberCreateEmoji === e ? 'selected' : ''}" onclick="selectMemberEmoji('${e}')">${e}</div>
+    grid.innerHTML = MEMBER_EMOJI_GROUPS.map(g => `
+        <div class="emoji-group-label">${g.label}</div>
+        ${g.emojis.map(e => `<div class="member-emoji-item ${memberCreateEmoji === e ? 'selected' : ''}" onclick="selectMemberEmoji('${e}')">${e}</div>`).join('')}
     `).join('');
 }
 
@@ -6758,6 +7027,96 @@ function saveMember() {
     renderMemberList();
 }
 
+function initMemberSwipeDelete(container) {
+    if (!container) return;
+    let activeSwipe = null;
+    const THRESHOLD = 50;
+    const OPEN_X = -90;
+
+    container.querySelectorAll('.member-swipe-wrap').forEach(wrap => {
+        const item = wrap.querySelector('.member-list-item');
+        if (!item) return;
+        const memberId = wrap.dataset.memberId;
+        if (memberId === 'm1') return; // anggota utama tidak bisa dihapus
+
+        let startX = 0, startY = 0, currentX = 0, swiping = false, moved = false;
+
+        item.addEventListener('touchstart', e => {
+            if (e.target.closest('[data-drag-handle]')) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            currentX = 0; swiping = false; moved = false;
+            item.style.transition = 'none';
+        }, { passive: true });
+
+        item.addEventListener('touchmove', e => {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            if (!moved) {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    moved = true;
+                    swiping = Math.abs(dx) > Math.abs(dy);
+                }
+            }
+            if (!swiping) return;
+            e.preventDefault();
+            if (activeSwipe && activeSwipe !== wrap) _closeMemberSwipe(activeSwipe);
+            currentX = Math.min(0, Math.max(OPEN_X - 20, dx));
+            item.style.transform = `translateX(${currentX}px)`;
+        }, { passive: false });
+
+        item.addEventListener('touchend', () => {
+            if (!swiping) {
+                if (activeSwipe && activeSwipe !== wrap) _closeMemberSwipe(activeSwipe);
+                return;
+            }
+            item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+            if (currentX < -THRESHOLD) {
+                item.style.transform = `translateX(${OPEN_X}px)`;
+                activeSwipe = wrap;
+            } else {
+                item.style.transform = 'translateX(0)';
+                if (activeSwipe === wrap) activeSwipe = null;
+            }
+        });
+    });
+
+    container.addEventListener('touchstart', e => {
+        if (!activeSwipe) return;
+        const tappedWrap = e.target.closest('.member-swipe-wrap');
+        if (tappedWrap !== activeSwipe) { _closeMemberSwipe(activeSwipe); activeSwipe = null; }
+    }, { passive: true });
+}
+
+function _closeMemberSwipe(wrap) {
+    if (!wrap) return;
+    const item = wrap.querySelector('.member-list-item');
+    if (item) {
+        item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+        item.style.transform = 'translateX(0)';
+    }
+}
+
+async function deleteMemberSwipe(id) {
+    const m = (db.members || []).find(x => x.id === id);
+    if (!m || m.id === 'm1') return;
+
+    const ok = await showConfirm({
+        icon: m.emoji || '👤',
+        title: 'Hapus Anggota',
+        message: `Anggota <b>${m.name}</b> akan dihapus.`,
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
+
+    db.members = db.members.filter(x => x.id !== id);
+    if (state.trxMemberId === id) state.trxMemberId = 'm1';
+    markSave();
+    renderMemberList();
+    showNotification(`Anggota "${m.name}" dihapus`, 'warning');
+}
+
 function deleteMember() {
     if (!editingMemberId || editingMemberId === 'm1') return;
     db.members = db.members.filter(m => m.id !== editingMemberId);
@@ -6774,9 +7133,9 @@ function initMemberDragDrop(container) {
     let cloneStartTop = 0, touchStartY = 0, currentTouchY = 0;
     let rafId = null, itemHeight = 0;
     let orderedIds = [], draggingId = null;
-    let origIndexMap = {};   // id → original DOM index (snapshot saat drag start)
+    let origIndexMap = {};
 
-    function getItems() { return Array.from(container.querySelectorAll('.member-list-item')); }
+    function getItems() { return Array.from(container.querySelectorAll('.member-swipe-wrap')); }
 
     function styleItems(exclude) {
         getItems().forEach(el => {
@@ -6791,12 +7150,12 @@ function initMemberDragDrop(container) {
         const handle = e.target.closest('[data-drag-handle]');
         if (!handle) return;
         e.preventDefault(); e.stopPropagation();
-        dragging = handle.closest('.member-list-item');
+        dragging = handle.closest('.member-swipe-wrap');
+        if (!dragging) return;
         draggingId = dragging.dataset.memberId;
         itemHeight = dragging.offsetHeight;
         touchStartY = currentTouchY = e.touches[0].clientY;
 
-        // Snapshot urutan & index asli
         const items = getItems();
         orderedIds = items.map(el => el.dataset.memberId);
         origIndexMap = {};
@@ -6805,15 +7164,15 @@ function initMemberDragDrop(container) {
         const rect = dragging.getBoundingClientRect();
         cloneStartTop = rect.top;
 
-        dragClone = dragging.cloneNode(true);
+        const innerItem = dragging.querySelector('.member-list-item');
+        dragClone = (innerItem || dragging).cloneNode(true);
         dragClone.style.cssText = `
             position:fixed;left:${rect.left}px;top:${rect.top}px;
-            width:${rect.width}px;height:${rect.height}px;
+            width:${rect.width}px;height:${itemHeight}px;
             z-index:9999;background:var(--bg-card2);
             border:1px solid var(--primary);border-radius:0.75rem;
             opacity:0.97;pointer-events:none;
             box-shadow:0 12px 32px rgba(0,0,0,0.55);
-            transition:box-shadow 0.22s cubic-bezier(0.16,1,0.3,1);
             transform:scale(1.025);
         `;
         document.getElementById('app').appendChild(dragClone);
@@ -6842,7 +7201,6 @@ function initMemberDragDrop(container) {
             newOrder.splice(targetIdx, 0, draggingId);
             orderedIds = newOrder;
 
-            // Shift items via translateY menggunakan origIndexMap (stabil, tidak stale)
             getItems().forEach(el => {
                 const id = el.dataset.memberId;
                 if (id === draggingId) return;
@@ -6868,13 +7226,11 @@ function initMemberDragDrop(container) {
         dragClone.remove(); dragClone = null;
         container.style.userSelect = '';
 
-        // Reorder DOM sesuai urutan baru
         orderedIds.forEach(id => {
-            const el = container.querySelector(`[data-member-id="${id}"]`);
+            const el = container.querySelector(`.member-swipe-wrap[data-member-id="${id}"]`);
             if (el) container.appendChild(el);
         });
 
-        // Persist
         db.members = orderedIds.map(id => db.members.find(m => m.id === id)).filter(Boolean);
         markSave();
 
@@ -6982,7 +7338,7 @@ function saveTrxFromKeyboard() {
     };
 
     if (state.editingTrxId) {
-        const idx = db.transactions.findIndex(t => String(t.id) === String(state.editingTrxId));
+        const idx = db.transactions.findIndex(t => t.id === state.editingTrxId);
         if (idx > -1) {
             const oldTrx = db.transactions[idx];
             _indexRemove(oldTrx);
@@ -6990,13 +7346,6 @@ function saveTrxFromKeyboard() {
             db.transactions[idx] = newTrx;
             _indexAdd(newTrx);
             invalidateMetricsCache(oldTrx);
-            invalidateMetricsCache(newTrx);
-            showNotification('Transaksi diperbarui');
-        } else {
-            const ghost = _trxById.get(String(state.editingTrxId));
-            if (ghost) { _indexRemove(ghost); reverseAccountBalance(ghost); }
-            db.transactions.unshift(newTrx);
-            _indexAdd(newTrx);
             invalidateMetricsCache(newTrx);
             showNotification('Transaksi diperbarui');
         }
@@ -7162,25 +7511,32 @@ function openIconPicker() {
     if (existing) { existing.remove(); return; }
     const panel = document.createElement('div');
     panel.id = 'acc-icon-picker-panel';
-    panel.style.cssText = 'position:absolute;left:0;right:0;bottom:0;background:var(--bg-card);border-top:1px solid var(--border-strong);border-radius:1.25rem 1.25rem 0 0;padding:1rem 1.25rem 2rem;z-index:999;max-height:55%;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 -8px 32px rgba(0,0,0,0.5);animation:slideUp 0.22s cubic-bezier(0.16,1,0.3,1);';
-    const rows = ACC_ICON_POOL.map(e => {
-        const isSel = state.selectedAccIcon === e;
-        const bg = isSel ? 'var(--primary-dim)' : 'var(--bg-card2)';
-        const border = isSel ? 'var(--primary)' : 'transparent';
-        return `<div onclick="selectAccIcon(this.dataset.e)" data-e="${e}" style="width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1.35rem;border-radius:0.6rem;cursor:pointer;background:${bg};border:1.5px solid ${border};">${e}</div>`;
+    panel.style.cssText = 'position:absolute;left:0;right:0;bottom:0;background:var(--bg-card);border-top:1px solid var(--border-strong);border-radius:1.25rem 1.25rem 0 0;padding:1rem 1.25rem 2rem;z-index:999;max-height:60%;overflow-y:auto;overscroll-behavior:contain;box-shadow:0 -8px 32px rgba(0,0,0,0.5);animation:slideUp 0.22s cubic-bezier(0.16,1,0.3,1);';
+
+    const groupsHTML = ACC_ICON_GROUPS.map(g => {
+        const items = g.emojis.map(e => {
+            const isSel = state.selectedAccIcon === e;
+            const bg = isSel ? 'var(--primary-dim)' : 'var(--bg-card2)';
+            const border = isSel ? 'var(--primary)' : 'transparent';
+            return `<div onclick="selectAccIcon(this.dataset.e)" data-e="${e}" style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:1.35rem;border-radius:0.6rem;cursor:pointer;background:${bg};border:1.5px solid ${border};">${e}</div>`;
+        }).join('');
+        return `
+            <div style="font-size:0.68rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;padding:0.6rem 0 0.3rem;grid-column:1/-1;">${g.label}</div>
+            ${items}`;
     }).join('');
+
     const resetBtn = state.selectedAccIcon
         ? `<button onclick="resetAccIcon()" style="font-size:0.72rem;font-weight:700;color:var(--primary);background:var(--primary-dim);border:none;padding:0.3rem 0.7rem;border-radius:0.5rem;cursor:pointer;">Reset default</button>`
         : '';
     panel.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
             <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">Pilih Ikon Akun</div>
             <div style="display:flex;gap:0.5rem;align-items:center;">
                 ${resetBtn}
                 <button onclick="document.getElementById('acc-icon-picker-panel').remove()" style="background:var(--bg-hover);border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;border-radius:0.5rem;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</button>
             </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:0.4rem;">${rows}</div>`;
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:0.4rem;">${groupsHTML}</div>`;
     document.getElementById('modal-add-account').appendChild(panel);
 }
 
@@ -7496,15 +7852,153 @@ function renderCatListForManager(type) {
     const scroll = document.getElementById('cat-list-scroll');
     if (!scroll) return;
     scroll.innerHTML = cats.map(c => `
-        <div class="cat-list-item" data-cat-id="${c.id}">
-            <div class="cat-list-item-emoji" onclick="openCatEditFromManager('${c.id}')">${c.emoji || '📌'}</div>
-            <div class="cat-list-item-name" onclick="openCatEditFromManager('${c.id}')">${c.name}</div>
-            <div class="cat-list-drag" data-drag-handle>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        <div class="cat-list-swipe-wrap" data-cat-id="${c.id}">
+            <div class="cat-list-delete-bg" onclick="deleteCategorySwipe('${c.id}')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Hapus
+            </div>
+            <div class="cat-list-item" data-cat-id="${c.id}">
+                <div class="cat-list-item-emoji" onclick="openCatEditFromManager('${c.id}')">${c.emoji || '📌'}</div>
+                <div class="cat-list-item-name" onclick="openCatEditFromManager('${c.id}')">${c.name}</div>
+                <div class="cat-list-drag" data-drag-handle>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+                </div>
             </div>
         </div>
     `).join('');
+    initCatSwipeDelete(scroll);
     initCatDragDrop(scroll, type);
+}
+
+/* ===== SWIPE-TO-DELETE KATEGORI ===== */
+function initCatSwipeDelete(container) {
+    let activeSwipe = null; // currently swiped-open wrap element
+    const THRESHOLD = 50;   // px to trigger open
+    const OPEN_X = -90;     // px offset when open (matches delete button width)
+    
+    container.querySelectorAll('.cat-list-swipe-wrap').forEach(wrap => {
+        const item = wrap.querySelector('.cat-list-item');
+        if (!item) return;
+        
+        let startX = 0, startY = 0, currentX = 0, swiping = false, moved = false;
+        
+        item.addEventListener('touchstart', e => {
+            // Don't interfere with drag handle
+            if (e.target.closest('[data-drag-handle]')) return;
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            currentX = 0;
+            swiping = false;
+            moved = false;
+            item.style.transition = 'none';
+        }, { passive: true });
+        
+        item.addEventListener('touchmove', e => {
+            const dx = e.touches[0].clientX - startX;
+            const dy = e.touches[0].clientY - startY;
+            
+            // Determine direction on first significant move
+            if (!swiping && !moved) {
+                if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+                    moved = true;
+                    swiping = Math.abs(dx) > Math.abs(dy); // horizontal = swipe
+                }
+            }
+            
+            if (!swiping) return;
+            e.preventDefault();
+            
+            // Close any other open swipe
+            if (activeSwipe && activeSwipe !== wrap) {
+                _closeCatSwipe(activeSwipe);
+            }
+            
+            // Only allow swipe left (negative)
+            currentX = Math.min(0, Math.max(OPEN_X - 20, dx));
+            item.style.transform = `translateX(${currentX}px)`;
+        }, { passive: false });
+        
+        item.addEventListener('touchend', () => {
+            if (!swiping) {
+                // If there's an active swipe on another item, close it on any tap
+                if (activeSwipe && activeSwipe !== wrap) {
+                    _closeCatSwipe(activeSwipe);
+                }
+                return;
+            }
+            item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+            
+            if (currentX < -THRESHOLD) {
+                // Open
+                item.style.transform = `translateX(${OPEN_X}px)`;
+                activeSwipe = wrap;
+            } else {
+                // Snap back
+                item.style.transform = 'translateX(0)';
+                if (activeSwipe === wrap) activeSwipe = null;
+            }
+        });
+    });
+    
+    // Tap anywhere in scroll area closes open swipe
+    container.addEventListener('touchstart', e => {
+        if (!activeSwipe) return;
+        const tappedWrap = e.target.closest('.cat-list-swipe-wrap');
+        if (tappedWrap !== activeSwipe) {
+            _closeCatSwipe(activeSwipe);
+            activeSwipe = null;
+        }
+    }, { passive: true });
+}
+
+function _closeCatSwipe(wrap) {
+    if (!wrap) return;
+    const item = wrap.querySelector('.cat-list-item');
+    if (item) {
+        item.style.transition = 'transform 0.25s cubic-bezier(0.16,1,0.3,1)';
+        item.style.transform = 'translateX(0)';
+    }
+}
+
+async function deleteCategorySwipe(id) {
+    const cat = db.categories.find(c => String(c.id) === String(id));
+    if (!cat) return;
+    
+    // Check if category is used by any transactions
+    const usedCount = db.transactions.filter(t => String(t.category_id) === String(id)).length;
+    
+    let message = `Kategori <b>${cat.emoji} ${cat.name}</b> akan dihapus.`;
+    if (usedCount > 0) {
+        message += `<br><br>Ada <b>${usedCount} transaksi</b> menggunakan kategori ini. Transaksi tidak dihapus, tapi kategorinya akan hilang.`;
+    }
+    
+    const ok = await showConfirm({
+        icon: '🗑️',
+        title: 'Hapus Kategori',
+        message,
+        confirmLabel: 'Hapus',
+        confirmClass: 'danger'
+    });
+    if (!ok) return;
+    
+    db.categories = db.categories.filter(c => String(c.id) !== String(id));
+    
+    // Reset selected category if it was this one
+    if (String(state.trxCategoryId) === String(id)) {
+        state.trxCategoryId = null;
+    }
+    
+    markSave(); invalidateMetricsCache(); markDirty();
+    
+    // Re-render the appropriate list
+    if (catModalMode === 'manager') {
+        renderCatListForManager(catManagerTab);
+    } else {
+        renderCatListModal();
+    }
+    renderCatGrid();
+    renderLebih();
+    showNotification(`Kategori "${cat.name}" dihapus`, 'warning');
 }
 
 function openCatEditFromManager(id) {
