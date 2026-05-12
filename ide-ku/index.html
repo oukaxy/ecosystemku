@@ -2517,13 +2517,25 @@ function importIdeas(e) {
   const reader = new FileReader();
   reader.onload = function(ev) {
     try {
-      const imported = JSON.parse(ev.target.result);
-      if (!Array.isArray(imported)) throw new Error("Format tidak valid");
+      const parsed = JSON.parse(ev.target.result);
+
+      // Terima dua format:
+      // 1. Array langsung (export native IdeKu)         → [ {...}, ... ]
+      // 2. Object wrapper (backup dashboard ecosystemku) → { ideas: [...], ... }
+      let imported;
+      if (Array.isArray(parsed)) {
+        imported = parsed;
+      } else if (parsed && Array.isArray(parsed.ideas)) {
+        imported = parsed.ideas;
+      } else {
+        throw new Error("Format tidak valid");
+      }
+
       // Merge: skip duplicate ids
       const existingIds = new Set(ideas.map(i => i.id));
       const newOnes = imported.filter(i => i.id && i.title && !existingIds.has(i.id));
       const merged = [...newOnes, ...ideas].sort((a,b) => b.id - a.id);
-      // Save all to IndexedDB
+      // Save all to IndexedDB (termasuk field image/base64 jika ada)
       Promise.all(merged.map(i => putIdea(i))).then(() => {
         ideas = merged;
         render();
