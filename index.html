@@ -854,17 +854,15 @@
     </div>
 
     <div class="backup-btns">
-      <button class="btn btn-primary" id="btn-restore" onclick="triggerRestoreZip()">
+      <label class="btn btn-primary" id="btn-restore" style="cursor:pointer">
         📂 Import ZIP
-      </button>
+        <input type="file" id="restore-file-input" accept=".zip" style="display:none" onchange="handleRestoreZip(event)" />
+      </label>
       <button class="btn btn-secondary" id="btn-cloud-restore" onclick="cloudRestore()">
         ☁️ Restore Cloud
       </button>
     </div>
   </div>
-
-  <!-- Hidden file input untuk restore ZIP -->
-  <input type="file" id="restore-file-input" accept=".zip" style="display:none" onchange="handleRestoreZip(event)" />
 
   <!-- Modal pilih metode restore -->
   <div class="modal-overlay" id="restore-modal">
@@ -1469,8 +1467,8 @@ async function confirmRestore(mode) {
 
 // ── Trigger file picker ───────────────────────────────────────
 function triggerRestoreZip() {
-  document.getElementById('restore-file-input').value = '';
-  document.getElementById('restore-file-input').click();
+  // File input sekarang di dalam label — tidak perlu trigger manual
+  // Fungsi ini dibiarkan untuk kompatibilitas
 }
 
 // ── Handle file ZIP dipilih ───────────────────────────────────
