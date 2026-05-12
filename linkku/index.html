@@ -1,1487 +1,2089 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0c0c0e">
-<meta name="description" content="Linkku — Simpan link pribadimu">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Linkku">
-<title>Linkku</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/svg+xml" href="icon-192.svg">
-<link rel="apple-touch-icon" href="icon-192.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Nunito+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root{
-  --bg:#0c0c0e;--bg2:#111114;--bg3:#18181c;--bg4:#1e1e24;
-  --border:#26262e;--border2:#32323c;
-  --text:#f0f0f2;--text2:#8a8a9a;--text3:#4a4a5a;
-  --accent-dim:rgba(240,240,242,0.07);
-  --green:#4ade80;--red:#f87171;
-  --pr-bg:#0d0a13;--pr-border:#2a1a38;
-  --pr-accent:#c084fc;--pr-dim:rgba(192,132,252,0.1);
-  --r:8px;--r-sm:6px;--fh:'Nunito',sans-serif;--fm:'Nunito Mono',monospace;--t:0.14s ease;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--fh);min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body.pm{background:var(--pr-bg)}
-body.pm .topbar{background:rgba(13,10,19,0.92);border-bottom-color:var(--pr-border)}
-body.pm .sidebar{border-right-color:var(--pr-border);background:var(--pr-bg)}
-body.pm .cat-item.active{color:var(--pr-accent);border-left-color:var(--pr-accent);background:var(--pr-dim)}
-body.pm .btn-add{background:var(--pr-accent);color:#0c0c0e}
-body.pm .btn-add:hover{background:#a855f7}
-/* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;background:rgba(12,12,14,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;gap:8px}
-.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;flex-shrink:0;display:flex;align-items:center;gap:5px}
-.logo-mark{width:20px;height:20px;border:2px solid var(--text);border-radius:5px;display:flex;align-items:center;justify-content:center}
-.logo-mark svg{width:9px;height:9px}
-/* Search: flex-grow fills available space, never overflows */
-.sw{flex:1;min-width:0;position:relative}
-.sw svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:var(--text3);pointer-events:none}
-.si{width:100%;height:32px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fh);font-size:12px;padding:0 9px 0 28px;outline:none;transition:border-color var(--t)}
-.si:focus{border-color:var(--border2)}
-.si::placeholder{color:var(--text3)}
-.tr{display:flex;align-items:center;gap:6px;flex-shrink:0}
-/* PM badge: hanya dot kecil di pojok logo-mark */
-.pm-badge{display:none}
-.pm-dot{display:none;width:7px;height:7px;border-radius:50%;background:var(--pr-accent);border:1.5px solid var(--bg);position:absolute;bottom:-1px;right:-1px}
-body.pm .pm-dot{display:block}
-.bico{width:32px;height:32px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
-.bico:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
-.bico svg{width:14px;height:14px}
-.badd{display:none} /* hidden — replaced by FAB */
-/* FAB */
-.fab{position:fixed;bottom:calc(24px + env(safe-area-inset-bottom));right:20px;z-index:150;width:52px;height:52px;border-radius:50%;background:var(--text);color:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(0,0,0,.55),0 1px 4px rgba(0,0,0,.3);transition:transform .15s ease,opacity .15s ease,box-shadow .15s ease}
-.fab:hover{transform:scale(1.08);box-shadow:0 6px 24px rgba(0,0,0,.65)}
-.fab:active{transform:scale(.93)}
-.fab svg{width:22px;height:22px;flex-shrink:0}
-body.pm .fab{background:var(--pr-accent);color:#0c0c0e}
-/* Toast moves up a bit so it's not behind FAB */
-.tc{bottom:calc(88px + env(safe-area-inset-bottom))!important}
-/* LAYOUT */
-.layout{display:grid;grid-template-columns:196px 1fr;min-height:calc(100dvh - 52px)}
-/* SIDEBAR */
-.sidebar{border-right:1px solid var(--border);padding:10px 0;position:sticky;top:52px;height:calc(100dvh - 52px);overflow-y:auto;scrollbar-width:none;background:var(--bg);transition:background .2s}
-.sidebar::-webkit-scrollbar{display:none}
-.slabel{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:7px 13px 2px}
-.ci{display:flex;align-items:center;justify-content:space-between;padding:6px 13px;cursor:pointer;color:var(--text2);font-size:12px;font-weight:600;transition:all var(--t);border-left:2px solid transparent;user-select:none;gap:5px}
-.ci:hover{color:var(--text);background:var(--bg3)}
-.ci.active{color:var(--text);border-left-color:var(--text);background:var(--accent-dim)}
-.ci-l{display:flex;align-items:center;gap:5px;flex:1;min-width:0}
-.ci-l svg{width:12px;height:12px;flex-shrink:0}
-.ci-lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ccnt{font-family:var(--fm);font-size:9px;color:var(--text3);background:var(--bg4);border:1px solid var(--border);padding:1px 5px;border-radius:20px;flex-shrink:0}
-.sdiv{border:none;border-top:1px solid var(--border);margin:6px 0}
-.sfooter{border-top:1px solid var(--border);padding-top:4px;margin-top:2px}
-/* CONTENT */
-.content{padding:16px 18px;min-height:calc(100dvh - 52px)}
-.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
-.ctitle{font-size:15px;font-weight:800;letter-spacing:-.3px}
-.ccountlbl{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:1px}
-.hr{display:flex;align-items:center;gap:5px}
-.fchip{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all var(--t)}
-.fchip:hover{color:var(--text2);border-color:var(--border2)}
-.fchip.active{background:var(--bg4);border-color:var(--border2);color:var(--text)}
-/* GRID */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px;contain:layout}
-/* CARD */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:border-color var(--t),transform var(--t);display:flex;flex-direction:column;position:relative;will-change:transform;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.card:hover{border-color:var(--border2);transform:translateY(-1px)}
-/* Thumbnail 16:9 */
-.cthumb{width:100%;aspect-ratio:16/9;background:var(--bg3);position:relative;overflow:hidden;flex-shrink:0}
-.cthumb img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;-webkit-user-drag:none}
-.cthumb-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.cthumb-fb::before{content:'';position:absolute;inset:0;background:var(--cfav-bg,var(--bg4))}
-/* favicon stays at native 16px — rendered crisp, not stretched */
-.cfav-big{width:16px;height:16px;image-rendering:crisp-edges;position:relative;z-index:1;flex-shrink:0}
-.cletter{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:var(--text2);position:relative;z-index:1;background:rgba(255,255,255,.06);border:1px solid var(--border2)}
-.cfav{width:16px;height:16px;border-radius:2px;image-rendering:crisp-edges}
-/* Card body */
-.cbody{padding:8px 10px 4px;flex:1;display:flex;flex-direction:column;gap:2px}
-/* domain/source line — use heading font, lighter weight */
-.csrc{display:flex;align-items:center;gap:4px;font-family:var(--fh);font-size:10px;font-weight:600;color:var(--text3);overflow:hidden}
-.csrc img{width:10px;height:10px;border-radius:2px;flex-shrink:0;image-rendering:crisp-edges}
-.csrc span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ctitle2{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:1px}
-.cnote{font-family:var(--fm);font-size:10px;color:var(--text2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;transition:all .2s ease}
-.cnote.exp{display:block;-webkit-line-clamp:unset;overflow:visible;white-space:pre-wrap}
-.cnote-arr{font-family:var(--fm);font-size:9px;color:var(--text3);margin-top:2px;cursor:pointer;display:flex;align-items:center;gap:2px;transition:color var(--t)}
-.cnote-arr:hover{color:var(--text2)}
-.cnote-arr svg{width:10px;height:10px;transition:transform .2s ease}
-.cnote-arr.exp svg{transform:rotate(180deg)}
-.ctags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
-.ctag{font-family:var(--fm);font-size:8px;padding:2px 6px;border-radius:20px;background:var(--bg4);border:1px solid var(--border);color:var(--text3)}
-/* Footer: stick to bottom of card, no excess gap */
-.cfoot{display:flex;align-items:center;justify-content:space-between;padding:4px 10px 7px;margin-top:auto}
-.cdate{font-family:var(--fm);font-size:9px;color:var(--text3)}
-.cacts{display:flex;gap:3px;opacity:0;transition:opacity var(--t)}
-.card:hover .cacts{opacity:1}
-.cbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
-.cbtn:hover{background:var(--bg4);color:var(--text)}
-.cbtn svg{width:10px;height:10px}
-.cbtn.del:hover{background:rgba(248,113,113,.1);border-color:var(--red);color:var(--red)}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EcosystemKu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Tag Picker */
-.tag-picker{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
-.tpick{font-family:var(--fm);font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);cursor:pointer;transition:all var(--t);user-select:none;display:inline-flex;align-items:center;gap:4px}
-.tpick:hover{border-color:var(--border2);color:var(--text2)}
-.tpick.on{background:var(--bg4);border-color:var(--border2);color:var(--text);font-weight:700}
-.tpick-del{font-size:11px;line-height:1;color:var(--text3);padding:0 0 0 2px;cursor:pointer;border-radius:50%;transition:color var(--t)}
-.tpick-del:hover{color:var(--red)}
-.tag-new{display:flex;gap:5px;margin-top:6px}
-.tag-new input{flex:1;height:28px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fm);font-size:11px;padding:0 8px;outline:none}
-.tag-new input:focus{border-color:var(--border2)}
-.tag-new button{height:28px;padding:0 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--fh);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap}
-.tag-new button:hover{background:var(--bg4);color:var(--text)}
-/* EMPTY STATE */
-.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px 80px;text-align:center;min-height:50dvh}
-.empty-icon{width:64px;height:64px;border-radius:18px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.empty-icon svg{width:28px;height:28px;color:var(--text3)}
-.empty-t{font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px}
-.empty-s{font-family:var(--fm);font-size:11px;color:var(--text3);line-height:1.6;max-width:220px}
-.empty-cta{margin-top:22px;display:flex;flex-direction:column;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;color:var(--text3)}
-.empty-cta svg{width:18px;height:18px;color:var(--text2);animation:bouncedown 1.4s ease infinite}
-@keyframes bouncedown{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
-/* OVERLAY / MODAL */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:14px;opacity:0;pointer-events:none;transition:opacity .16s ease}
-.ov.open{opacity:1;pointer-events:all}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:100%;max-width:440px;max-height:90dvh;overflow-y:auto;scrollbar-width:none;transform:translateY(10px);transition:transform .16s ease}
-.modal::-webkit-scrollbar{display:none}
-.ov.open .modal{transform:translateY(0)}
-.msm{max-width:290px}
-.mh{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
-.mt{font-size:14px;font-weight:800}
-.mc{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--t)}
-.mc:hover{background:var(--bg3);color:var(--text)}
-.mc svg{width:11px;height:11px}
-.mb{padding:14px 18px;display:flex;flex-direction:column;gap:10px}
-.mf{display:flex;gap:7px;padding:0 18px 18px;justify-content:flex-end}
-/* Form */
-.fld{display:flex;flex-direction:column;gap:4px}
-.flbl{font-family:var(--fm);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
-.fi,.fta,.fsel{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);color:var(--text);font-family:var(--fm);font-size:12px;padding:7px 9px;outline:none;width:100%;transition:border-color var(--t)}
-.fi:focus,.fta:focus,.fsel:focus{border-color:var(--border2)}
-.fi::placeholder,.fta::placeholder{color:var(--text3)}
-.fta{resize:vertical;min-height:55px}
-.fsel{cursor:pointer}
-.fsel option{background:var(--bg3)}
-.togrow{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)}
-.toginfo{display:flex;flex-direction:column;gap:1px}
-.togname{font-size:12px;font-weight:600;display:flex;align-items:center;gap:4px}
-.togname svg{width:11px;height:11px}
-.togdesc{font-family:var(--fm);font-size:10px;color:var(--text3)}
-.tog{width:34px;height:19px;border-radius:10px;background:var(--border);cursor:pointer;position:relative;transition:background var(--t);flex-shrink:0;border:none}
-.tog.on{background:#c084fc}
-.tog::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#fff;transition:transform var(--t)}
-.tog.on::after{transform:translateX(15px)}
-/* Buttons */
-.bsec{height:32px;padding:0 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:transparent;color:var(--text2);font-family:var(--fh);font-size:12px;font-weight:600;cursor:pointer;transition:all var(--t)}
-.bsec:hover{background:var(--bg3);color:var(--text)}
-.bpri{height:32px;padding:0 14px;border-radius:var(--r-sm);border:none;background:var(--text);color:var(--bg);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer;transition:opacity var(--t)}
-.bpri:hover{opacity:.85}
-.bdanger{height:32px;padding:0 14px;border-radius:var(--r-sm);border:1px solid rgba(248,113,113,.3);background:rgba(248,113,113,.08);color:var(--red);font-family:var(--fh);font-size:12px;font-weight:700;cursor:pointer;transition:all var(--t)}
-.bdanger:hover{background:rgba(248,113,113,.16)}
-/* PIN */
-.pdots{display:flex;gap:7px;justify-content:center;padding:4px 0}
-.pdot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--border2);transition:all var(--t)}
-.pdot.on{background:#c084fc;border-color:#c084fc}
-.ppad{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:2px}
-.pkey{height:46px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--bg3);color:var(--text);font-family:var(--fh);font-size:17px;font-weight:700;cursor:pointer;transition:all var(--t);display:flex;align-items:center;justify-content:center}
-.pkey:hover{background:var(--bg4);border-color:var(--border2)}
-.pkey:active{transform:scale(.94)}
-.pkey svg{width:13px;height:13px}
-.pok{background:var(--pr-dim);border-color:var(--pr-border);color:#c084fc}
-.perr{font-family:var(--fm);font-size:10px;color:var(--red);text-align:center;min-height:14px}
-/* Settings */
-.ss{display:flex;flex-direction:column;gap:5px}
-.ssl{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding-bottom:4px;border-bottom:1px solid var(--border)}
-.sr{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);cursor:pointer;transition:all var(--t)}
-.sr:hover{background:var(--bg4);border-color:var(--border2)}
-.srl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600}
-.srl svg{width:13px;height:13px;flex-shrink:0}
-.srs{font-family:var(--fm);font-size:10px;color:var(--text3);margin-top:1px}
-.srr svg{width:11px;height:11px;color:var(--text3)}
-.drow{color:var(--red)}
-.drow .srs{color:rgba(248,113,113,.6)}
-.drow .srr svg{color:var(--red)}
-/* Cat manager */
-.ncr{display:flex;gap:5px;align-items:center}
-.emji{width:38px;text-align:center;font-size:14px}
-.cml{display:flex;flex-direction:column;gap:4px}
-.cmi{display:flex;align-items:center;justify-content:space-between;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)}
-.cmil{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
-.cmil svg{width:11px;height:11px;color:var(--text3)}
-/* URL preview */
-.uprev{display:flex;align-items:center;gap:6px;padding:7px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);font-family:var(--fm);font-size:10px;color:var(--text3)}
-.uprev img{width:11px;height:11px;border-radius:2px;flex-shrink:0}
-.uprev-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ftag{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--text3);flex-shrink:0}
-.fdot{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-/* Toast */
-.tc{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}
-.toast{background:var(--bg4);border:1px solid var(--border2);color:var(--text);font-family:var(--fm);font-size:11px;padding:6px 14px;border-radius:100px;animation:tin .18s ease;white-space:nowrap}
-@keyframes tin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.toast.ok{color:var(--green);border-color:rgba(74,222,128,.3)}
-.toast.err{color:var(--red);border-color:rgba(248,113,113,.3)}
-@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-/* ── SIDEBAR BACKDROP (mobile) ── */
-.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);z-index:89;opacity:0;transition:opacity .22s ease}
-.sb-backdrop.show{opacity:1}
+    :root {
+      --bg:          #f5f4f2;
+      --bg-card:     #ffffff;
+      --bg-card-2:   #eeede9;
+      --text:        #0f0e0c;
+      --text-2:      #6b6a67;
+      --text-3:      #b0afa9;
+      --border:      rgba(0,0,0,0.07);
+      --shadow:      0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-lg:   0 8px 32px rgba(0,0,0,0.08);
+      --radius:      16px;
+      --radius-sm:   10px;
+      --accent:      #0f0e0c;
+      --accent-soft: rgba(15,14,12,0.06);
+      --green:       #22c55e;
+      --amber:       #f59e0b;
+      --red:         #ef4444;
+      --blue:        #3b82f6;
+    }
 
-/* ── BOTTOM SHEET (long-press card actions) ── */
-.bs-ov{position:fixed;inset:0;z-index:300;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;background:rgba(0,0,0,0)}
-.bs-ov.open{opacity:1;pointer-events:all;background:rgba(0,0,0,.6)}
-.bs{background:var(--bg2);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:540px;padding-bottom:env(safe-area-inset-bottom);transform:translateY(100%);transition:transform .26s cubic-bezier(.4,0,.2,1)}
-.bs-ov.open .bs{transform:translateY(0)}
-.bs-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 6px}
-.bs-preview{display:flex;align-items:center;gap:10px;padding:8px 18px 12px;border-bottom:1px solid var(--border)}
-.bs-thumb{width:48px;height:27px;border-radius:5px;background:var(--bg3);overflow:hidden;flex-shrink:0}
-.bs-thumb img{width:100%;height:100%;object-fit:cover}
-.bs-info{flex:1;min-width:0}
-.bs-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bs-url{font-family:var(--fm);font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.bs-actions{display:flex;flex-direction:column;gap:0}
-.bs-btn{display:flex;align-items:center;gap:10px;padding:16px 20px;background:transparent;border:none;border-top:1px solid var(--border);color:var(--text);font-family:var(--fh);font-size:13px;font-weight:600;cursor:pointer;transition:background .12s ease;text-align:left;width:100%}
-.bs-btn:first-child{border-top:none}
-.bs-btn:hover,.bs-btn:active{background:var(--bg3)}
-.bs-btn svg{width:16px;height:16px;color:var(--text2);flex-shrink:0}
-.bs-btn.danger{color:var(--red)}
-.bs-btn.danger svg{color:var(--red)}
-.bs-sep{grid-column:1/-1;height:1px;background:var(--border);margin:0}
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:          #0f0e0c;
+        --bg-card:     #1a1917;
+        --bg-card-2:   #232220;
+        --text:        #f0efe9;
+        --text-2:      #9a9994;
+        --text-3:      #4a4945;
+        --border:      rgba(255,255,255,0.06);
+        --shadow:      0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+        --shadow-lg:   0 8px 32px rgba(0,0,0,0.4);
+        --accent:      #f0efe9;
+        --accent-soft: rgba(240,239,233,0.06);
+      }
+    }
 
-/* ── CARD TAP FEEDBACK (mobile) ── */
-@media(hover:none){
-  .card{-webkit-tap-highlight-color:transparent}
-  .card:active{transform:scale(.97);border-color:var(--border2)}
-  .cacts{opacity:1!important} /* always show action buttons on touch */
-  .cbtn{width:26px;height:26px} /* slightly bigger tap target */
-}
+    html { -webkit-text-size-adjust: 100%; }
 
-/* ── RESPONSIVE ── */
-@media(max-width:660px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{position:fixed;left:-206px;top:52px;height:calc(100dvh - 52px);width:206px;z-index:90;transition:left .22s ease;border-right:1px solid var(--border)}
-  .sidebar.open{left:0}
-  .sb-backdrop{display:block}
-  .content{padding:10px 10px calc(80px + env(safe-area-inset-bottom)) 10px}
-  /* Mobile: horizontal list cards */
-  .grid{grid-template-columns:1fr;gap:6px}
-  .card{flex-direction:row;flex-wrap:wrap;align-items:stretch;min-height:72px}
-  /* thumbnail: fixed square on mobile — no aspect-ratio stretch */
-  .cthumb{width:88px;height:88px;aspect-ratio:unset;flex-shrink:0;border-radius:var(--r) 0 0 var(--r)}
-  /* bigger favicon in list view fallback */
-  .cthumb-fb .cfav-big{width:24px;height:24px;image-rendering:auto}
-  .cbody{flex:1;min-width:0;padding:9px 10px 4px}
-  .ctitle2{font-size:13px}
-  .cfoot{width:100%;border-top:1px solid var(--border);padding:4px 10px 6px;margin-top:0;display:flex;align-items:center;justify-content:space-between}
-  .cacts{display:none!important}
-  /* hint tahan kartu */
-  .cfoot::after{content:'Tahan untuk opsi';font-family:var(--fm);font-size:9px;color:var(--text3);opacity:0.6}
-  /* search: fixed small width, icons always visible */
-  .sw{width:130px;flex-shrink:1}
-  .si:focus{width:130px} /* don't expand on mobile, space is tight */
-  .bmob{display:flex!important}
-  .topbar{padding:0 10px;gap:6px}
-}
-@media(min-width:661px){
-  .content{padding-bottom:calc(16px + env(safe-area-inset-bottom))}
-  .fab{bottom:calc(28px + env(safe-area-inset-bottom));right:24px;width:56px;height:56px}
-}
-.bmob{display:none}
-</style>
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+      overflow-x: hidden;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px 32px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .header {
+      padding: 56px 0 24px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .greeting-time {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 6px;
+    }
+
+    .greeting-main {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .greeting-main em {
+      font-style: italic;
+      color: var(--text-2);
+    }
+
+    .header-date {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      padding-top: 4px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+    .icon-btn:hover  { background: var(--bg-card-2); }
+
+    .sheet-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .sheet-overlay.active { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      padding: 12px 20px calc(24px + env(safe-area-inset-bottom));
+      z-index: 101;
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sheet.active { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--text-3);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+      opacity: 0.4;
+    }
+
+    .sheet-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .sheet-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s ease;
+    }
+    .sheet-item:last-child { border-bottom: none; }
+    .sheet-item:active { opacity: 0.6; }
+
+    .sheet-item-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--bg-card-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .sheet-item-title { font-size: 14px; font-weight: 500; color: var(--text); }
+    .sheet-item-sub   { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .sheet-item.danger .sheet-item-title { color: var(--red); }
+    .sheet-item.danger .sheet-item-icon  { background: rgba(239,68,68,0.1); }
+
+    /* ── Section label ────────────────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+      margin-top: 28px;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    /* ── Snapshot grid ────────────────────────────────────────── */
+    .snapshot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .snap-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      cursor: default;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .snap-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .snap-card.clickable { cursor: pointer; }
+    .snap-card.clickable:active { transform: scale(0.97); }
+
+    /* Skeleton loading aktif */
+    .snap-card.loading .snap-value,
+    .snap-card.loading .snap-sub {
+      color: transparent;
+      background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      user-select: none;
+    }
+
+    .snap-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .snap-icon {
+      font-size: 18px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .snap-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px;
+      line-height: 1;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .snap-value.small {
+      font-size: 18px;
+    }
+
+    .snap-label {
+      font-size: 11px;
+      color: var(--text-3);
+      font-weight: 400;
+    }
+
+    .snap-sub {
+      font-size: 10px;
+      color: var(--text-3);
+      margin-top: 4px;
+    }
+
+    .snap-tag {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 99px;
+      margin-top: 6px;
+    }
+
+    .snap-tag.good  { background: rgba(34,197,94,0.12);  color: var(--green); }
+    .snap-tag.warn  { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .snap-tag.info  { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+    /* Journal status card */
+    .journal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      margin-top: 8px;
+    }
+
+    .journal-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+
+    .journal-card-left { display: flex; align-items: center; gap: 10px; }
+    .journal-card-icon { font-size: 20px; }
+    .journal-card-text {}
+    .journal-card-title { font-size: 13px; font-weight: 500; color: var(--text); }
+    .journal-card-sub   { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+    .journal-card-arrow { font-size: 16px; color: var(--text-3); }
+
+    /* ── PWA Grid ─────────────────────────────────────────────── */
+    .pwa-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .pwa-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .pwa-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pwa-item:hover .pwa-icon-wrap {
+      transform: scale(1.06);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .pwa-item:active .pwa-icon-wrap {
+      transform: scale(0.96);
+    }
+
+    .pwa-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .pwa-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      min-width: 16px;
+      height: 16px;
+      background: var(--red);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+    }
+
+    .pwa-soon {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .pwa-icon-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 18px;
+    }
+
+    .pwa-soon .pwa-icon-wrap::after {
+      content: 'Soon';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-align: center;
+      padding: 3px 0;
+    }
+
+    /* ── Backup Section ───────────────────────────────────────── */
+    .backup-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    .backup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .backup-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .backup-last {
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .backup-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card-2);
+      color: var(--text-2);
+      position: relative;
+    }
+
+    .btn-coming-soon {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--text-3);
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+
+    /* ── Restore Section ─────────────────────────────────────── */
+    .restore-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeUp 0.5s ease forwards;
+      margin-top: 8px;
+    }
+
+    .restore-progress {
+      display: none;
+      margin-bottom: 12px;
+    }
+
+    /* ── Modal ────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px calc(32px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .modal-overlay.active .modal { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--text-3);
+      border-radius: 2px;
+      margin: 0 auto 16px;
+      opacity: 0.4;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.15s ease, background 0.15s ease;
+      background: var(--bg-card-2);
+      color: var(--text);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+    .modal-btn-icon { font-size: 20px; }
+    .modal-btn-label { font-size: 12px; font-weight: 600; }
+    .modal-btn-desc { font-size: 10px; opacity: 0.7; text-align: center; line-height: 1.3; }
+
+    .modal-cancel {
+      width: 100%;
+      padding: 12px;
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: var(--text-3);
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Loading skeleton ─────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      height: 20px;
+    }
+
+    /* ── Animations ───────────────────────────────────────────── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── Stagger delays ───────────────────────────────────────── */
+    .delay-1 { animation-delay: 0.05s; }
+    .delay-2 { animation-delay: 0.10s; }
+    .delay-3 { animation-delay: 0.15s; }
+    .delay-4 { animation-delay: 0.20s; }
+    .delay-5 { animation-delay: 0.25s; }
+    .delay-6 { animation-delay: 0.30s; }
+    .delay-7 { animation-delay: 0.35s; }
+    .delay-8 { animation-delay: 0.40s; }
+    .delay-9 { animation-delay: 0.45s; }
+    .delay-10 { animation-delay: 0.50s; }
+    .delay-11 { animation-delay: 0.55s; }
+    .delay-12 { animation-delay: 0.60s; }
+  </style>
 </head>
 <body>
+<div class="app">
 
-<header class="topbar">
-  <div class="logo">
-    <div class="logo-mark" style="position:relative">
-      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 5h6M5 2l3 3-3 3"/></svg>
-      <span class="pm-dot"></span>
-    </div>
-    Linkku
-  </div>
-  <div class="sw">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input class="si" type="text" placeholder="Cari link..." id="si" autocomplete="off">
-  </div>
-  <div class="tr">
-    <button class="bico bmob" id="btnMob">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
-    <button class="bico" id="btnPT" title="Mode Privat">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-    </button>
-    <button class="bico" id="btnSet" title="Pengaturan">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
-  </div>
-</header>
-
-<div class="layout">
-  <aside class="sidebar" id="sidebar">
-    <!-- Normal nav -->
-    <div id="navN">
-      <div class="slabel">Semua</div>
-      <div class="ci active" data-cat="all" onclick="selCat('all')">
-        <div class="ci-l">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span class="ci-lbl">Semua Link</span>
-        </div>
-        <span class="ccnt" id="cntAll">0</span>
-      </div>
-      <hr class="sdiv">
-      <div class="slabel">Kategori</div>
-      <div id="catList"></div>
-      <div class="sfooter">
-        <div class="ci" onclick="openCatMgr()">
-          <div class="ci-l">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span class="ci-lbl" style="color:var(--text3)">Kelola Kategori</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Private nav -->
-    <div id="navP" style="display:none">
-      <div style="padding:9px 13px 5px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#c084fc">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        Mode Privat
-      </div>
-      <div class="ci active" data-cat="private-all" onclick="selCat('private-all')">
-        <div class="ci-l">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span class="ci-lbl">Semua Privat</span>
-        </div>
-        <span class="ccnt" id="cntPriv">0</span>
-      </div>
-      <hr class="sdiv">
-      <div class="slabel">Kategori</div>
-      <div id="catListP"></div>
-      <div class="sfooter">
-        <div class="ci" onclick="openPrivCatMgr()">
-          <div class="ci-l">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span class="ci-lbl" style="color:var(--text3)">Kelola Kategori Privat</span>
-          </div>
-        </div>
-        <div class="ci" onclick="exitPrivate()">
-          <div class="ci-l" style="color:var(--text3)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span class="ci-lbl">Keluar Mode Privat</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <main class="content">
-    <div class="ch">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-top">
       <div>
-        <div class="ctitle" id="pgTitle">Semua Link</div>
-        <div class="ccountlbl" id="pgCount">0 link</div>
+        <div class="greeting-time" id="greeting-time">Selamat pagi</div>
+        <div class="greeting-main" id="greeting-main">Hai <em id="user-name"></em></div>
+        <div class="header-date" id="header-date"></div>
       </div>
-      <div class="hr">
-        <span class="fchip active" data-f="all" onclick="setF('all')">Semua</span>
-        <span class="fchip" data-f="recent" onclick="setF('recent')">Terbaru</span>
+      <div class="header-actions">
+        <div class="icon-btn" onclick="openSheet()" title="Pengaturan">⚙️</div>
       </div>
     </div>
-    <div class="grid" id="grid"></div>
-  </main>
-</div>
+  </header>
 
-<!-- Modal: Add/Edit -->
-<div class="ov" id="ovL">
-  <div class="modal">
-    <div class="mh"><div class="mt" id="mLT">Tambah Link</div>
-      <button class="mc" onclick="closeOv('ovL')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mb">
-      <div class="fld"><label class="flbl">URL *</label><input class="fi" type="url" id="lU" placeholder="https://..." oninput="onUrlI()" autocomplete="off"></div>
-      <div id="upw" style="display:none"></div>
-      <div class="fld"><label class="flbl">Judul</label><input class="fi" type="text" id="lTi" placeholder="Auto-fetch dari URL..."></div>
-      <div class="fld"><label class="flbl">Catatan</label><textarea class="fta" id="lN" placeholder="Catatan opsional..."></textarea></div>
-      <div class="fld"><label class="flbl">Kategori</label><select class="fsel" id="lC"></select></div>
-      <div class="fld">
-        <label class="flbl">Tags</label>
-        <div class="tag-picker" id="tagPicker"></div>
-        <div class="tag-new">
-          <input type="text" id="tagNewI" placeholder="Tag baru..." maxlength="24" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewTag()}">
-          <button onclick="addNewTag()">+ Tambah</button>
-        </div>
-        <input type="hidden" id="lTg">
-      </div>
-      <div class="togrow">
-        <div class="toginfo">
-          <div class="togname"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Link Privat</div>
-          <div class="togdesc">Hanya muncul di Mode Privat</div>
-        </div>
-        <button class="tog" id="togP" onclick="togPFn()"></button>
-      </div>
-    </div>
-    <div class="mf"><button class="bsec" onclick="closeOv('ovL')">Batal</button><button class="bpri" onclick="saveLink()">Simpan</button></div>
-  </div>
-</div>
+  <!-- BOTTOM SHEET -->
+  <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Pengaturan</div>
 
-<!-- Modal: PIN enter -->
-<div class="ov" id="ovPin">
-  <div class="modal msm">
-    <div class="mh"><div class="mt" id="pinTit">Masukkan PIN</div>
-      <button class="mc" onclick="closeOv('ovPin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div class="sheet-item" onclick="refreshApp()">
+      <div class="sheet-item-icon">🔄</div>
+      <div>
+        <div class="sheet-item-title">Refresh & Clear Cache</div>
+        <div class="sheet-item-sub">Hapus cache SW, cocok setelah deploy baru</div>
+      </div>
     </div>
-    <div class="mb">
-      <div class="pdots" id="pDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
-      <div class="perr" id="pErr"></div>
-      <div class="ppad">
-        <button class="pkey" onclick="pi('1')">1</button><button class="pkey" onclick="pi('2')">2</button><button class="pkey" onclick="pi('3')">3</button>
-        <button class="pkey" onclick="pi('4')">4</button><button class="pkey" onclick="pi('5')">5</button><button class="pkey" onclick="pi('6')">6</button>
-        <button class="pkey" onclick="pi('7')">7</button><button class="pkey" onclick="pi('8')">8</button><button class="pkey" onclick="pi('9')">9</button>
-        <button class="pkey" onclick="pd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
-        <button class="pkey" onclick="pi('0')">0</button><button class="pkey pok" onclick="pc()">OK</button>
+
+    <div class="sheet-item" onclick="reloadData()">
+      <div class="sheet-item-icon">📡</div>
+      <div>
+        <div class="sheet-item-title">Muat ulang data</div>
+        <div class="sheet-item-sub">Refresh snapshot tanpa clear cache</div>
+      </div>
+    </div>
+
+    <div class="sheet-item danger" onclick="confirmClearData()">
+      <div class="sheet-item-icon">🗑️</div>
+      <div>
+        <div class="sheet-item-title">Hapus semua data lokal</div>
+        <div class="sheet-item-sub">Hapus ecosystem_db — tidak bisa dikembalikan</div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Modal: Set PIN -->
-<div class="ov" id="ovSP">
-  <div class="modal msm">
-    <div class="mh"><div class="mt">Atur PIN Privat</div>
-      <button class="mc" onclick="closeOv('ovSP')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mb">
-      <div style="font-family:var(--fm);font-size:10px;color:var(--text3);text-align:center" id="spHint">Masukkan PIN 4 digit baru</div>
-      <div class="pdots" id="spDots"><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div><div class="pdot"></div></div>
-      <div class="perr" id="spErr"></div>
-      <div class="ppad">
-        <button class="pkey" onclick="spi('1')">1</button><button class="pkey" onclick="spi('2')">2</button><button class="pkey" onclick="spi('3')">3</button>
-        <button class="pkey" onclick="spi('4')">4</button><button class="pkey" onclick="spi('5')">5</button><button class="pkey" onclick="spi('6')">6</button>
-        <button class="pkey" onclick="spi('7')">7</button><button class="pkey" onclick="spi('8')">8</button><button class="pkey" onclick="spi('9')">9</button>
-        <button class="pkey" onclick="spd()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></button>
-        <button class="pkey" onclick="spi('0')">0</button><button class="pkey pok" onclick="spc()">OK</button>
-      </div>
-    </div>
+  <!-- TODAY SNAPSHOT -->
+  <div class="section-label delay-1">Hari ini</div>
+
+  <div class="snapshot-grid">
+    <!-- Habit -->
+    <a class="snap-card delay-2 clickable" id="card-habit" href="/daily-os/">
+      <span class="snap-icon">🔥</span>
+      <div class="snap-value" id="val-habit">—</div>
+      <div class="snap-label">Habit selesai</div>
+      <div class="snap-sub" id="sub-habit">memuat...</div>
+    </a>
+
+    <!-- Todo -->
+    <a class="snap-card delay-3 clickable" id="card-todo" href="/daily-os/">
+      <span class="snap-icon">✅</span>
+      <div class="snap-value" id="val-todo">—</div>
+      <div class="snap-label">Todo pending</div>
+      <div class="snap-sub" id="sub-todo">memuat...</div>
+    </a>
+
+    <!-- Ide -->
+    <a class="snap-card delay-4 clickable" id="card-ide" href="/ide-ku/">
+      <span class="snap-icon">💡</span>
+      <div class="snap-value" id="val-ide">—</div>
+      <div class="snap-label">Ide in progress</div>
+      <div class="snap-sub" id="sub-ide">memuat...</div>
+    </a>
+
+    <!-- Streak -->
+    <a class="snap-card delay-5 clickable" id="card-streak" href="/daily-os/">
+      <span class="snap-icon">⚡</span>
+      <div class="snap-value" id="val-streak">—</div>
+      <div class="snap-label">Hari streak</div>
+      <div class="snap-sub" id="sub-streak">memuat...</div>
+    </a>
+
+    <!-- Saldo -->
+    <a class="snap-card delay-6 clickable" id="card-saldo" href="/cucimoney/">
+      <span class="snap-icon">💰</span>
+      <div class="snap-value small" id="val-saldo">—</div>
+      <div class="snap-label">Total saldo</div>
+      <div class="snap-sub" id="sub-saldo">memuat...</div>
+    </a>
+
+    <!-- Pengeluaran -->
+    <a class="snap-card delay-7 clickable" id="card-keluar" href="/cucimoney/">
+      <span class="snap-icon">📤</span>
+      <div class="snap-value small" id="val-keluar">—</div>
+      <div class="snap-label">Keluar hari ini</div>
+      <div class="snap-sub" id="sub-keluar">memuat...</div>
+    </a>
   </div>
-</div>
 
-<!-- Modal: Settings -->
-<div class="ov" id="ovSet">
-  <div class="modal">
-    <div class="mh"><div class="mt">Pengaturan</div>
-      <button class="mc" onclick="closeOv('ovSet')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mb">
-      <div class="ss"><div class="ssl">Keamanan</div>
-        <div class="sr" onclick="openSetPin()">
-          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div>PIN Privat<div class="srs" id="pinSt">Belum diatur</div></div></div>
-          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-      </div>
-      <div class="ss"><div class="ssl">Data</div>
-        <div class="sr" onclick="exportData()">
-          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><div>Export Data<div class="srs">Download JSON</div></div></div>
-          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-        <div class="sr" onclick="importData()">
-          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><div>Import Data<div class="srs">Dari file JSON</div></div></div>
-          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-        <div class="sr drow" onclick="confirmReset()">
-          <div class="srl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg><div>Reset Semua Data<div class="srs">Hapus semua link & kategori</div></div></div>
-          <div class="srr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-        </div>
-      </div>
-      <div style="padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm)">
-        <div style="font-size:12px;font-weight:700;margin-bottom:2px">Linkku v2.0</div>
-        <div style="font-family:var(--fm);font-size:10px;color:var(--text3)">Data tersimpan lokal di browser kamu.</div>
+  <!-- Jurnal status -->
+  <a class="journal-card delay-8" id="journal-card" href="/kronik/">
+    <div class="journal-card-left">
+      <span class="journal-card-icon">📓</span>
+      <div class="journal-card-text">
+        <div class="journal-card-title" id="journal-title">Jurnal hari ini</div>
+        <div class="journal-card-sub" id="journal-sub">memuat...</div>
       </div>
     </div>
+    <span class="journal-card-arrow">›</span>
+  </a>
+
+  <!-- PWA SHORTCUTS -->
+  <div class="section-label delay-9">Aplikasi</div>
+
+  <div class="pwa-grid">
+    <a class="pwa-item delay-9"  href="/daily-os/">
+      <div class="pwa-icon-wrap">
+        <img src="/daily-os/icon.svg" alt="Daily OS" />
+        <span class="pwa-badge" id="badge-todo" style="display:none"></span>
+      </div>
+      <span class="pwa-name">Daily OS</span>
+    </a>
+    <a class="pwa-item delay-10" href="/ide-ku/">
+      <div class="pwa-icon-wrap">
+        <img src="/ide-ku/icon-192.png" alt="IdeKu" />
+        <span class="pwa-badge" id="badge-ide" style="display:none"></span>
+      </div>
+      <span class="pwa-name">IdeKu</span>
+    </a>
+    <a class="pwa-item delay-10" href="/kronik/">
+      <div class="pwa-icon-wrap">
+        <img src="/kronik/icons/icon-192.png" alt="Kronik" />
+      </div>
+      <span class="pwa-name">Kronik</span>
+    </a>
+    <a class="pwa-item delay-11" href="/cucimoney/">
+      <div class="pwa-icon-wrap">
+        <img src="/cucimoney/icon-192.png" alt="CuciMoney+" />
+      </div>
+      <span class="pwa-name">CuciMoney+</span>
+    </a>
+    <a class="pwa-item delay-11" href="/linkku/">
+      <div class="pwa-icon-wrap">
+        <img src="/linkku/icon-192.svg" alt="LinkKu" />
+      </div>
+      <span class="pwa-name">LinkKu</span>
+    </a>
+    <a class="pwa-item delay-12" href="https://www.hesych.com/app.html" target="_blank" rel="noopener">
+      <div class="pwa-icon-wrap">
+        <img src="/vault/icon-192.png" alt="Hesych" />
+      </div>
+      <span class="pwa-name">Hesych</span>
+    </a>
+    <a class="pwa-item delay-12" href="/assistant/">
+      <div class="pwa-icon-wrap">
+        <img src="/assistant/icon-192.png" alt="Assistant" />
+      </div>
+      <span class="pwa-name">Assistant</span>
+    </a>
   </div>
-</div>
 
-<!-- Modal: Private Category Manager -->
-<div class="ov" id="ovPrivCat">
-  <div class="modal">
-    <div class="mh"><div class="mt">Kelola Kategori Privat</div>
-      <button class="mc" onclick="closeOv('ovPrivCat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mb">
-      <div class="ncr">
-        <input class="fi emji" type="text" id="npcE" placeholder="🔒" maxlength="2">
-        <input class="fi" type="text" id="npcN" placeholder="Nama kategori privat...">
-        <button class="bpri" onclick="addPrivCat()" style="flex-shrink:0;padding:0 11px">Tambah</button>
-      </div>
-      <div class="cml" id="pcml"></div>
-    </div>
-  </div>
-</div>
+  <!-- BACKUP -->
+  <div class="section-label delay-12">Backup data</div>
 
-<!-- Modal: Cat Manager -->
-<div class="ov" id="ovCat">
-  <div class="modal">
-    <div class="mh"><div class="mt">Kelola Kategori</div>
-      <button class="mc" onclick="closeOv('ovCat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+  <div class="backup-card delay-12">
+    <div class="backup-header">
+      <span class="backup-title">Export semua data</span>
+      <span class="backup-last" id="backup-last">Belum pernah backup</span>
     </div>
-    <div class="mb">
-      <div class="ncr">
-        <input class="fi emji" type="text" id="ncE" placeholder="📁" maxlength="2">
-        <input class="fi" type="text" id="ncN" placeholder="Nama kategori...">
-        <button class="bpri" onclick="addCat()" style="flex-shrink:0;padding:0 11px">Tambah</button>
-      </div>
-      <div class="cml" id="cml"></div>
+
+    <!-- Per-app status (hanya tampil saat backup berjalan) -->
+    <div id="backup-progress" style="display:none; margin-bottom:12px;">
+      <div style="font-size:11px; color:var(--text-3); margin-bottom:8px; font-weight:500;">Status per aplikasi:</div>
+      <div id="backup-status-list" style="display:flex; flex-direction:column; gap:5px;"></div>
     </div>
-  </div>
-</div>
 
-<!-- Modal: Confirm -->
-<div class="ov" id="ovCfm">
-  <div class="modal" style="max-width:320px">
-    <div class="mh"><div class="mt" id="cfmTit">Konfirmasi</div>
-      <button class="mc" onclick="closeOv('ovCfm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="mb"><p style="font-family:var(--fm);font-size:12px;color:var(--text2);line-height:1.6" id="cfmMsg"></p></div>
-    <div class="mf"><button class="bsec" onclick="closeOv('ovCfm')">Batal</button><button class="bdanger" id="cfmBtn">Hapus</button></div>
-  </div>
-</div>
-
-<div class="tc" id="tc"></div>
-<input type="file" id="impI" accept=".json" style="display:none" onchange="handleImp(event)">
-
-<!-- Sidebar backdrop -->
-<div class="sb-backdrop" id="sbBackdrop"></div>
-
-<!-- Bottom Sheet: Card Actions -->
-<div class="bs-ov" id="bsOv">
-  <div class="bs" id="bsEl">
-    <div class="bs-handle"></div>
-    <div class="bs-preview">
-      <div class="bs-thumb"><img id="bsThumb" src="" alt=""></div>
-      <div class="bs-info">
-        <div class="bs-title" id="bsTitle">—</div>
-        <div class="bs-url" id="bsUrl">—</div>
-      </div>
-    </div>
-    <div class="bs-actions">
-      <button class="bs-btn" id="bsBtnCopy">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Salin URL
+    <div class="backup-btns">
+      <button class="btn btn-primary" id="btn-export" onclick="exportZip()">
+        📦 Download ZIP
       </button>
-      <button class="bs-btn" id="bsBtnEdit">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Edit
-      </button>
-      <button class="bs-btn danger" id="bsBtnDel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        Hapus
+      <button class="btn btn-secondary" id="btn-cloud-backup" onclick="cloudBackup()">
+        ☁️ Cloud Backup
       </button>
     </div>
   </div>
+
+  <!-- RESTORE -->
+  <div class="section-label delay-12">Restore data</div>
+
+  <div class="restore-card delay-12">
+    <div class="backup-header">
+      <span class="backup-title">Pulihkan data</span>
+      <span class="backup-last" id="restore-last">Pilih sumber backup</span>
+    </div>
+
+    <!-- Per-app status restore (hanya tampil saat restore berjalan) -->
+    <div class="restore-progress" id="restore-progress">
+      <div style="font-size:11px; color:var(--text-3); margin-bottom:8px; font-weight:500;">Status per aplikasi:</div>
+      <div id="restore-status-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+    </div>
+
+    <div class="backup-btns">
+      <button class="btn btn-primary" id="btn-restore" onclick="triggerRestoreZip()">
+        📂 Import ZIP
+      </button>
+      <button class="btn btn-secondary" id="btn-cloud-restore" onclick="cloudRestore()">
+        ☁️ Restore Cloud
+      </button>
+    </div>
+  </div>
+
+  <!-- Hidden file input untuk restore ZIP -->
+  <input type="file" id="restore-file-input" accept=".zip" style="display:none" onchange="handleRestoreZip(event)" />
+
+  <!-- Modal pilih metode restore -->
+  <div class="modal-overlay" id="restore-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Pilih metode restore</div>
+      <div class="modal-sub" id="restore-modal-sub">Memuat info backup...</div>
+      <div class="modal-btns">
+        <button class="modal-btn" onclick="confirmRestore('merge')">
+          <span class="modal-btn-icon">🔀</span>
+          <span class="modal-btn-label">Gabung</span>
+          <span class="modal-btn-desc">Tambah data baru, skip duplikat</span>
+        </button>
+        <button class="modal-btn primary" onclick="confirmRestore('replace')">
+          <span class="modal-btn-icon">🔄</span>
+          <span class="modal-btn-label">Ganti semua</span>
+          <span class="modal-btn-desc">Hapus data lama, ganti dengan backup</span>
+        </button>
+      </div>
+      <button class="modal-cancel" onclick="closeRestoreModal()">Batal</button>
+    </div>
+  </div>
+
+  <!-- Modal Drive file picker -->
+  <div class="modal-overlay" id="drive-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Restore dari Google Drive</div>
+      <div class="modal-sub">Pilih file backup yang ingin dipulihkan</div>
+      <div id="drive-file-list" style="max-height:240px;overflow-y:auto;margin-bottom:16px;"></div>
+      <button class="modal-cancel" onclick="closeDriveModal()">Batal</button>
+    </div>
+  </div>
+
 </div>
 
-<!-- FAB: Tambah Link -->
-<button class="fab" id="btnAdd" title="Tambah Link" aria-label="Tambah Link">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="/shared/ecosystem-db.js"></script>
 <script>
-// ── STATE ──
-let L=[],C=[],PC=[],cur='all',flt='all',q='',eid=null,pm=false,pBuf='',pCb=null,pRaw=false,spStep=1,spF='',spB='';
-
-// ── INDEXEDDB STORAGE ──
-let _db=null;
-function openDB(){
-  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
-  return new Promise((res,rej)=>{
-    if(_db){res(_db);return}
-    const req=indexedDB.open('linkkuDB',1);
-    req.onupgradeneeded=e=>{
-      const db=e.target.result;
-      if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');
-    };
-    req.onsuccess=e=>{_db=e.target.result;res(_db)};
-    req.onerror=e=>rej(e);
-  });
-}
-async function dbGet(key){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction('kv','readonly');
-    const req=tx.objectStore('kv').get(key);
-    req.onsuccess=()=>res(req.result??null);
-    req.onerror=e=>rej(e);
-  });
-}
-async function dbSet(key,val){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction('kv','readwrite');
-    tx.objectStore('kv').put(val,key);
-    tx.oncomplete=()=>res();
-    tx.onerror=e=>rej(e);
-  });
-}
-async function dbDel(key){
-  const db=await openDB();
-  return new Promise((res,rej)=>{
-    const tx=db.transaction('kv','readwrite');
-    tx.objectStore('kv').delete(key);
-    tx.oncomplete=()=>res();
-    tx.onerror=e=>rej(e);
-  });
+// ── Helpers ──────────────────────────────────────────────────
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
 }
 
-async function save(){
-  await dbSet('lk_l',L);
-  await dbSet('lk_c',C);
-  await dbSet('lk_pc',PC);
+function formatRupiah(n) {
+  if (n === null || n === undefined) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000) return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000_000_000).toFixed(1) + 'M';
+  if (abs >= 1_000_000)     return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000_000).toFixed(1) + 'jt';
+  if (abs >= 1_000)         return (n < 0 ? '-' : '') + 'Rp ' + (abs / 1_000).toFixed(0) + 'rb';
+  return (n < 0 ? '-' : '') + 'Rp ' + abs;
 }
 
-async function load(){
-  // migrate from localStorage first
-  const LS=localStorage;
-  let migrated=false;
-  if(LS.getItem('lk_l')){
-    try{const v=JSON.parse(LS.getItem('lk_l'));if(Array.isArray(v)){await dbSet('lk_l',v);migrated=true;}}catch{}
-    LS.removeItem('lk_l');
-  }
-  if(LS.getItem('lk_c')){
-    try{const v=JSON.parse(LS.getItem('lk_c'));if(Array.isArray(v)){await dbSet('lk_c',v);migrated=true;}}catch{}
-    LS.removeItem('lk_c');
-  }
-  if(LS.getItem('lk_pin')){
-    await dbSet('lk_pin',LS.getItem('lk_pin'));
-    LS.removeItem('lk_pin');
-  }
-
-  L=(await dbGet('lk_l'))||[];
-  C=(await dbGet('lk_c'))||[];
-  PC=(await dbGet('lk_pc'))||[];
-  if(!Array.isArray(L))L=[];
-  if(!Array.isArray(C))C=[];
-  if(!Array.isArray(PC))PC=[];
-  if(!C.length){C=[{id:'yt',n:'YouTube'},{id:'tools',n:'Tools'},{id:'reading',n:'Reading'},{id:'project',n:'Project'}];await save()}
-  if(migrated)toast('Data dimigrasi ke IndexedDB','ok');
-}
-async function gpin(){return(await dbGet('lk_pin'))||''}
-async function hashPin(p){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(p));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
-async function spin(p){const h=await hashPin(p);await dbSet('lk_pin',h)}
-async function verifyPin(p){return(await hashPin(p))===(await gpin())}
-
-// ── PRIVATE MODE ──
-function enterPM(){
-  pm=true;cur='private-all';
-  sessionStorage.setItem('lk_pm','1');
-  sessionStorage.setItem('lk_cur','private-all');
-  document.body.classList.add('pm');
-  document.getElementById('navN').style.display='none';
-  document.getElementById('navP').style.display='block';
-  document.getElementById('btnPT').style.color='#c084fc';
-  render();
-}
-function exitPrivate(){
-  pm=false;cur='all';
-  sessionStorage.removeItem('lk_pm');
-  sessionStorage.removeItem('lk_cur');
-  document.body.classList.remove('pm');
-  document.getElementById('navN').style.display='block';
-  document.getElementById('navP').style.display='none';
-  document.getElementById('btnPT').style.color='';
-  render();
-}
-async function togglePM(){
-  if(pm){exitPrivate();return}
-  if(!(await gpin())){toast('Atur PIN dulu di Pengaturan','err');return}
-  openPin('Masukkan PIN',()=>enterPM());
+function greetingWord() {
+  const h = new Date().getHours();
+  if (h < 11) return 'Selamat pagi';
+  if (h < 15) return 'Selamat siang';
+  if (h < 18) return 'Selamat sore';
+  return 'Selamat malam';
 }
 
-// ── RENDER ──
-function render(){renderSB();renderCards()}
-
-function renderSB(){
-  const pub=L.filter(l=>!l.p),prv=L.filter(l=>l.p);
-  document.getElementById('cntAll').textContent=pub.length;
-  document.getElementById('cntPriv').textContent=prv.length;
-
-  const mkCat=(l,cats,priv)=>cats.map(c=>{
-    const cnt=l.filter(x=>x.pcat===c.id||x.cat===c.id).length;
-    if(priv&&!cnt)return'';
-    const act=cur===c.id?'active':'';
-    return`<div class="ci ${act}" data-cat="${c.id}" onclick="selCat('${c.id}')"><div class="ci-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="ci-lbl">${esc(c.n)}</span></div><span class="ccnt">${cnt}</span></div>`;
-  }).join('');
-
-  document.getElementById('catList').innerHTML=mkCat(pub,C,false);
-  document.getElementById('catListP').innerHTML=mkCat(prv,PC,true)||`<div style="padding:5px 13px;font-family:var(--fm);font-size:10px;color:var(--text3)">Belum ada</div>`;
-
-  document.querySelectorAll((pm?'#navP':'#navN')+' .ci').forEach(el=>{
-    el.classList.toggle('active',el.dataset.cat===cur);
-  });
+function formatDate(d = new Date()) {
+  return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-function gFiltered(){
-  let r=L.filter(l=>pm?l.p:!l.p);
-  if(cur==='private-all'){}
-  else if(cur!=='all'){
-    if(pm)r=r.filter(l=>l.pcat===cur);
-    else r=r.filter(l=>l.cat===cur);
-  }
-  if(q){const lq=q.toLowerCase();r=r.filter(l=>(l.ti||'').toLowerCase().includes(lq)||(l.url||'').toLowerCase().includes(lq)||(l.note||'').toLowerCase().includes(lq)||(l.tags||[]).some(t=>t.toLowerCase().includes(lq)))}
-  if(flt==='recent')r=r.slice().sort((a,b)=>b.ts-a.ts).slice(0,20);
-  return r;
-}
-
-function renderCards(){
-  const g=document.getElementById('grid');
-  const rows=gFiltered();
-  let title='Semua Link';
-  if(pm)title=cur==='private-all'?'Semua Privat':(C.find(c=>c.id===cur)?.n||'Kategori');
-  else if(cur!=='all')title=C.find(c=>c.id===cur)?.n||'Kategori';
-  document.getElementById('pgTitle').textContent=title;
-  document.getElementById('pgCount').textContent=`${rows.length} link`;
-  if(!rows.length){
-    const isSearch=!!q;
-    const isCat=cur!=='all'&&cur!=='private-all';
-    let icon,emptyTitle,sub,cta='';
-    if(isSearch){
-      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`;
-      emptyTitle='Tidak ditemukan';sub='Coba kata kunci lain';
-    } else if(isCat){
-      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
-      emptyTitle='Kategori kosong';sub='Belum ada link di kategori ini';
-      cta=`<div class="empty-cta">Tap tombol + untuk menambah<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>`;
-    } else {
-      icon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
-      emptyTitle='Belum ada link';sub='Simpan link favoritmu di sini, akses kapan saja.';
-      cta=`<div class="empty-cta">Tap tombol + untuk mulai<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>`;
-    }
-    g.innerHTML=`<div class="empty"><div class="empty-icon">${icon}</div><div class="empty-t">${emptyTitle}</div><div class="empty-s">${sub}</div>${cta}</div>`;
-    return;
-  }
-  g.innerHTML=rows.map(l=>cHtml(l)).join('');
-  // attach long-press listeners for mobile bottom sheet
-  g.querySelectorAll('.card[data-id]').forEach(card=>attachLP(card,card.dataset.id));
-}
-
-function cHtml(l){
-  const dom=gDom(l.url);
-  const fav=`https://www.google.com/s2/favicons?domain=${dom}&sz=32`;
-  const cat=C.find(c=>c.id===l.cat);
-  const tags=(l.tags||[]).map(t=>`<span class="ctag">${esc(t)}</span>`).join('');
-  // stable per-domain hue for fallback bg
-  let hue=0;for(let i=0;i<dom.length;i++)hue=(hue*31+dom.charCodeAt(i))%360;
-  const fbStyle=`style="--cfav-bg:hsl(${hue},16%,13%)"`;
-  const initLetter=esc((l.ti||dom||'?').charAt(0).toUpperCase());
-  const thumb=l.thumb
-    ?`<img src="${esc(l.thumb)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'cthumb-fb\\'><div class=\\'cletter\\'>${initLetter}</div></div>'">`
-    :`<div class="cthumb-fb" ${fbStyle}><img class="cfav-big" src="${fav}" alt="" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="cletter" style="display:none">${initLetter}</div></div>`;
-  const titleHtml=l.ti
-    ?`<div class="ctitle2">${esc(l.ti)}</div>`
-    :`<div class="ctitle2" style="color:var(--text3);font-style:italic">${esc(dom)}</div>`;
-  return`<div class="card" data-id="${l.id}"><div class="cthumb">${thumb}</div><div class="cbody"><div class="csrc"><img src="${fav}" alt="" onerror="this.style.display='none'"><span>${esc(dom)}</span>${cat?`<span style="color:var(--text3)"> · ${esc(cat.n)}</span>`:''}</div>${titleHtml}${l.note?`<div class="cnote" onclick="toggleNote(event,'${l.id}')" id="note-${l.id}">${esc(l.note)}</div><div class="cnote-arr" id="narr-${l.id}" onclick="toggleNote(event,'${l.id}')"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg></div>`:''} ${tags?`<div class="ctags">${tags}</div>`:''}</div><div class="cfoot"><span class="cdate">${fmtD(l.ts)}</span><div class="cacts"><button class="cbtn" onclick="cpUrl('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button><button class="cbtn" onclick="editL('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="cbtn del" onclick="delL('${l.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div></div></div>`;
-}
-
-// ── BOTTOM SHEET (long-press) ──
-let bsId=null,lpTimer=null,lpMoved=false;
-
-function openBS(id){
-  const l=L.find(x=>x.id===id);if(!l)return;
-  bsId=id;
-  const dom=gDom(l.url);
-  document.getElementById('bsTitle').textContent=l.ti||dom;
-  document.getElementById('bsUrl').textContent=dom;
-  const img=document.getElementById('bsThumb');
-  if(l.thumb){img.src=l.thumb;img.style.display='block'}
-  else{img.style.display='none'}
-  const ov=document.getElementById('bsOv');
-  ov.classList.add('open');
-}
-function closeBS(){
-  document.getElementById('bsOv').classList.remove('open');
-  bsId=null;
-}
-document.getElementById('bsOv').addEventListener('click',e=>{if(e.target===document.getElementById('bsOv'))closeBS()});
-document.getElementById('bsBtnCopy').addEventListener('click',()=>{if(bsId)cpUrl(bsId);closeBS()});
-document.getElementById('bsBtnEdit').addEventListener('click',()=>{if(bsId)editL(bsId);closeBS()});
-document.getElementById('bsBtnDel').addEventListener('click',()=>{const id=bsId;closeBS();if(id)delL(id)});
-
-// Swipe down to close bottom sheet
-let bsStartY=0;
-document.getElementById('bsEl').addEventListener('touchstart',e=>{bsStartY=e.touches[0].clientY},{passive:true});
-document.getElementById('bsEl').addEventListener('touchend',e=>{
-  if(e.changedTouches[0].clientY-bsStartY>60)closeBS();
-},{passive:true});
-
-// Long-press on cards → bottom sheet (only on touch devices)
-const _lpAttached=new WeakSet();
-let lpTriggered=false;
-function attachLP(card,id){
-  if(_lpAttached.has(card))return;
-  _lpAttached.add(card);
-  card.addEventListener('touchstart',e=>{
-    lpMoved=false;
-    lpTriggered=false;
-    lpTimer=setTimeout(()=>{
-      if(!lpMoved){
-        lpTriggered=true;
-        if(navigator.vibrate)navigator.vibrate(40);
-        openBS(id);
-      }
-    },420);
-  },{passive:true});
-  card.addEventListener('touchmove',()=>{lpMoved=true;clearTimeout(lpTimer)},{passive:true});
-  card.addEventListener('touchend',e=>{
-    clearTimeout(lpTimer);
-    // Kalau long-press sudah trigger, block click event berikutnya
-    if(lpTriggered){
-      lpTriggered=false;
-      e.stopPropagation();
-    }
-  },{passive:false});
-  card.addEventListener('touchcancel',()=>{clearTimeout(lpTimer);lpTriggered=false;},{passive:true});
-  // Block click jika berasal dari long-press
-  card.addEventListener('click',e=>{
-    if(lpTriggered){e.stopPropagation();e.preventDefault();lpTriggered=false;}
-  },true);
-}
-
-function selCat(id){cur=id;closeSidebar();render()}
-function setF(f){flt=f;document.querySelectorAll('.fchip').forEach(el=>el.classList.toggle('active',el.dataset.f===f));renderCards()}
-function cpUrl(id){
-  const l=L.find(x=>x.id===id);if(!l)return;
-  if(navigator.clipboard&&window.isSecureContext){
-    navigator.clipboard.writeText(l.url).then(()=>toast('URL disalin','ok')).catch(()=>cpFallback(l.url));
+// ── Header ────────────────────────────────────────────────────
+function initHeader(name) {
+  document.getElementById('greeting-time').textContent = greetingWord();
+  const nameEl = document.getElementById('user-name');
+  if (name) {
+    nameEl.textContent = name;
+    document.getElementById('greeting-main').innerHTML = 'Hai, <em>' + name + '</em>';
   } else {
-    cpFallback(l.url);
+    document.getElementById('greeting-main').textContent = 'Hai 👋';
   }
+  document.getElementById('header-date').textContent = formatDate();
 }
-function cpFallback(text){
-  const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
-  document.body.appendChild(ta);ta.focus();ta.select();
-  try{document.execCommand('copy');toast('URL disalin','ok')}catch{toast('Gagal menyalin','err')}
-  document.body.removeChild(ta);
-}
-async function editL(id){
-  const l=L.find(x=>x.id===id);if(!l)return;
-  eid=id;document.getElementById('mLT').textContent='Edit Link';
-  document.getElementById('lU').value=l.url;document.getElementById('lTi').value=l.ti;
-  document.getElementById('lN').value=l.note||'';
-  // Set toggle privat DULU sebelum resetTagPicker, supaya isPrivForm() terbaca benar
-  document.getElementById('togP').classList.toggle('on',!!l.p);
-  await resetTagPicker(l.tags||[]);
-  popCatSel(l.p?(l.pcat||''):(l.cat||''));showUP(l.url);openOv('ovL');
-}
-async function delL(id){cfm('Hapus Link?','Link akan dihapus permanen.',async()=>{L=L.filter(l=>l.id!==id);await save();render();toast('Dihapus','err')})}
-async function saveLink(){
-  const url=document.getElementById('lU').value.trim();
-  if(!url){toast('URL tidak boleh kosong','err');return}
-  const ti=document.getElementById('lTi').value.trim()||gDom(url);
-  const note=document.getElementById('lN').value.trim();
-  const catVal=document.getElementById('lC').value;
-  const tagsR=document.getElementById('lTg').value.trim();
-  const tags=tagsR?tagsR.split(',').map(t=>t.trim()).filter(Boolean):[];
-  const prv=document.getElementById('togP').classList.contains('on');
-  if(eid){
-    const i=L.findIndex(l=>l.id===eid);
-    if(i!==-1)L[i]=prv?{...L[i],url,ti,note,pcat:catVal,cat:'',tags,p:true}:{...L[i],url,ti,note,cat:catVal,pcat:'',tags,p:false};
-    toast('Diperbarui','ok');
-  } else {
-    const nl=prv
-      ?{id:gId(),url,ti,note,pcat:catVal,cat:'',tags,p:true,thumb:gThumb(url),ts:Date.now()}
-      :{id:gId(),url,ti,note,cat:catVal,pcat:'',tags,p:false,thumb:gThumb(url),ts:Date.now()};
-    L.unshift(nl);toast('Disimpan','ok');fetchM(url,nl.id);
-  }
-  await save();render();closeOv('ovL');eid=null;
-}
-// ── TAG PICKER ──
-// _extraTags dipisah per mode supaya tidak bocor antar mode
-let _extraTagsNormal=[];
-let _extraTagsPriv=[];
 
-function isPrivForm(){
-  return document.getElementById('togP').classList.contains('on');
-}
-function getAllTags(){
-  const prv=isPrivForm();
-  const set=new Set();
-  // Ambil dari link sesuai mode
-  L.filter(l=>prv?l.p:!l.p).forEach(l=>(l.tags||[]).forEach(t=>set.add(t)));
-  // Tambah tag ekstra persistent sesuai mode
-  (prv?_extraTagsPriv:_extraTagsNormal).forEach(t=>set.add(t));
-  return [...set].sort();
-}
-function getSelectedTags(){
-  return document.getElementById('lTg').value.split(',').map(t=>t.trim()).filter(Boolean);
-}
-function setSelectedTags(tags){
-  document.getElementById('lTg').value=tags.join(', ');
-}
-function renderTagPicker(selected=[]){
-  const allTags=getAllTags();
-  const sel=new Set(selected);
-  const picker=document.getElementById('tagPicker');
-  if(!picker)return;
-  if(!allTags.length){picker.innerHTML='<span style="font-family:var(--fm);font-size:10px;color:var(--text3)">Belum ada tag — tambahkan di bawah</span>';return}
-  picker.innerHTML=allTags.map(t=>`<span class="tpick${sel.has(t)?' on':''}" onclick="toggleTag('${esc(t)}')">${esc(t)}<span class="tpick-del" onclick="deleteTag(event,'${esc(t)}')">×</span></span>`).join('');
-}
-function toggleTag(t){
-  const sel=new Set(getSelectedTags());
-  sel.has(t)?sel.delete(t):sel.add(t);
-  setSelectedTags([...sel]);
-  renderTagPicker([...sel]);
-}
-function deleteTag(e,t){
-  e.stopPropagation();
-  cfm(`Hapus tag "${t}"?`,'Tag akan dihapus dari semua link di mode ini.',()=>{
-    const sel=new Set(getSelectedTags());
-    sel.delete(t);
-    setSelectedTags([...sel]);
-    _extraTagsNormal=_extraTagsNormal.filter(x=>x!==t);
-    _extraTagsPriv=_extraTagsPriv.filter(x=>x!==t);
-    dbSet('lk_tags_normal',_extraTagsNormal);
-    dbSet('lk_tags_priv',_extraTagsPriv);
-    const prv=isPrivForm();
-    L=L.map(l=>{
-      if(prv?l.p:!l.p)return{...l,tags:(l.tags||[]).filter(x=>x!==t)};
-      return l;
-    });
-    save();
-    renderTagPicker([...sel]);
-    toast(`Tag "${t}" dihapus`,'err');
+// ── Load data dari EcosystemDB ────────────────────────────────
+async function loadSnapshot() {
+  // Aktifkan skeleton loading di semua card
+  ['card-habit','card-todo','card-ide','card-streak','card-saldo','card-keluar'].forEach(id => {
+    document.getElementById(id)?.classList.add('loading');
   });
-}
-async function addNewTag(){
-  const inp=document.getElementById('tagNewI');
-  const t=inp.value.trim();
-  if(!t)return;
-  inp.value='';
-  const prv=isPrivForm();
-  const bucket=prv?_extraTagsPriv:_extraTagsNormal;
-  if(!bucket.includes(t)){
-    bucket.push(t);
-    // Simpan ke IndexedDB supaya persist meski form ditutup
-    await dbSet(prv?'lk_tags_priv':'lk_tags_normal',bucket);
-  }
-  const sel=new Set(getSelectedTags());
-  sel.add(t);
-  setSelectedTags([...sel]);
-  renderTagPicker([...sel]);
-}
-async function resetTagPicker(selected=[]){
-  // Load tag ekstra dari IndexedDB supaya tidak hilang
-  _extraTagsNormal=(await dbGet('lk_tags_normal'))||[];
-  _extraTagsPriv=(await dbGet('lk_tags_priv'))||[];
-  document.getElementById('tagNewI').value='';
-  setSelectedTags(selected);
-  renderTagPicker(selected);
-}
 
-async function openAddM(){
-  eid=null;document.getElementById('mLT').textContent='Tambah Link';
-  ['lU','lTi','lN','lTg'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('togP').classList.toggle('on',pm);
-  document.getElementById('upw').style.display='none';
-  await resetTagPicker([]);
-  popCatSel('');openOv('ovL');setTimeout(()=>document.getElementById('lU').focus(),180);
-}
-function popCatSel(s){
-  const cats=pm?PC:C;
-  document.getElementById('lC').innerHTML=`<option value="">— Tanpa Kategori —</option>`+cats.map(c=>`<option value="${c.id}"${s===c.id?' selected':''}>${esc(c.n)}</option>`).join('');
-}
-async function togPFn(){
-  const t=document.getElementById('togP');
-  if(!t.classList.contains('on')&&!(await gpin())){toast('Atur PIN dulu di Pengaturan','err');return}
-  t.classList.toggle('on');
-  // Refresh tag picker karena mode privat/normal berubah
-  renderTagPicker(getSelectedTags());
-}
+  try {
+    await EcosystemDB.open();
 
-// ── NOTE EXPAND ──
-function toggleNote(e,id){
-  e.stopPropagation();
-  const note=document.getElementById('note-'+id);
-  const arr=document.getElementById('narr-'+id);
-  if(!note)return;
-  note.classList.toggle('exp');
-  arr.classList.toggle('exp');
-}
+    // Bersihkan snap-tag lama (menghindari duplikat saat reload)
+    document.querySelectorAll('.snap-tag').forEach(el => el.remove());
+    // Reset badges
+    document.querySelectorAll('.pwa-badge').forEach(el => el.style.display = 'none');
 
-// ── URL META & THUMBNAIL ──
-function gThumb(url){
-  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  return yt?`https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg`:'';
-}
+    // 1. Profil dari Kronik
+    const profileName = await EcosystemDB.kv.kronik.get('profile_name');
+    initHeader(profileName);
 
-// Update card thumbnail in DOM directly without full re-render
-function patchThumb(id,thumb){
-  const card=document.querySelector(`.card[data-id="${id}"]`);
-  if(!card||!thumb)return;
-  const ct=card.querySelector('.cthumb');
-  if(!ct)return;
-  // skip if a real thumb was already applied
-  if(ct.dataset.hasThumb)return;
-  ct.dataset.hasThumb='1';
-  ct.innerHTML=`<img src="${thumb}" alt="" loading="lazy" onerror="this.parentElement.innerHTML=this.parentElement.dataset.fb">`;
-  ct.dataset.fb=ct.dataset.fb||'';
-}
+    // 2. Habits & Todos (Daily OS)
+    const habits = await EcosystemDB.habits.getAll();
+    const todos  = await EcosystemDB.todos.getAll();
+    const today  = todayStr();
 
-async function fetchM(url,lid){
-  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-
-  // ── Layer 0: YouTube ──
-  if(yt){
-    try{
-      const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-      if(r.ok){
-        const d=await r.json();
-        const thumb=`https://img.youtube.com/vi/${yt[1]}/mqdefault.jpg`;
-        updL(lid,{ti:d.title||undefined,thumb});
-        patchThumb(lid,thumb);
-      }
-    }catch{}
-    return;
-  }
-
-  // ── Layer 1: Open Graph image via allorigins proxy ──
-  let ogThumb='', metaTitle='';
-  try{
-    const proxy=`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-    const r=await fetch(proxy,{signal:AbortSignal.timeout(6000)});
-    if(r.ok){
-      const d=await r.json();
-      const html=d.contents||'';
-      // parse og:image
-      const ogMatch=html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
-                 ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
-      if(ogMatch&&ogMatch[1])ogThumb=ogMatch[1];
-      // parse og:title or <title> for meta title
-      const ogTitle=html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
-                   ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
-      const tagTitle=html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      metaTitle=(ogTitle&&ogTitle[1])||(tagTitle&&tagTitle[1])||'';
-      metaTitle=metaTitle.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
-    }
-  }catch{}
-
-  // apply title + OG thumb if found
-  const cur=L.find(l=>l.id===lid)||{};
-  const update={};
-  if(metaTitle&&!cur.ti)update.ti=metaTitle;
-  if(ogThumb){
-    update.thumb=ogThumb;
-    updL(lid,update);
-    patchThumb(lid,ogThumb);
-    return; // done, no need for screenshot
-  } else if(Object.keys(update).length){
-    updL(lid,update);
-  }
-
-  // all layers exhausted — fallback color stays, no update needed
-}
-
-async function updL(id,f){
-  const i=L.findIndex(l=>l.id===id);
-  if(i===-1)return;
-  Object.keys(f).forEach(k=>{if(f[k]!==undefined&&f[k]!=='')L[i][k]=f[k]});
-  await save();
-  renderCards();
-}
-
-let utTm=null;
-function onUrlI(){
-  clearTimeout(utTm);
-  const url=document.getElementById('lU').value.trim();
-  if(!url){document.getElementById('upw').style.display='none';return}
-  showUP(url);utTm=setTimeout(()=>aFetch(url),900);
-}
-function showUP(url){
-  const w=document.getElementById('upw');const d=gDom(url);
-  w.style.display='block';
-  w.innerHTML=`<div class="uprev"><img src="https://www.google.com/s2/favicons?domain=${d}&sz=32" onerror="this.style.display='none'" alt=""><span class="uprev-t">${esc(url)}</span><span class="ftag" id="ftag"><span class="fdot"></span>Fetch</span></div>`;
-}
-async function aFetch(url){
-  const ft=document.getElementById('ftag');
-  const yt=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  try{
-    if(yt){
-      const r=await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-      if(r.ok){const d=await r.json();const ti=document.getElementById('lTi');if(!ti.value)ti.value=d.title||'';if(ft)ft.textContent='✓'}
-    } else {
-      // try allorigins to get OG title
-      const r=await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,{signal:AbortSignal.timeout(6000)});
-      if(r.ok){
-        const d=await r.json();const html=d.contents||'';
-        const ogT=html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i)
-                 ||html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
-        const tagT=html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        const title=((ogT&&ogT[1])||(tagT&&tagT[1])||'').replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"').trim();
-        const ti=document.getElementById('lTi');if(!ti.value&&title)ti.value=title;
-        if(ft)ft.textContent='✓';
-      }
-    }
-  }catch{if(ft)ft.textContent='–'}
-}
-
-// ── PIN ──
-// rawMode: kalau true, callback dipanggil dengan rawPin (untuk enkripsi), bukan sekadar verified
-function openPin(tit,cb,rawMode=false){pBuf='';pCb=cb;pRaw=rawMode;document.getElementById('pinTit').textContent=tit;document.getElementById('pErr').textContent='';updD('pDots',pBuf);openOv('ovPin')}
-function pi(d){if(pBuf.length>=4)return;pBuf+=d;updD('pDots',pBuf);if(pBuf.length===4)setTimeout(pc,110)}
-function pd(){pBuf=pBuf.slice(0,-1);updD('pDots',pBuf)}
-function pc(){
-  if(pRaw){
-    // Mode enkripsi: langsung kirim rawPin ke callback tanpa verify
-    closeOv('ovPin');const cb=pCb;pCb=null;pRaw=false;if(cb)cb(pBuf);
-    return;
-  }
-  verifyPin(pBuf).then(ok=>{
-    if(ok){closeOv('ovPin');const cb=pCb;pCb=null;if(cb)cb(pBuf)}
-    else{document.getElementById('pErr').textContent='PIN salah';pBuf='';updD('pDots',pBuf);const m=document.querySelector('#ovPin .modal');m.style.animation='shake .28s ease';setTimeout(()=>m.style.animation='',300)}
-  });
-}
-async function openSetPin(){
-  const existing=await gpin();
-  closeOv('ovSet');
-  if(existing){
-    setTimeout(()=>{
-      openPin('Verifikasi PIN Lama',()=>{
-        setTimeout(()=>{
-          spStep=1;spF='';spB='';
-          document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';
-          document.getElementById('spErr').textContent='';
-          updD('spDots',spB);openOv('ovSP');
-        },180);
+    // Hitung habit selesai hari ini
+    let habitDone = 0, habitTotal = 0;
+    if (Array.isArray(habits)) {
+      habits.filter(h => !h.archived).forEach(h => {
+        const log = h.history?.[today];
+        habitTotal++;
+        if (Array.isArray(log) && log.length > 0) habitDone++;
+        else if (log === true) habitDone++;
       });
-    },180);
-  } else {
-    setTimeout(()=>{
-      spStep=1;spF='';spB='';
-      document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';
-      document.getElementById('spErr').textContent='';
-      updD('spDots',spB);openOv('ovSP');
-    },180);
-  }
-}
-function spi(d){if(spB.length>=4)return;spB+=d;updD('spDots',spB);if(spB.length===4)setTimeout(spc,110)}
-function spd(){spB=spB.slice(0,-1);updD('spDots',spB)}
-async function spc(){
-  if(spStep===1){spF=spB;spB='';spStep=2;document.getElementById('spHint').textContent='Konfirmasi PIN';updD('spDots',spB)}
-  else{if(spB===spF){await spin(spF);closeOv('ovSP');updPinSt();toast('PIN diatur','ok')}else{document.getElementById('spErr').textContent='PIN tidak cocok';spStep=1;spF='';spB='';document.getElementById('spHint').textContent='Masukkan PIN 4 digit baru';updD('spDots',spB)}}
-}
-function updD(id,buf){document.querySelectorAll(`#${id} .pdot`).forEach((d,i)=>d.classList.toggle('on',i<buf.length))}
-async function updPinSt(){const el=document.getElementById('pinSt');if(el)el.textContent=(await gpin())?'Sudah diatur':'Belum diatur'}
-
-// ── PRIVATE CATEGORIES ──
-function openPrivCatMgr(){renderPCM();openOv('ovPrivCat')}
-function renderPCM(){
-  const list=document.getElementById('pcml');
-  if(!PC.length){list.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--text3);text-align:center;padding:14px">Belum ada kategori privat</div>';return}
-  list.innerHTML=PC.map(c=>`<div class="cmi"><div class="cmil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>${esc(c.n)}</div><button class="cbtn del" onclick="delPrivCat('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>`).join('');
-}
-async function addPrivCat(){
-  const n=document.getElementById('npcN').value.trim();
-  if(!n){toast('Nama wajib diisi','err');return}
-  PC.push({id:'pc-'+n.toLowerCase().replace(/\s+/g,'-')+'-'+gId().slice(0,4),n});
-  await save();document.getElementById('npcN').value='';document.getElementById('npcE').value='';
-  renderPCM();renderSB();toast('Kategori privat ditambahkan','ok');
-}
-async function delPrivCat(id){
-  cfm('Hapus Kategori Privat?','Link di kategori ini tidak terhapus.',async()=>{
-    PC=PC.filter(c=>c.id!==id);L=L.map(l=>l.pcat===id?{...l,pcat:''}:l);
-    await save();renderPCM();render();toast('Kategori privat dihapus','err');
-  });
-}
-
-// ── CATEGORIES ──
-function openCatMgr(){renderCM();openOv('ovCat')}
-function renderCM(){
-  const list=document.getElementById('cml');
-  if(!C.length){list.innerHTML='<div style="font-family:var(--fm);font-size:11px;color:var(--text3);text-align:center;padding:14px">Belum ada kategori</div>';return}
-  list.innerHTML=C.map(c=>`<div class="cmi"><div class="cmil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>${esc(c.n)}</div><button class="cbtn del" onclick="delCat('${c.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>`).join('');
-}
-async function addCat(){
-  const n=document.getElementById('ncN').value.trim();
-  if(!n){toast('Nama wajib diisi','err');return}
-  C.push({id:n.toLowerCase().replace(/\s+/g,'-')+'-'+gId().slice(0,4),n});
-  await save();document.getElementById('ncN').value='';document.getElementById('ncE').value='';
-  renderCM();renderSB();toast('Kategori ditambahkan','ok');
-}
-async function delCat(id){
-  cfm('Hapus Kategori?','Link di kategori ini tidak terhapus.',async()=>{
-    C=C.filter(c=>c.id!==id);L=L.map(l=>l.cat===id?{...l,cat:''}:l);
-    await save();renderCM();render();toast('Kategori dihapus','err');
-  });
-}
-
-// ── CRYPTO (AES-256-GCM) ──
-async function deriveKey(pin){
-  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),{name:'PBKDF2'},false,['deriveKey']);
-  return crypto.subtle.deriveKey(
-    {name:'PBKDF2',salt:new TextEncoder().encode('linkku-salt-v1'),iterations:100000,hash:'SHA-256'},
-    base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']
-  );
-}
-async function encryptObj(obj,pin){
-  const key=await deriveKey(pin);
-  const iv=crypto.getRandomValues(new Uint8Array(12));
-  const enc=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
-  // gabung iv + ciphertext → base64
-  const combined=new Uint8Array(iv.byteLength+enc.byteLength);
-  combined.set(iv,0);combined.set(new Uint8Array(enc),12);
-  return btoa(String.fromCharCode(...combined));
-}
-async function decryptObj(b64,pin){
-  const key=await deriveKey(pin);
-  const combined=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-  const iv=combined.slice(0,12);
-  const data=combined.slice(12);
-  const dec=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,data);
-  return JSON.parse(new TextDecoder().decode(dec));
-}
-
-// ── DATA ──
-async function exportData(){
-  const pinHash=await gpin();
-  const privLinks=L.filter(l=>l.p);
-  const pubLinks=L.filter(l=>!l.p);
-  if(privLinks.length>0&&pinHash){
-    try{
-      const encryptedPriv=await encryptObj({links:privLinks,cats:PC},pinHash);
-      const payload={L:pubLinks,C,ep:encryptedPriv,ts:Date.now(),v:5};
-      const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-      const a=document.createElement('a');a.href=URL.createObjectURL(b);
-      a.download=`linkku-${new Date().toISOString().slice(0,10)}.json`;a.click();
-      toast('Export berhasil','ok');
-    }catch{toast('Gagal enkripsi','err')}
-  } else {
-    const payload={L:pubLinks,C,PC,ts:Date.now(),v:5};
-    const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(b);
-    a.download=`linkku-${new Date().toISOString().slice(0,10)}.json`;a.click();
-    toast('Export berhasil','ok');
-  }
-}
-
-function importData(){document.getElementById('impI').click()}
-function handleImp(e){
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=async ev=>{
-    try{
-      const d=JSON.parse(ev.target.result);
-      if(!Array.isArray(d.L)&&!Array.isArray(d.links)){toast('Format tidak valid','err');return}
-      const pubLinks=d.L||d.links;
-      if(d.ep){
-        closeOv('ovSet');
-        setTimeout(()=>{
-          openPin('Masukkan PIN untuk import',async(rawPin)=>{
-            try{
-              const priv=await decryptObj(d.ep,await hashPin(rawPin));
-              await spin(rawPin);
-              _doImport([...pubLinks,...(priv.links||[])],d,priv.cats||[]);
-            }catch{toast('Gagal decrypt — PIN salah atau data rusak','err')}
-          },true);
-        },180);
-      } else {
-        _doImport(pubLinks,d,d.PC||[]);
-      }
-    }catch{toast('Gagal membaca file','err')}
-    e.target.value='';
-  };r.readAsText(f);
-}
-async function _doImport(allLinks,d,privCats=[]){
-  cfm('Import Data?',`Import ${allLinks.length} link.`,async()=>{
-    const ex=new Set(L.map(l=>l.id));
-    L=[...allLinks.filter(l=>!ex.has(l.id)),...L];
-    const ec=new Set(C.map(c=>c.id));
-    C=[...C,...(d.C||d.cats||[]).filter(c=>!ec.has(c.id))];
-    const epc=new Set(PC.map(c=>c.id));
-    const incomingPC=[...(d.PC||[]),...privCats];
-    PC=[...PC,...incomingPC.filter(c=>!epc.has(c.id))];
-    await save();render();toast(`${allLinks.length} link diimport`,'ok');
-  },'Import','bpri');
-}
-async function confirmReset(){
-  cfm('Reset Semua Data?','Semua link dan kategori dihapus permanen.',async()=>{
-    L=[];C=[];PC=[];
-    await dbDel('lk_l');await dbDel('lk_c');await dbDel('lk_pc');await dbDel('lk_pin');
-    exitPrivate();render();closeOv('ovSet');toast('Data direset','err');
-  });
-}
-
-// ── MODALS ──
-function openOv(id){document.getElementById(id).classList.add('open')}
-function closeOv(id){document.getElementById(id).classList.remove('open')}
-document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeOv(o.id)}));
-function cfm(t,m,cb,btnLbl='Hapus',btnCls='bdanger'){const btn=document.getElementById('cfmBtn');document.getElementById('cfmTit').textContent=t;document.getElementById('cfmMsg').textContent=m;btn.textContent=btnLbl;btn.className=btnCls;btn.onclick=()=>{cb();closeOv('ovCfm')};openOv('ovCfm')}
-
-// ── TOAST ──
-function toast(msg,type=''){const c=document.getElementById('tc');const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;c.appendChild(el);setTimeout(()=>el.remove(),2400)}
-
-// ── UTILS ──
-function gId(){return Math.random().toString(36).slice(2,8)+Date.now().toString(36)}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function gDom(url){try{return new URL(url).hostname.replace('www.','')}catch{return url}}
-function fmtD(ts){const d=Date.now()-ts;if(d<60000)return'Baru';if(d<3600000)return~~(d/60000)+' mnt';if(d<86400000)return~~(d/3600000)+' jam';if(d<604800000)return~~(d/86400000)+' hari';return new Date(ts).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}
-
-// ── EVENTS ──
-let sT=null;
-document.getElementById('si').addEventListener('input',function(){clearTimeout(sT);sT=setTimeout(()=>{q=this.value.trim();renderCards()},200)});
-document.getElementById('btnAdd').addEventListener('click',openAddM);
-document.getElementById('btnSet').addEventListener('click',()=>{updPinSt();openOv('ovSet')});
-document.getElementById('btnPT').addEventListener('click',togglePM);
-// ── SIDEBAR ──
-function openSidebar(){
-  document.getElementById('sidebar').classList.add('open');
-  const bd=document.getElementById('sbBackdrop');
-  bd.classList.add('show');
-  requestAnimationFrame(()=>bd.style.display='block');
-}
-function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  const bd=document.getElementById('sbBackdrop');
-  bd.classList.remove('show');
-  setTimeout(()=>{if(!bd.classList.contains('show'))bd.style.display='none'},230);
-}
-document.getElementById('sbBackdrop').addEventListener('click',closeSidebar);
-document.getElementById('btnMob').addEventListener('click',()=>{
-  const open=document.getElementById('sidebar').classList.contains('open');
-  open?closeSidebar():openSidebar();
-});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.ov.open').forEach(o=>closeOv(o.id))});
-// Private Mode tetap aktif sampai user manually exit
-
-function chkMob(){document.getElementById('btnMob').style.display=window.innerWidth<=660?'flex':'none'}
-window.addEventListener('resize',chkMob);chkMob();
-
-// ── INIT ──
-load().then(()=>{
-  // Restore private mode jika sebelumnya aktif (misal setelah buka link)
-  if(sessionStorage.getItem('lk_pm')==='1'){
-    const savedCur=sessionStorage.getItem('lk_cur')||'private-all';
-    pm=true;cur=savedCur;
-    document.body.classList.add('pm');
-    document.getElementById('navN').style.display='none';
-    document.getElementById('navP').style.display='block';
-    document.getElementById('btnPT').style.color='#c084fc';
-  }
-  render();updPinSt();
-});
-
-// ── SERVICE WORKER ──
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
-}
-
-// ── ECOSYSTEM BACKUP LISTENER ──
-// Kirim sinyal READY ke parent saat sudah siap
-window.addEventListener('load', () => {
-  if (window.parent !== window) {
-    window.parent.postMessage({ type: 'APP_READY', app: 'linkku' }, '*');
-  }
-});
-
-// Menerima request backup dari dashboard
-// Link private dikirim dalam bentuk terenkripsi (sama seperti exportData)
-window.addEventListener('message', async (e) => {
-  const allowed = [
-    'https://ecosystemku.vercel.app',
-    'http://localhost',
-    'http://127.0.0.1',
-  ];
-  if (!allowed.some(o => e.origin.startsWith(o))) return;
-  if (!e.data) return;
-
-  // ── BACKUP ──────────────────────────────────────────────────
-  if (e.data.type === 'REQUEST_BACKUP') {
-    try {
-      const pinHash   = await gpin();
-      const privLinks = L.filter(l => l.p);
-      const pubLinks  = L.filter(l => !l.p);
-
-      let payload;
-      if (privLinks.length > 0 && pinHash) {
-        const encryptedPriv = await encryptObj({ links: privLinks, cats: PC }, pinHash);
-        payload = { L: pubLinks, C, ep: encryptedPriv, ts: Date.now(), v: 5 };
-      } else {
-        payload = { L: pubLinks, C, PC, ts: Date.now(), v: 5 };
-      }
-
-      e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', data: payload }, e.origin);
-    } catch(err) {
-      e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', error: err.message }, e.origin);
     }
-    return;
+    document.getElementById('val-habit').textContent = habitDone + '/' + habitTotal;
+    document.getElementById('sub-habit').textContent = habitTotal > 0
+      ? (habitDone === habitTotal ? '✓ semua selesai' : habitTotal - habitDone + ' lagi')
+      : 'belum ada habit';
+    if (habitDone > 0) {
+      const tag = document.createElement('span');
+      tag.className = 'snap-tag ' + (habitDone === habitTotal ? 'good' : 'warn');
+      tag.textContent = habitDone === habitTotal ? 'Semua done!' : 'On track';
+      document.getElementById('card-habit').appendChild(tag);
+    }
+
+    // Hitung todo pending
+    let todoPending = 0, todoTotal = 0;
+    if (Array.isArray(todos)) {
+      todos.forEach(t => {
+        todoTotal++;
+        if (!t.done && !t.completed) todoPending++;
+      });
+    }
+    document.getElementById('val-todo').textContent = todoPending;
+    document.getElementById('sub-todo').textContent = todoTotal > 0
+      ? todoTotal - todoPending + ' selesai'
+      : 'belum ada todo';
+    const badgeTodo = document.getElementById('badge-todo');
+    if (todoPending > 0) {
+      badgeTodo.textContent = todoPending > 9 ? '9+' : todoPending;
+      badgeTodo.style.display = 'flex';
+    }
+
+    // Hitung streak (hari berturut-turut ada habit selesai)
+    let streak = 0;
+    if (Array.isArray(habits) && habits.length > 0) {
+      const d = new Date();
+      while (true) {
+        const key = d.toISOString().split('T')[0];
+        const anyDone = habits.some(h => {
+          const log = h.history?.[key];
+          return Array.isArray(log) ? log.length > 0 : log === true;
+        });
+        if (!anyDone) break;
+        streak++;
+        d.setDate(d.getDate() - 1);
+        if (streak > 365) break;
+      }
+    }
+    document.getElementById('val-streak').textContent = streak;
+    document.getElementById('sub-streak').textContent = streak > 0
+      ? 'hari berturut-turut'
+      : 'mulai hari ini!';
+    if (streak >= 3) {
+      const tag = document.createElement('span');
+      tag.className = 'snap-tag good';
+      tag.textContent = '🔥 ' + streak + ' hari';
+      document.getElementById('card-streak').appendChild(tag);
+    }
+
+    // 3. Ide in progress (IdeKu)
+    const ideas = await EcosystemDB.ideas.getAll();
+    const ideProses = ideas.filter(i => i.status === 'Proses').length;
+    document.getElementById('val-ide').textContent = ideProses;
+    document.getElementById('sub-ide').textContent = ideas.length + ' total ide';
+    const badgeIde = document.getElementById('badge-ide');
+    if (ideProses > 0) {
+      badgeIde.textContent = ideProses > 9 ? '9+' : ideProses;
+      badgeIde.style.display = 'flex';
+    }
+
+    // 4. Keuangan (CuciMoney+)
+    const finDb      = await EcosystemDB.kv.finances.get('db');
+    const finBudgets = await EcosystemDB.kv.finances.get('budgets');
+
+    if (finDb && Array.isArray(finDb.accounts)) {
+      // Total saldo semua akun
+      const totalSaldo = finDb.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+      document.getElementById('val-saldo').textContent = formatRupiah(totalSaldo);
+      document.getElementById('sub-saldo').textContent = finDb.accounts.length + ' akun';
+
+      // Pengeluaran hari ini
+      // CuciMoney+ pakai direction:'out' bukan type:'expense'
+      const keluarHariIni = (finDb.transactions || [])
+        .filter(t => (t.direction === 'out' || t.type === 'expense') && t.date === today)
+        .reduce((s, t) => s + (t.amount || 0), 0);
+      document.getElementById('val-keluar').textContent = formatRupiah(keluarHariIni);
+      document.getElementById('sub-keluar').textContent = keluarHariIni > 0 ? 'hari ini' : 'belum ada pengeluaran';
+    } else {
+      document.getElementById('val-saldo').textContent = '—';
+      document.getElementById('sub-saldo').textContent = 'buka CuciMoney+';
+      document.getElementById('val-keluar').textContent = '—';
+      document.getElementById('sub-keluar').textContent = 'buka CuciMoney+';
+    }
+
+    // 5. Jurnal (Kronik)
+    const entries = await EcosystemDB.journal.getAll();
+    const todayEntry = entries.find(e => e.date === today);
+    if (todayEntry) {
+      document.getElementById('journal-title').textContent = todayEntry.title || 'Jurnal hari ini';
+      document.getElementById('journal-sub').textContent   = '✓ Sudah nulis hari ini';
+    } else {
+      const latest = entries.sort((a, b) => b.date.localeCompare(a.date))[0];
+      document.getElementById('journal-title').textContent = 'Belum nulis jurnal hari ini';
+      document.getElementById('journal-sub').textContent   = latest
+        ? 'Terakhir: ' + new Date(latest.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+        : 'Tulis jurnal pertamamu →';
+    }
+
+  } catch (e) {
+    console.warn('[EcosystemKu] Error loading snapshot:', e);
+    initHeader(null);
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) el.textContent = '—';
+      const sub = document.getElementById('sub-' + k);
+      if (sub) sub.textContent = 'tidak tersedia';
+    });
+  } finally {
+    // Matikan skeleton loading di semua card
+    ['card-habit','card-todo','card-ide','card-streak','card-saldo','card-keluar'].forEach(id => {
+      document.getElementById(id)?.classList.remove('loading');
+    });
+  }
+}
+
+// ── Backup status UI ──────────────────────────────────────────
+const _backupStatus = {};
+
+function _setAppStatus(appId, label, state) {
+  // state: 'loading' | 'ok' | 'warn' | 'error'
+  _backupStatus[appId] = state;
+
+  const list = document.getElementById('backup-status-list');
+  let row = document.getElementById('bstatus-' + appId);
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'bstatus-' + appId;
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:11px;';
+    list.appendChild(row);
   }
 
-  // ── RESTORE ─────────────────────────────────────────────────
-  if (e.data.type === 'REQUEST_RESTORE') {
-    const inData = e.data.data;
-    const mode   = e.data.mode || 'merge'; // 'merge' | 'replace'
-    const src    = e.source;
-    const origin = e.origin;
+  const icons = { loading: '⏳', ok: '✅', warn: '⚠️', error: '❌' };
+  const colors = { loading: 'var(--text-3)', ok: 'var(--green)', warn: 'var(--amber)', error: 'var(--red)' };
+  row.innerHTML = `
+    <span style="color:var(--text-2)">${label}</span>
+    <span style="color:${colors[state]};font-weight:600">${icons[state]} ${state === 'loading' ? 'mengambil...' : state === 'ok' ? 'OK' : state === 'warn' ? 'partial' : 'gagal'}</span>
+  `;
+}
 
+function _showProgress(show) {
+  document.getElementById('backup-progress').style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('backup-status-list').innerHTML = '';
+    Object.keys(_backupStatus).forEach(k => delete _backupStatus[k]);
+  }
+}
+
+// ── Request backup dari iframe app ───────────────────────────
+function requestBackupFromApp(url, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+
+    let resolved = false;
+    let loadFallbackTimer = null;
+
+    const timeout = setTimeout(() => {
+      if (resolved) return;
+      cleanup();
+      reject(new Error('Timeout setelah ' + (timeoutMs/1000) + 's'));
+    }, timeoutMs);
+
+    function onMessage(e) {
+      if (resolved) return;
+      // Cek origin sama (same-origin: both window.location.origin)
+      if (e.origin !== window.location.origin) return;
+
+      // App kirim READY → request backup
+      if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
+        clearTimeout(loadFallbackTimer);
+        iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, window.location.origin);
+        return;
+      }
+
+      if (!e.data || e.data.type !== 'BACKUP_RESPONSE') return;
+      resolved = true;
+      cleanup();
+      if (e.data.error) reject(new Error(e.data.error));
+      else resolve({ app: e.data.app, data: e.data.data });
+    }
+
+    function cleanup() {
+      clearTimeout(timeout);
+      clearTimeout(loadFallbackTimer);
+      window.removeEventListener('message', onMessage);
+      // Delay kecil sebelum remove agar postMessage terakhir sempat diproses
+      setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 200);
+    }
+
+    // Fallback: kalau READY tidak datang, coba kirim setelah load + 2 detik
+    iframe.addEventListener('load', () => {
+      loadFallbackTimer = setTimeout(() => {
+        if (resolved) return;
+        try { iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, window.location.origin); }
+        catch(e) { /* cross-origin guard */ }
+      }, 2000);
+    });
+
+    window.addEventListener('message', onMessage);
+    document.body.appendChild(iframe);
+  });
+}
+
+// ── Backup ZIP (JSZip) ────────────────────────────────────────
+async function exportZip() {
+  const btn = document.getElementById('btn-export');
+  btn.textContent = '⏳ Menyiapkan...';
+  btn.disabled = true;
+  _showProgress(true);
+
+  try {
+    await EcosystemDB.open();
+
+    const zip  = new JSZip();
+    const date = todayStr();
+    const meta = { exportedAt: new Date().toISOString(), version: 2 };
+
+    // ── Daily OS ──────────────────────────────────────────────
+    _setAppStatus('dailyos', 'Daily OS', 'loading');
     try {
-      const pubLinks  = inData.L || inData.links || [];
-      const hasPrivate = !!inData.ep;
+      const habits = await EcosystemDB.habits.getAll();
+      const todos  = await EcosystemDB.todos.getAll();
+      // localStorage extras (coach memory, xp)
+      const coachMemory = (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })();
+      const xp          = localStorage.getItem('dailyos_xp') ?? null;
+      zip.file(`daily-os-${date}.json`, JSON.stringify({
+        ...meta, habits, todos,
+        localStorage: { dailyos_xp: xp, dailyos_coach_memory: coachMemory }
+      }, null, 2));
+      _setAppStatus('dailyos', 'Daily OS', 'ok');
+    } catch(e) {
+      zip.file(`daily-os-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('dailyos', 'Daily OS', 'error');
+    }
 
-      // Fungsi eksekusi restore setelah keputusan private selesai
-      async function doRestoreLinks(allLinks, privCats = []) {
-        try {
-          if (mode === 'replace') {
-            L = allLinks;
-            C = inData.C || inData.cats || [];
-            PC = privCats.length > 0 ? privCats : (inData.PC || []);
-          } else {
-            // Merge — skip duplikat by id
-            const exIds = new Set(L.map(l => l.id));
-            const newLinks = allLinks.filter(l => !exIds.has(l.id));
-            L = [...newLinks, ...L];
+    // ── IdeKu ─────────────────────────────────────────────────
+    _setAppStatus('ideku', 'IdeKu', 'loading');
+    try {
+      const ideas      = await EcosystemDB.ideas.getAll();
+      const categories = (() => { try { return JSON.parse(localStorage.getItem('ideku-categories') || 'null'); } catch(e) { return null; } })();
+      zip.file(`ideku-${date}.json`, JSON.stringify({
+        ...meta, ideas,
+        localStorage: { 'ideku-categories': categories }
+      }, null, 2));
+      _setAppStatus('ideku', 'IdeKu', 'ok');
+    } catch(e) {
+      zip.file(`ideku-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('ideku', 'IdeKu', 'error');
+    }
 
-            const exCats = new Set(C.map(c => c.id));
-            C = [...C, ...(inData.C || []).filter(c => !exCats.has(c.id))];
+    // ── Kronik ────────────────────────────────────────────────
+    _setAppStatus('kronik', 'Kronik', 'loading');
+    try {
+      const entries        = await EcosystemDB.journal.getAll();
+      const profileName    = await EcosystemDB.kv.kronik.get('profile_name');
+      const profileAvatar  = await EcosystemDB.kv.kronik.get('profile_avatar');
+      const rpgCache       = await EcosystemDB.kv.kronik.get('rpg_profile_cache');
+      zip.file(`kronik-${date}.json`, JSON.stringify({
+        ...meta, entries,
+        profile: { profile_name: profileName, profile_avatar: profileAvatar, rpg_profile_cache: rpgCache }
+      }, null, 2));
+      _setAppStatus('kronik', 'Kronik', 'ok');
+    } catch(e) {
+      zip.file(`kronik-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('kronik', 'Kronik', 'error');
+    }
 
-            const exPC = new Set(PC.map(c => c.id));
-            PC = [...PC, ...privCats.filter(c => !exPC.has(c.id))];
-          }
+    // ── CuciMoney+ ────────────────────────────────────────────
+    _setAppStatus('cucimoney', 'CuciMoney+', 'loading');
+    try {
+      const finDb            = await EcosystemDB.kv.finances.get('db');
+      const finBudgets       = await EcosystemDB.kv.finances.get('budgets');
+      const finMasterBudgets = await EcosystemDB.kv.finances.get('masterBudgets');
+      zip.file(`cucimoney-${date}.json`, JSON.stringify({
+        ...meta,
+        db:            finDb            ?? {},
+        budgets:       finBudgets       ?? [],
+        masterBudgets: finMasterBudgets ?? [],
+      }, null, 2));
+      _setAppStatus('cucimoney', 'CuciMoney+', finDb ? 'ok' : 'warn');
+    } catch(e) {
+      zip.file(`cucimoney-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('cucimoney', 'CuciMoney+', 'error');
+    }
 
-          await save();
-          render();
-          src.postMessage({
-            type: 'RESTORE_RESPONSE',
-            app:  'linkku',
-            restored: allLinks.length,
-            skipped:  0,
-          }, origin);
-        } catch(err) {
-          src.postMessage({ type: 'RESTORE_RESPONSE', app: 'linkku', error: err.message }, origin);
+    // ── LinkKu (IndexedDB terpisah — via iframe postMessage) ──
+    _setAppStatus('linkku', 'LinkKu', 'loading');
+    btn.textContent = '⏳ Mengambil LinkKu...';
+    try {
+      const linkkuBackup = await requestBackupFromApp('/linkku/');
+      zip.file(`linkku-${date}.json`, JSON.stringify(linkkuBackup.data, null, 2));
+      _setAppStatus('linkku', 'LinkKu', 'ok');
+    } catch(e) {
+      console.warn('[Backup] LinkKu:', e.message);
+      zip.file(`linkku-${date}.error.txt`, 'LinkKu tidak tersedia: ' + e.message);
+      _setAppStatus('linkku', 'LinkKu', 'warn');
+    }
+
+    // ── Hesych — app terpisah, sync otomatis di hesych.com ───
+    // Tidak perlu backup dari dashboard.
+
+    // ── Generate & download ───────────────────────────────────
+    btn.textContent = '⏳ Membuat ZIP...';
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `ecosystemku-backup-${date}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // Simpan waktu backup terakhir
+    localStorage.setItem('ecosystemku_last_backup', new Date().toISOString());
+    document.getElementById('backup-last').textContent = 'Baru saja';
+
+    // Tampilkan ringkasan singkat
+    const failCount = Object.values(_backupStatus).filter(s => s === 'error').length;
+    const warnCount = Object.values(_backupStatus).filter(s => s === 'warn').length;
+    if (failCount === 0 && warnCount === 0) {
+      btn.textContent = '✅ Berhasil!';
+      setTimeout(() => { btn.textContent = '📦 Download ZIP'; }, 3000);
+    } else {
+      btn.textContent = '⚠️ Selesai (ada peringatan)';
+      setTimeout(() => { btn.textContent = '📦 Download ZIP'; }, 4000);
+    }
+
+  } catch(e) {
+    alert('Gagal export: ' + e.message);
+    console.error(e);
+    btn.textContent = '📦 Download ZIP';
+  } finally {
+    btn.disabled = false;
+    // Sembunyikan progress setelah 6 detik
+    setTimeout(() => _showProgress(false), 6000);
+  }
+}
+
+// ── Last backup info ──────────────────────────────────────────
+function initBackupInfo() {
+  const last = localStorage.getItem('ecosystemku_last_backup');
+  if (!last) return;
+  const diff = Math.floor((Date.now() - new Date(last)) / 86400000);
+  const el   = document.getElementById('backup-last');
+  if (diff === 0) el.textContent = 'Backup hari ini';
+  else if (diff === 1) el.textContent = 'Kemarin';
+  else el.textContent = diff + ' hari lalu';
+
+  if (diff >= 7) {
+    el.style.color = 'var(--amber)';
+  }
+}
+
+// ── Bottom Sheet ─────────────────────────────────────────────
+function openSheet() {
+  document.getElementById('sheet-overlay').classList.add('active');
+  document.getElementById('sheet').classList.add('active');
+}
+function closeSheet() {
+  document.getElementById('sheet-overlay').classList.remove('active');
+  document.getElementById('sheet').classList.remove('active');
+}
+
+// ── Refresh & Clear Cache ─────────────────────────────────────
+async function refreshApp() {
+  closeSheet();
+  const btn = document.querySelector('.sheet-item');
+  try {
+    // Unregister semua Service Worker
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    // Hapus semua cache
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    // Hard reload
+    location.reload(true);
+  } catch(e) {
+    alert('Gagal clear cache: ' + e.message);
+  }
+}
+
+// ── Reload data snapshot ──────────────────────────────────────
+function reloadData() {
+  closeSheet();
+
+  // Beri jeda singkat agar sheet selesai animasi tutup dulu
+  setTimeout(async () => {
+    // Visual feedback: fade semua val agar user tahu data sedang dimuat ulang
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) { el.style.transition = 'opacity 0.15s ease'; el.style.opacity = '0.3'; }
+    });
+    const journalSub = document.getElementById('journal-sub');
+    if (journalSub) journalSub.style.opacity = '0.3';
+
+    await loadSnapshot();
+
+    // Restore opacity setelah data masuk
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) el.style.opacity = '1';
+    });
+    if (journalSub) journalSub.style.opacity = '1';
+  }, 300);
+}
+
+// ── Hapus semua data lokal ────────────────────────────────────
+async function confirmClearData() {
+  closeSheet();
+  const ok = confirm('⚠️ Yakin mau hapus semua data ecosystem_db?\nData yang belum di-backup akan hilang permanen.');
+  if (!ok) return;
+  try {
+    await EcosystemDB.open();
+    await EcosystemDB.clear('ideas');
+    await EcosystemDB.clear('habits');
+    await EcosystemDB.clear('todos');
+    await EcosystemDB.clear('journal_entries');
+    await EcosystemDB.clear('kv');
+    // Hapus juga localStorage yang dipakai app-app ecosystem
+    [
+      'dailyos_xp', 'dailyos_coach_memory', 'dailyos_done_open',
+      'dailyos_theme', 'dailyos_memory_date',
+      'ideku-categories', 'ideku-theme',
+      'ecosystemku_last_backup',
+    ].forEach(k => localStorage.removeItem(k));
+    alert('Data berhasil dihapus.');
+    initBackupInfo();
+    loadSnapshot();
+  } catch(e) {
+    alert('Gagal hapus data: ' + e.message);
+  }
+}
+
+// ── Restore status UI ────────────────────────────────────────
+const _restoreStatus = {};
+
+function _setRestoreStatus(appId, label, state) {
+  _restoreStatus[appId] = state;
+  const list = document.getElementById('restore-status-list');
+  let row = document.getElementById('rstatus-' + appId);
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'rstatus-' + appId;
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:11px;';
+    list.appendChild(row);
+  }
+  const icons  = { loading: '⏳', ok: '✅', warn: '⚠️', error: '❌', skip: '⏭️' };
+  const colors = { loading: 'var(--text-3)', ok: 'var(--green)', warn: 'var(--amber)', error: 'var(--red)', skip: 'var(--text-3)' };
+  const labels = { loading: 'memulihkan...', ok: 'OK', warn: 'partial', error: 'gagal', skip: 'dilewati' };
+  row.innerHTML = `
+    <span style="color:var(--text-2)">${label}</span>
+    <span style="color:${colors[state]};font-weight:600">${icons[state]} ${labels[state]}</span>
+  `;
+}
+
+function _showRestoreProgress(show) {
+  document.getElementById('restore-progress').style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('restore-status-list').innerHTML = '';
+    Object.keys(_restoreStatus).forEach(k => delete _restoreStatus[k]);
+  }
+}
+
+// ── Modal restore ─────────────────────────────────────────────
+let _pendingRestoreData = null; // data ZIP yang sudah di-parse, tunggu pilihan user
+
+function closeRestoreModal() {
+  document.getElementById('restore-modal').classList.remove('active');
+  _pendingRestoreData = null;
+}
+
+async function confirmRestore(mode) {
+  // mode: 'merge' | 'replace'
+  closeRestoreModal();
+  if (!_pendingRestoreData) return;
+  await _doRestore(_pendingRestoreData, mode);
+}
+
+// ── Trigger file picker ───────────────────────────────────────
+function triggerRestoreZip() {
+  document.getElementById('restore-file-input').value = '';
+  document.getElementById('restore-file-input').click();
+}
+
+// ── Handle file ZIP dipilih ───────────────────────────────────
+async function handleRestoreZip(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const btn = document.getElementById('btn-restore');
+  btn.textContent = '⏳ Membaca ZIP...';
+  btn.disabled = true;
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const zip = await JSZip.loadAsync(arrayBuffer);
+
+    // Baca semua file JSON dalam ZIP
+    const data = {};
+    for (const [name, zipEntry] of Object.entries(zip.files)) {
+      if (zipEntry.dir || !name.endsWith('.json') || name === '_manifest.json') continue;
+      const text = await zipEntry.async('string');
+      try {
+        const parsed = JSON.parse(text);
+        // Identifikasi app dari nama file
+        if (name.startsWith('daily-os'))   data.dailyos   = parsed;
+        else if (name.startsWith('ideku')) data.ideku     = parsed;
+        else if (name.startsWith('kronik'))data.kronik    = parsed;
+        else if (name.startsWith('cucimoney')) data.cucimoney = parsed;
+        else if (name.startsWith('linkku'))data.linkku    = parsed;
+      } catch(e) {
+        console.warn('[Restore] Gagal parse:', name, e.message);
+      }
+    }
+
+    if (Object.keys(data).length === 0) {
+      alert('File ZIP tidak mengandung data backup yang valid.');
+      return;
+    }
+
+    // Tampilkan info di modal
+    const appNames = [];
+    if (data.dailyos)   appNames.push('Daily OS');
+    if (data.ideku)     appNames.push('IdeKu');
+    if (data.kronik)    appNames.push('Kronik');
+    if (data.cucimoney) appNames.push('CuciMoney+');
+    if (data.linkku)    appNames.push('LinkKu');
+
+    // Ekstrak tanggal dari nama file
+    const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
+    const dateLabel = dateMatch ? dateMatch[1] : file.name;
+
+    document.getElementById('restore-modal-sub').innerHTML =
+      `Backup dari <strong>${dateLabel}</strong><br>Berisi: ${appNames.join(', ')}`;
+
+    _pendingRestoreData = data;
+    document.getElementById('restore-modal').classList.add('active');
+
+  } catch(e) {
+    alert('Gagal membaca file ZIP: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '📂 Import ZIP';
+    btn.disabled = false;
+  }
+}
+
+// ── Kirim data restore ke app via iframe postMessage ──────────
+function sendRestoreToApp(url, data, mode, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+
+    let resolved = false;
+    let loadFallbackTimer = null;
+
+    const timeout = setTimeout(() => {
+      if (resolved) return;
+      cleanup();
+      reject(new Error('Timeout'));
+    }, timeoutMs);
+
+    function onMessage(e) {
+      if (resolved) return;
+      if (e.origin !== window.location.origin) return;
+
+      if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
+        clearTimeout(loadFallbackTimer);
+        iframe.contentWindow.postMessage({ type: 'REQUEST_RESTORE', data, mode }, window.location.origin);
+        return;
+      }
+
+      if (!e.data || e.data.type !== 'RESTORE_RESPONSE') return;
+      resolved = true;
+      cleanup();
+      if (e.data.error) reject(new Error(e.data.error));
+      else resolve({ restored: e.data.restored, skipped: e.data.skipped });
+    }
+
+    function cleanup() {
+      clearTimeout(timeout);
+      clearTimeout(loadFallbackTimer);
+      window.removeEventListener('message', onMessage);
+      setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 200);
+    }
+
+    iframe.addEventListener('load', () => {
+      loadFallbackTimer = setTimeout(() => {
+        if (resolved) return;
+        try { iframe.contentWindow.postMessage({ type: 'REQUEST_RESTORE', data, mode }, window.location.origin); }
+        catch(e) {}
+      }, 2000);
+    });
+
+    window.addEventListener('message', onMessage);
+    document.body.appendChild(iframe);
+  });
+}
+
+// ── Eksekusi restore ──────────────────────────────────────────
+async function _doRestore(data, mode) {
+  const btn = document.getElementById('btn-restore');
+  btn.disabled = true;
+  _showRestoreProgress(true);
+
+  try {
+    await EcosystemDB.open();
+
+    // ── Daily OS ────────────────────────────────────────────
+    if (data.dailyos) {
+      _setRestoreStatus('dailyos', 'Daily OS', 'loading');
+      try {
+        const raw = data.dailyos;
+        const habits = Array.isArray(raw) ? raw : (raw.habits ?? []);
+        const todos  = raw.todos ?? [];
+
+        if (mode === 'replace') {
+          await EcosystemDB.habits.save(habits);
+          await EcosystemDB.todos.save(todos);
+        } else {
+          // Merge habits
+          const existing = await EcosystemDB.habits.getAll();
+          const existIds = new Set(existing.map(h => h.id || h._key));
+          const newH = habits.filter(h => !existIds.has(h.id || h._key));
+          await EcosystemDB.habits.save([...existing, ...newH]);
+          // Merge todos
+          const existingT = await EcosystemDB.todos.getAll();
+          const existTIds = new Set(existingT.map(t => t.id));
+          const newT = todos.filter(t => !existTIds.has(t.id));
+          await EcosystemDB.todos.save([...existingT, ...newT]);
         }
-      }
 
-      if (hasPrivate) {
-        // Ada link private terenkripsi — minta PIN via popup
-        // Pastikan app tampil dulu (bukan iframe tersembunyi)
-        openPin('Masukkan PIN untuk restore link private', async (rawPin) => {
-          try {
-            const priv = await decryptObj(inData.ep, await hashPin(rawPin));
-            const allLinks = [...pubLinks, ...(priv.links || [])];
-            await doRestoreLinks(allLinks, priv.cats || []);
-          } catch {
-            // PIN salah — restore link biasa saja
-            toast('PIN salah — hanya link biasa yang di-restore', 'warn');
-            await doRestoreLinks(pubLinks, []);
-          }
-        }, true);
-      } else {
-        // Tidak ada private — langsung restore
-        await doRestoreLinks(pubLinks, inData.PC || []);
+        // Restore localStorage extras
+        if (raw.localStorage) {
+          if (raw.localStorage.dailyos_xp) localStorage.setItem('dailyos_xp', raw.localStorage.dailyos_xp);
+          if (raw.localStorage.dailyos_coach_memory) localStorage.setItem('dailyos_coach_memory', JSON.stringify(raw.localStorage.dailyos_coach_memory));
+        }
+        _setRestoreStatus('dailyos', 'Daily OS', 'ok');
+      } catch(e) {
+        console.error('[Restore] Daily OS:', e);
+        _setRestoreStatus('dailyos', 'Daily OS', 'error');
       }
-
-    } catch(err) {
-      src.postMessage({ type: 'RESTORE_RESPONSE', app: 'linkku', error: err.message }, origin);
     }
+
+    // ── IdeKu ──────────────────────────────────────────────
+    if (data.ideku) {
+      _setRestoreStatus('ideku', 'IdeKu', 'loading');
+      try {
+        const raw   = data.ideku;
+        const ideas = Array.isArray(raw) ? raw : (raw.ideas ?? []);
+
+        if (mode === 'replace') {
+          await EcosystemDB.clear('ideas');
+          await Promise.all(ideas.map(i => EcosystemDB.ideas.put(i)));
+        } else {
+          const existing = await EcosystemDB.ideas.getAll();
+          const existIds = new Set(existing.map(i => i.id));
+          const newIdeas = ideas.filter(i => !existIds.has(i.id));
+          await Promise.all(newIdeas.map(i => EcosystemDB.ideas.put(i)));
+        }
+
+        if (raw.localStorage?.['ideku-categories']) {
+          localStorage.setItem('ideku-categories', JSON.stringify(raw.localStorage['ideku-categories']));
+        }
+        _setRestoreStatus('ideku', 'IdeKu', 'ok');
+      } catch(e) {
+        console.error('[Restore] IdeKu:', e);
+        _setRestoreStatus('ideku', 'IdeKu', 'error');
+      }
+    }
+
+    // ── Kronik ─────────────────────────────────────────────
+    if (data.kronik) {
+      _setRestoreStatus('kronik', 'Kronik', 'loading');
+      try {
+        const raw     = data.kronik;
+        const entries = Array.isArray(raw) ? raw : (raw.entries ?? []);
+
+        if (mode === 'replace') {
+          await EcosystemDB.journal.putAll(entries, true);
+        } else {
+          const existing = await EcosystemDB.journal.getAll();
+          const existIds = new Set(existing.map(e => e.id));
+          const newEntries = entries.filter(e => !existIds.has(e.id));
+          await EcosystemDB.journal.putAll([...existing, ...newEntries], true);
+        }
+
+        // Restore profile Kronik
+        if (raw.profile) {
+          if (raw.profile.profile_name)   await EcosystemDB.kv.kronik.set('profile_name',   raw.profile.profile_name);
+          if (raw.profile.profile_avatar) await EcosystemDB.kv.kronik.set('profile_avatar', raw.profile.profile_avatar);
+        }
+        _setRestoreStatus('kronik', 'Kronik', 'ok');
+      } catch(e) {
+        console.error('[Restore] Kronik:', e);
+        _setRestoreStatus('kronik', 'Kronik', 'error');
+      }
+    }
+
+    // ── CuciMoney+ ─────────────────────────────────────────
+    if (data.cucimoney) {
+      _setRestoreStatus('cucimoney', 'CuciMoney+', 'loading');
+      try {
+        const raw = data.cucimoney;
+
+        if (mode === 'replace') {
+          await EcosystemDB.kv.finances.set('db',            raw.db            ?? {});
+          await EcosystemDB.kv.finances.set('budgets',       raw.budgets       ?? []);
+          await EcosystemDB.kv.finances.set('masterBudgets', raw.masterBudgets ?? []);
+        } else {
+          // Merge transaksi & akun — skip duplikat by id
+          const existingDb = await EcosystemDB.kv.finances.get('db') ?? { accounts: [], transactions: [] };
+          const existAccIds = new Set((existingDb.accounts || []).map(a => a.id));
+          const existTxIds  = new Set((existingDb.transactions || []).map(t => t.id));
+          const newAccounts = (raw.db?.accounts || []).filter(a => !existAccIds.has(a.id));
+          const newTxs      = (raw.db?.transactions || []).filter(t => !existTxIds.has(t.id));
+          const mergedDb = {
+            ...existingDb,
+            accounts:     [...(existingDb.accounts || []),     ...newAccounts],
+            transactions: [...(existingDb.transactions || []), ...newTxs],
+          };
+          await EcosystemDB.kv.finances.set('db', mergedDb);
+        }
+        _setRestoreStatus('cucimoney', 'CuciMoney+', 'ok');
+      } catch(e) {
+        console.error('[Restore] CuciMoney+:', e);
+        _setRestoreStatus('cucimoney', 'CuciMoney+', 'error');
+      }
+    }
+
+    // ── LinkKu (via iframe postMessage) ────────────────────
+    if (data.linkku) {
+      _setRestoreStatus('linkku', 'LinkKu', 'loading');
+      btn.textContent = '⏳ Memulihkan LinkKu...';
+      try {
+        const result = await sendRestoreToApp('/linkku/', data.linkku, mode);
+        _setRestoreStatus('linkku', 'LinkKu', 'ok');
+      } catch(e) {
+        console.warn('[Restore] LinkKu:', e.message);
+        _setRestoreStatus('linkku', 'LinkKu', 'warn');
+      }
+    }
+
+    // ── Selesai ─────────────────────────────────────────────
+    const failCount = Object.values(_restoreStatus).filter(s => s === 'error').length;
+    const warnCount = Object.values(_restoreStatus).filter(s => s === 'warn').length;
+
+    document.getElementById('restore-last').textContent =
+      failCount === 0 && warnCount === 0 ? 'Restore berhasil ✅' : 'Selesai (ada peringatan) ⚠️';
+
+    btn.textContent = failCount === 0 && warnCount === 0 ? '✅ Berhasil!' : '⚠️ Selesai';
+    setTimeout(() => { btn.textContent = '📂 Import ZIP'; }, 4000);
+
+    // Reload snapshot setelah restore
+    setTimeout(() => {
+      loadSnapshot();
+      _showRestoreProgress(false);
+    }, 3000);
+
+  } catch(e) {
+    alert('Gagal restore: ' + e.message);
+    console.error(e);
+    btn.textContent = '📂 Import ZIP';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// GOOGLE DRIVE INTEGRATION
+// ══════════════════════════════════════════════════════════════
+const GOOG_CLIENT_ID = '770379683691-pol140s7h8k11o68hloj55vta4um5clm.apps.googleusercontent.com';
+const GOOG_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FOLDER   = 'EcosystemKu Backup';
+
+let _googleToken     = null;
+let _tokenExpiry     = 0;
+let _tokenClient     = null;
+
+// ── Init Google Identity Services ────────────────────────────
+function initGoogleAuth() {
+  if (!window.google?.accounts?.oauth2) return;
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOG_CLIENT_ID,
+    scope:     GOOG_SCOPE,
+    callback:  (resp) => {
+      if (resp.error) {
+        console.error('[Drive] Auth error:', resp.error);
+        return;
+      }
+      _googleToken = resp.access_token;
+      _tokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+      // Jalankan pending action setelah token didapat
+      if (_pendingDriveAction) {
+        const fn = _pendingDriveAction;
+        _pendingDriveAction = null;
+        fn();
+      }
+    },
+  });
+}
+
+let _pendingDriveAction = null;
+
+// ── Pastikan token valid, minta login kalau perlu ─────────────
+function ensureGoogleAuth(action) {
+  if (_googleToken && Date.now() < _tokenExpiry) {
+    action();
     return;
+  }
+  _pendingDriveAction = action;
+  if (!_tokenClient) {
+    // GIS belum load — tunggu sebentar
+    const wait = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(wait);
+        initGoogleAuth();
+        _tokenClient.requestAccessToken({ prompt: '' });
+      }
+    }, 300);
+    return;
+  }
+  _tokenClient.requestAccessToken({ prompt: _googleToken ? '' : 'consent' });
+}
+
+// ── Drive API helpers ─────────────────────────────────────────
+async function driveRequest(path, options = {}) {
+  const res = await fetch('https://www.googleapis.com/drive/v3' + path, {
+    ...options,
+    headers: {
+      'Authorization': 'Bearer ' + _googleToken,
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error('Drive API error: ' + res.status);
+  return res.json();
+}
+
+async function driveUpload(filename, jsonData) {
+  // Cari atau buat folder EcosystemKu Backup
+  const folderRes = await driveRequest(
+    `/files?q=name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`
+  );
+
+  let folderId;
+  if (folderRes.files?.length > 0) {
+    folderId = folderRes.files[0].id;
+  } else {
+    const created = await driveRequest('/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: DRIVE_FOLDER,
+        mimeType: 'application/vnd.google-apps.folder',
+      }),
+    });
+    folderId = created.id;
+  }
+
+  // Upload file via multipart
+  const meta = JSON.stringify({ name: filename, parents: [folderId] });
+  const body = JSON.stringify(jsonData, null, 2);
+
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], { type: 'application/json' }));
+  form.append('file',     new Blob([body], { type: 'application/json' }));
+
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _googleToken },
+    body: form,
+  });
+  if (!res.ok) throw new Error('Upload error: ' + res.status);
+  return res.json();
+}
+
+async function driveListBackups() {
+  const folderRes = await driveRequest(
+    `/files?q=name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`
+  );
+  if (!folderRes.files?.length) return [];
+
+  const folderId = folderRes.files[0].id;
+  const filesRes = await driveRequest(
+    `/files?q='${folderId}' in parents and name contains 'ecosystemku-backup' and trashed=false&orderBy=createdTime desc&fields=files(id,name,createdTime,size)&pageSize=20`
+  );
+  return filesRes.files || [];
+}
+
+async function driveDownload(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': 'Bearer ' + _googleToken },
+  });
+  if (!res.ok) throw new Error('Download error: ' + res.status);
+  return res.json();
+}
+
+// ── Cloud Backup ──────────────────────────────────────────────
+function cloudBackup() {
+  ensureGoogleAuth(async () => {
+    const btn = document.getElementById('btn-cloud-backup');
+    btn.textContent = '⏳ Menyiapkan...';
+    btn.disabled = true;
+    _showProgress(true);
+
+    try {
+      await EcosystemDB.open();
+      const date = todayStr();
+      const meta = { exportedAt: new Date().toISOString(), version: 2 };
+      const backup = { ...meta };
+
+      // Kumpulkan data sama seperti exportZip
+      _setAppStatus('dailyos', 'Daily OS', 'loading');
+      backup.dailyos = {
+        habits: await EcosystemDB.habits.getAll(),
+        todos:  await EcosystemDB.todos.getAll(),
+        localStorage: {
+          dailyos_xp: localStorage.getItem('dailyos_xp'),
+          dailyos_coach_memory: (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })(),
+        },
+      };
+      _setAppStatus('dailyos', 'Daily OS', 'ok');
+
+      _setAppStatus('ideku', 'IdeKu', 'loading');
+      backup.ideku = {
+        ideas: await EcosystemDB.ideas.getAll(),
+        localStorage: { 'ideku-categories': (() => { try { return JSON.parse(localStorage.getItem('ideku-categories') || 'null'); } catch(e) { return null; } })() },
+      };
+      _setAppStatus('ideku', 'IdeKu', 'ok');
+
+      _setAppStatus('kronik', 'Kronik', 'loading');
+      backup.kronik = {
+        entries:  await EcosystemDB.journal.getAll(),
+        profile: {
+          profile_name:   await EcosystemDB.kv.kronik.get('profile_name'),
+          profile_avatar: await EcosystemDB.kv.kronik.get('profile_avatar'),
+        },
+      };
+      _setAppStatus('kronik', 'Kronik', 'ok');
+
+      _setAppStatus('cucimoney', 'CuciMoney+', 'loading');
+      const finDb = await EcosystemDB.kv.finances.get('db');
+      backup.cucimoney = {
+        db:            finDb ?? {},
+        budgets:       await EcosystemDB.kv.finances.get('budgets')       ?? [],
+        masterBudgets: await EcosystemDB.kv.finances.get('masterBudgets') ?? [],
+      };
+      _setAppStatus('cucimoney', 'CuciMoney+', finDb ? 'ok' : 'warn');
+
+      _setAppStatus('linkku', 'LinkKu', 'loading');
+      btn.textContent = '⏳ Mengambil LinkKu...';
+      try {
+        const linkkuBackup = await requestBackupFromApp('/linkku/');
+        backup.linkku = linkkuBackup.data;
+        _setAppStatus('linkku', 'LinkKu', 'ok');
+      } catch(e) {
+        console.warn('[Drive Backup] LinkKu:', e.message);
+        _setAppStatus('linkku', 'LinkKu', 'warn');
+      }
+
+      // Upload ke Drive
+      btn.textContent = '⏳ Mengupload ke Drive...';
+      const filename = `ecosystemku-backup-${date}.json`;
+      await driveUpload(filename, backup);
+
+      localStorage.setItem('ecosystemku_last_backup', new Date().toISOString());
+      document.getElementById('backup-last').textContent = 'Backup hari ini ☁️';
+
+      const warnCount = Object.values(_backupStatus).filter(s => s === 'warn').length;
+      btn.textContent = warnCount === 0 ? '✅ Tersimpan di Drive!' : '⚠️ Selesai';
+      setTimeout(() => { btn.textContent = '☁️ Cloud Backup'; }, 3000);
+
+    } catch(e) {
+      alert('Gagal cloud backup: ' + e.message);
+      console.error(e);
+      btn.textContent = '☁️ Cloud Backup';
+    } finally {
+      btn.disabled = false;
+      setTimeout(() => _showProgress(false), 6000);
+    }
+  });
+}
+
+// ── Cloud Restore ─────────────────────────────────────────────
+function cloudRestore() {
+  ensureGoogleAuth(async () => {
+    const btn = document.getElementById('btn-cloud-restore');
+    btn.textContent = '⏳ Memuat...';
+    btn.disabled = true;
+
+    try {
+      const files = await driveListBackups();
+
+      if (files.length === 0) {
+        alert('Belum ada backup di Google Drive.');
+        return;
+      }
+
+      // Tampilkan list file di modal
+      const list = document.getElementById('drive-file-list');
+      list.innerHTML = '';
+
+      files.forEach(file => {
+        const date  = new Date(file.createdTime);
+        const label = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const size  = file.size ? (file.size / 1024).toFixed(0) + ' KB' : '';
+
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;';
+        item.innerHTML = `
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">📄 ${file.name}</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px">${label} ${size ? '· ' + size : ''}</div>
+          </div>
+          <span style="font-size:16px;color:var(--text-3)">›</span>
+        `;
+        item.addEventListener('click', () => {
+          closeDriveModal();
+          _selectDriveFile(file);
+        });
+        list.appendChild(item);
+      });
+
+      document.getElementById('drive-modal').classList.add('active');
+
+    } catch(e) {
+      alert('Gagal memuat daftar backup: ' + e.message);
+      console.error(e);
+    } finally {
+      btn.textContent = '☁️ Restore Cloud';
+      btn.disabled = false;
+    }
+  });
+}
+
+function closeDriveModal() {
+  document.getElementById('drive-modal').classList.remove('active');
+}
+
+async function _selectDriveFile(file) {
+  const btn = document.getElementById('btn-cloud-restore');
+  btn.textContent = '⏳ Mengunduh...';
+  btn.disabled = true;
+
+  try {
+    const backup = await driveDownload(file.id);
+
+    // Parsing sama seperti handleRestoreZip — konversi format cloud ke format restore
+    const data = {};
+    if (backup.dailyos)   data.dailyos   = backup.dailyos;
+    if (backup.ideku)     data.ideku     = backup.ideku;
+    if (backup.kronik)    data.kronik    = backup.kronik;
+    if (backup.cucimoney) data.cucimoney = backup.cucimoney;
+    if (backup.linkku)    data.linkku    = backup.linkku;
+
+    if (Object.keys(data).length === 0) {
+      alert('File backup tidak valid atau kosong.');
+      return;
+    }
+
+    // Tampilkan tanggal di modal restore
+    const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
+    const dateLabel = dateMatch ? dateMatch[1] : file.name;
+    const appNames  = Object.keys(data).map(k => ({ dailyos:'Daily OS', ideku:'IdeKu', kronik:'Kronik', cucimoney:'CuciMoney+', linkku:'LinkKu' }[k])).filter(Boolean);
+
+    document.getElementById('restore-modal-sub').innerHTML =
+      `Backup dari <strong>${dateLabel}</strong><br>Berisi: ${appNames.join(', ')}`;
+
+    _pendingRestoreData = data;
+    document.getElementById('restore-modal').classList.add('active');
+
+  } catch(e) {
+    alert('Gagal mengunduh backup: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '☁️ Restore Cloud';
+    btn.disabled = false;
+  }
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+initBackupInfo();
+loadSnapshot();
+// Init Google Auth setelah GIS library load
+window.addEventListener('load', () => {
+  if (window.google?.accounts?.oauth2) initGoogleAuth();
+  else {
+    // GIS belum siap — tunggu
+    const t = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(t);
+        initGoogleAuth();
+      }
+    }, 500);
   }
 });
 </script>
