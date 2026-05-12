@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>EcosystemKu</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EcosystemKu" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet" />
@@ -575,38 +581,37 @@
 
     .modal-btns {
       display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 8px;
     }
 
     .modal-btn {
       flex: 1;
-      padding: 14px 10px;
+      padding: 16px 10px;
       border-radius: var(--radius-sm);
-      font-size: 12px;
-      font-weight: 500;
       font-family: 'DM Sans', sans-serif;
       border: 1px solid var(--border);
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      transition: transform 0.15s ease, background 0.15s ease;
+      gap: 6px;
+      transition: transform 0.15s ease, opacity 0.15s ease;
       background: var(--bg-card-2);
       color: var(--text);
       -webkit-tap-highlight-color: transparent;
     }
-    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn:active { transform: scale(0.96); opacity: 0.85; }
     .modal-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .modal-btn.danger  { background: #e53935; color: #fff; border-color: #e53935; }
 
-    .modal-btn-icon { font-size: 20px; }
-    .modal-btn-label { font-size: 12px; font-weight: 600; }
-    .modal-btn-desc { font-size: 10px; opacity: 0.7; text-align: center; line-height: 1.3; }
+    .modal-btn-icon  { font-size: 22px; line-height: 1; }
+    .modal-btn-label { font-size: 13px; font-weight: 600; }
+    .modal-btn-desc  { font-size: 11px; opacity: 0.65; text-align: center; line-height: 1.4; }
 
     .modal-cancel {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       background: none;
       border: none;
       font-size: 13px;
@@ -874,13 +879,12 @@
       <div class="modal-handle"></div>
       <div class="modal-title">Hapus semua data?</div>
       <div class="modal-sub">
-        Data berikut akan dihapus permanen:<br>
-        Daily OS · IdeKu · Kronik · CuciMoney+ · LinkKu<br>
-        <span style="color:var(--text-3);font-size:11px">Hesych tidak terpengaruh (sync terpisah)</span>
+        Data berikut akan dihapus permanen<br>
+        <strong style="color:var(--text)">Daily OS · IdeKu · Kronik · CuciMoney+ · LinkKu</strong><br>
+        <span style="font-size:11px">Hesych tidak terpengaruh</span>
       </div>
 
-      <!-- Status per app (muncul saat proses berjalan) -->
-      <div id="clear-status-wrap" style="display:none">
+      <div id="clear-status-wrap" style="display:none; margin-bottom:16px;">
         <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;font-weight:500">Status per aplikasi:</div>
         <div class="clear-status-list" id="clear-status-list"></div>
       </div>
@@ -890,7 +894,7 @@
           <span class="modal-btn-icon">✕</span>
           <span class="modal-btn-label">Batal</span>
         </button>
-        <button class="modal-btn primary" onclick="doDeleteAll()" style="background:var(--red,#e53935);border-color:var(--red,#e53935)">
+        <button class="modal-btn danger" onclick="doDeleteAll()">
           <span class="modal-btn-icon">🗑️</span>
           <span class="modal-btn-label">Hapus semua</span>
         </button>
@@ -905,8 +909,8 @@
       <div class="modal-handle"></div>
       <div class="modal-title">Pilih metode restore</div>
       <div class="modal-sub" id="restore-modal-sub">Memuat info backup...</div>
-      <div style="font-size:11px;color:var(--text-3);margin-top:-8px;margin-bottom:4px;text-align:center">
-        💡 LinkKu perlu direstore manual dari dalam app LinkKu
+      <div style="font-size:11px;color:var(--text-3);margin:-4px 0 16px;text-align:center">
+        💡 LinkKu direstore manual dari app LinkKu
       </div>
       <div class="modal-btns">
         <button class="modal-btn" onclick="confirmRestore('merge')">
@@ -1930,13 +1934,25 @@ function initGoogleAuth() {
   _tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOG_CLIENT_ID,
     scope:     GOOG_SCOPE,
+    hint:      localStorage.getItem('goog_hint') || undefined,
     callback:  (resp) => {
       if (resp.error) {
-        console.error('[Drive] Auth error:', resp.error);
+        // Kalau silent refresh gagal, coba dengan prompt
+        if (resp.error === 'interaction_required' || resp.error === 'access_denied') {
+          _tokenClient.requestAccessToken({ prompt: 'consent' });
+        } else {
+          console.error('[Drive] Auth error:', resp.error);
+        }
         return;
       }
       _googleToken = resp.access_token;
       _tokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+      // Simpan hint email untuk silent refresh berikutnya
+      // (decode JWT tanpa library — ambil email dari token info)
+      fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=' + _googleToken)
+        .then(r => r.json())
+        .then(info => { if (info.email) localStorage.setItem('goog_hint', info.email); })
+        .catch(() => {});
       // Jalankan pending action setelah token didapat
       if (_pendingDriveAction) {
         const fn = _pendingDriveAction;
@@ -1945,6 +1961,11 @@ function initGoogleAuth() {
       }
     },
   });
+
+  // Coba silent refresh otomatis saat init kalau ada hint tersimpan
+  if (localStorage.getItem('goog_hint')) {
+    _tokenClient.requestAccessToken({ prompt: '' });
+  }
 }
 
 let _pendingDriveAction = null;
@@ -1957,17 +1978,16 @@ function ensureGoogleAuth(action) {
   }
   _pendingDriveAction = action;
   if (!_tokenClient) {
-    // GIS belum load — tunggu sebentar
     const wait = setInterval(() => {
       if (window.google?.accounts?.oauth2) {
         clearInterval(wait);
         initGoogleAuth();
-        _tokenClient.requestAccessToken({ prompt: '' });
       }
     }, 300);
     return;
   }
-  _tokenClient.requestAccessToken({ prompt: _googleToken ? '' : 'consent' });
+  // Coba silent dulu (prompt: ''), kalau gagal baru popup
+  _tokenClient.requestAccessToken({ prompt: '' });
 }
 
 // ── Drive API helpers ─────────────────────────────────────────
@@ -2227,6 +2247,15 @@ async function _selectDriveFile(file) {
     btn.textContent = '☁️ Restore Cloud';
     btn.disabled = false;
   }
+}
+
+// ── Register Service Worker ──────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+      .then(reg => console.log('[SW] Dashboard SW registered:', reg.scope))
+      .catch(err => console.warn('[SW] Dashboard SW failed:', err));
+  });
 }
 
 // ── Boot ──────────────────────────────────────────────────────
