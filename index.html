@@ -1473,6 +1473,9 @@ function triggerRestoreZip() {
 
 // ── Handle file ZIP dipilih ───────────────────────────────────
 async function handleRestoreZip(event) {
+  // DEBUG: konfirmasi function terpanggil
+  alert('[DEBUG] handleRestoreZip terpanggil. File: ' + (event.target.files[0]?.name || 'tidak ada'));
+
   const file = event.target.files[0];
   if (!file) return;
 
@@ -1980,6 +1983,7 @@ function cloudBackup() {
 
 // ── Cloud Restore ─────────────────────────────────────────────
 function cloudRestore() {
+  alert('[DEBUG] cloudRestore terpanggil. google defined: ' + (typeof google !== 'undefined') + ', google.accounts: ' + !!(typeof google !== 'undefined' && google.accounts));
   if (typeof google === 'undefined' || !google.accounts) {
     alert('Google Sign-In belum tersedia. Pastikan koneksi internet aktif lalu refresh halaman.');
     return;
