@@ -616,6 +616,10 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* ── Clear modal status ──────────────────────────────────── */
+    .clear-status-list { display:flex; flex-direction:column; gap:5px; margin-bottom:16px; }
+    .clear-status-row  { display:flex; align-items:center; justify-content:space-between; font-size:12px; }
+
     /* ── Loading skeleton ─────────────────────────────────────── */
     .skeleton {
       background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
@@ -861,6 +865,37 @@
       <button class="btn btn-secondary" id="btn-cloud-restore" onclick="cloudRestore()">
         ☁️ Restore Cloud
       </button>
+    </div>
+  </div>
+
+  <!-- Modal konfirmasi hapus semua data -->
+  <div class="modal-overlay" id="clear-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Hapus semua data?</div>
+      <div class="modal-sub">
+        Data berikut akan dihapus permanen:<br>
+        Daily OS · IdeKu · Kronik · CuciMoney+ · LinkKu<br>
+        <span style="color:var(--text-3);font-size:11px">Hesych tidak terpengaruh (sync terpisah)</span>
+      </div>
+
+      <!-- Status per app (muncul saat proses berjalan) -->
+      <div id="clear-status-wrap" style="display:none">
+        <div style="font-size:11px;color:var(--text-3);margin-bottom:8px;font-weight:500">Status per aplikasi:</div>
+        <div class="clear-status-list" id="clear-status-list"></div>
+      </div>
+
+      <div class="modal-btns" id="clear-modal-btns">
+        <button class="modal-btn" onclick="closeClearModal()">
+          <span class="modal-btn-icon">✕</span>
+          <span class="modal-btn-label">Batal</span>
+        </button>
+        <button class="modal-btn primary" onclick="doDeleteAll()" style="background:var(--red,#e53935);border-color:var(--red,#e53935)">
+          <span class="modal-btn-icon">🗑️</span>
+          <span class="modal-btn-label">Hapus semua</span>
+        </button>
+      </div>
+      <button class="modal-cancel" id="clear-modal-close" style="display:none" onclick="closeClearModal()">Tutup</button>
     </div>
   </div>
 
@@ -1406,30 +1441,138 @@ function reloadData() {
 }
 
 // ── Hapus semua data lokal ────────────────────────────────────
-async function confirmClearData() {
+function confirmClearData() {
   closeSheet();
-  const ok = confirm('⚠️ Yakin mau hapus semua data ecosystem_db?\nData yang belum di-backup akan hilang permanen.');
-  if (!ok) return;
+  // Reset modal state
+  document.getElementById('clear-status-wrap').style.display = 'none';
+  document.getElementById('clear-status-list').innerHTML = '';
+  document.getElementById('clear-modal-btns').style.display = 'flex';
+  document.getElementById('clear-modal-close').style.display = 'none';
+  document.getElementById('clear-modal').classList.add('active');
+}
+
+function closeClearModal() {
+  document.getElementById('clear-modal').classList.remove('active');
+}
+
+function _setClearStatus(appId, label, state) {
+  const list = document.getElementById('clear-status-list');
+  let row = document.getElementById('cstatus-' + appId);
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'cstatus-' + appId;
+    row.className = 'clear-status-row';
+    list.appendChild(row);
+  }
+  const icons  = { loading:'⏳', ok:'✅', error:'❌', warn:'⚠️' };
+  const colors = { loading:'var(--text-3)', ok:'var(--green)', error:'var(--red)', warn:'var(--amber)' };
+  const labels = { loading:'menghapus...', ok:'Dihapus', error:'Gagal', warn:'Partial' };
+  row.innerHTML = `
+    <span style="color:var(--text-2)">${label}</span>
+    <span style="color:${colors[state]};font-weight:600">${icons[state]} ${labels[state]}</span>
+  `;
+}
+
+async function doDeleteAll() {
+  // Sembunyikan tombol, tampilkan status
+  document.getElementById('clear-modal-btns').style.display = 'none';
+  document.getElementById('clear-status-wrap').style.display = 'block';
+
+  // ── EcosystemDB apps ──────────────────────────────────────
   try {
+    _setClearStatus('dailyos', 'Daily OS', 'loading');
     await EcosystemDB.open();
-    await EcosystemDB.clear('ideas');
     await EcosystemDB.clear('habits');
     await EcosystemDB.clear('todos');
-    await EcosystemDB.clear('journal_entries');
-    await EcosystemDB.clear('kv');
-    // Hapus juga localStorage yang dipakai app-app ecosystem
     [
       'dailyos_xp', 'dailyos_coach_memory', 'dailyos_done_open',
       'dailyos_theme', 'dailyos_memory_date',
-      'ideku-categories', 'ideku-theme',
-      'ecosystemku_last_backup',
     ].forEach(k => localStorage.removeItem(k));
-    alert('Data berhasil dihapus.');
-    initBackupInfo();
-    loadSnapshot();
+    _setClearStatus('dailyos', 'Daily OS', 'ok');
+  } catch(e) { _setClearStatus('dailyos', 'Daily OS', 'error'); }
+
+  try {
+    _setClearStatus('ideku', 'IdeKu', 'loading');
+    await EcosystemDB.clear('ideas');
+    ['ideku-categories', 'ideku-theme'].forEach(k => localStorage.removeItem(k));
+    _setClearStatus('ideku', 'IdeKu', 'ok');
+  } catch(e) { _setClearStatus('ideku', 'IdeKu', 'error'); }
+
+  try {
+    _setClearStatus('kronik', 'Kronik', 'loading');
+    await EcosystemDB.clear('journal_entries');
+    _setClearStatus('kronik', 'Kronik', 'ok');
+  } catch(e) { _setClearStatus('kronik', 'Kronik', 'error'); }
+
+  try {
+    _setClearStatus('cucimoney', 'CuciMoney+', 'loading');
+    await EcosystemDB.clear('kv');
+    _setClearStatus('cucimoney', 'CuciMoney+', 'ok');
+  } catch(e) { _setClearStatus('cucimoney', 'CuciMoney+', 'error'); }
+
+  // ── LinkKu via iframe ─────────────────────────────────────
+  _setClearStatus('linkku', 'LinkKu', 'loading');
+  try {
+    await _clearLinkku();
+    _setClearStatus('linkku', 'LinkKu', 'ok');
   } catch(e) {
-    alert('Gagal hapus data: ' + e.message);
+    console.warn('[Clear] LinkKu:', e.message);
+    _setClearStatus('linkku', 'LinkKu', 'warn');
   }
+
+  // ── Cleanup localStorage global ───────────────────────────
+  localStorage.removeItem('ecosystemku_last_backup');
+
+  // Tampilkan tombol tutup
+  document.getElementById('clear-modal-close').style.display = 'block';
+  initBackupInfo();
+  setTimeout(() => loadSnapshot(), 500);
+}
+
+function _clearLinkku() {
+  return new Promise((resolve, reject) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = '/linkku/';
+    iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
+
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (resolved) return;
+      cleanup();
+      reject(new Error('Timeout'));
+    }, 30000);
+
+    function onMessage(e) {
+      if (resolved) return;
+      if (e.origin !== window.location.origin) return;
+      if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: 'REQUEST_CLEAR' }, window.location.origin);
+        return;
+      }
+      if (e.data?.type !== 'CLEAR_RESPONSE') return;
+      resolved = true;
+      cleanup();
+      if (e.data.error) reject(new Error(e.data.error));
+      else resolve();
+    }
+
+    function cleanup() {
+      clearTimeout(timeout);
+      window.removeEventListener('message', onMessage);
+      setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 200);
+    }
+
+    iframe.addEventListener('load', () => {
+      setTimeout(() => {
+        if (!resolved) {
+          try { iframe.contentWindow.postMessage({ type: 'REQUEST_CLEAR' }, window.location.origin); } catch(e) {}
+        }
+      }, 2000);
+    });
+
+    window.addEventListener('message', onMessage);
+    document.body.appendChild(iframe);
+  });
 }
 
 // ── Restore status UI ────────────────────────────────────────
@@ -1744,7 +1887,7 @@ async function _doRestore(data, mode) {
       _setRestoreStatus('linkku', 'LinkKu', 'loading');
       document.getElementById('btn-restore-text').textContent = '⏳ Memulihkan LinkKu...';
       try {
-        const result = await sendRestoreToApp('/linkku/', data.linkku, mode);
+        const result = await sendRestoreToApp('/linkku/', data.linkku, mode, 30000);
         _setRestoreStatus('linkku', 'LinkKu', 'ok');
       } catch(e) {
         console.warn('[Restore] LinkKu:', e.message);
@@ -1961,7 +2104,7 @@ function cloudBackup() {
       _setAppStatus('linkku', 'LinkKu', 'loading');
       btn.textContent = '⏳ Mengambil LinkKu...';
       try {
-        const linkkuBackup = await requestBackupFromApp('/linkku/');
+        const linkkuBackup = await requestBackupFromApp('/linkku/', 30000);
         backup.linkku = linkkuBackup.data;
         _setAppStatus('linkku', 'LinkKu', 'ok');
       } catch(e) {
