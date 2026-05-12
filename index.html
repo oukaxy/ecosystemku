@@ -832,8 +832,8 @@
       <button class="btn btn-primary" id="btn-export" onclick="exportZip()">
         📦 Download ZIP
       </button>
-      <button class="btn btn-secondary" disabled>
-        ☁️ Cloud <span class="btn-coming-soon">Soon</span>
+      <button class="btn btn-secondary" id="btn-cloud-backup" onclick="cloudBackup()">
+        ☁️ Cloud Backup
       </button>
     </div>
   </div>
@@ -857,8 +857,8 @@
       <button class="btn btn-primary" id="btn-restore" onclick="triggerRestoreZip()">
         📂 Import ZIP
       </button>
-      <button class="btn btn-secondary" disabled>
-        ☁️ Restore Cloud <span class="btn-coming-soon">Soon</span>
+      <button class="btn btn-secondary" id="btn-cloud-restore" onclick="cloudRestore()">
+        ☁️ Restore Cloud
       </button>
     </div>
   </div>
@@ -888,9 +888,21 @@
     </div>
   </div>
 
+  <!-- Modal Drive file picker -->
+  <div class="modal-overlay" id="drive-modal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Restore dari Google Drive</div>
+      <div class="modal-sub">Pilih file backup yang ingin dipulihkan</div>
+      <div id="drive-file-list" style="max-height:240px;overflow-y:auto;margin-bottom:16px;"></div>
+      <button class="modal-cancel" onclick="closeDriveModal()">Batal</button>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="/shared/ecosystem-db.js"></script>
 <script>
 // ── Helpers ──────────────────────────────────────────────────
@@ -1274,13 +1286,6 @@ async function exportZip() {
 
     // ── Hesych — app terpisah, sync otomatis di hesych.com ───
     // Tidak perlu backup dari dashboard.
-
-    // ── Manifest ringkasan ────────────────────────────────────
-    zip.file('_manifest.json', JSON.stringify({
-      exportedAt: meta.exportedAt,
-      version: meta.version,
-      apps: Object.entries(_backupStatus).map(([id, status]) => ({ id, status })),
-    }, null, 2));
 
     // ── Generate & download ───────────────────────────────────
     btn.textContent = '⏳ Membuat ZIP...';
@@ -1753,9 +1758,334 @@ async function _doRestore(data, mode) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// GOOGLE DRIVE INTEGRATION
+// ══════════════════════════════════════════════════════════════
+const GOOG_CLIENT_ID = '770379683691-pol140s7h8k11o68hloj55vta4um5clm.apps.googleusercontent.com';
+const GOOG_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const DRIVE_FOLDER   = 'EcosystemKu Backup';
+
+let _googleToken     = null;
+let _tokenExpiry     = 0;
+let _tokenClient     = null;
+
+// ── Init Google Identity Services ────────────────────────────
+function initGoogleAuth() {
+  if (!window.google?.accounts?.oauth2) return;
+  _tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOG_CLIENT_ID,
+    scope:     GOOG_SCOPE,
+    callback:  (resp) => {
+      if (resp.error) {
+        console.error('[Drive] Auth error:', resp.error);
+        return;
+      }
+      _googleToken = resp.access_token;
+      _tokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+      // Jalankan pending action setelah token didapat
+      if (_pendingDriveAction) {
+        const fn = _pendingDriveAction;
+        _pendingDriveAction = null;
+        fn();
+      }
+    },
+  });
+}
+
+let _pendingDriveAction = null;
+
+// ── Pastikan token valid, minta login kalau perlu ─────────────
+function ensureGoogleAuth(action) {
+  if (_googleToken && Date.now() < _tokenExpiry) {
+    action();
+    return;
+  }
+  _pendingDriveAction = action;
+  if (!_tokenClient) {
+    // GIS belum load — tunggu sebentar
+    const wait = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(wait);
+        initGoogleAuth();
+        _tokenClient.requestAccessToken({ prompt: '' });
+      }
+    }, 300);
+    return;
+  }
+  _tokenClient.requestAccessToken({ prompt: _googleToken ? '' : 'consent' });
+}
+
+// ── Drive API helpers ─────────────────────────────────────────
+async function driveRequest(path, options = {}) {
+  const res = await fetch('https://www.googleapis.com/drive/v3' + path, {
+    ...options,
+    headers: {
+      'Authorization': 'Bearer ' + _googleToken,
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) throw new Error('Drive API error: ' + res.status);
+  return res.json();
+}
+
+async function driveUpload(filename, jsonData) {
+  // Cari atau buat folder EcosystemKu Backup
+  const folderRes = await driveRequest(
+    `/files?q=name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id,name)`
+  );
+
+  let folderId;
+  if (folderRes.files?.length > 0) {
+    folderId = folderRes.files[0].id;
+  } else {
+    const created = await driveRequest('/files', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: DRIVE_FOLDER,
+        mimeType: 'application/vnd.google-apps.folder',
+      }),
+    });
+    folderId = created.id;
+  }
+
+  // Upload file via multipart
+  const meta = JSON.stringify({ name: filename, parents: [folderId] });
+  const body = JSON.stringify(jsonData, null, 2);
+
+  const form = new FormData();
+  form.append('metadata', new Blob([meta], { type: 'application/json' }));
+  form.append('file',     new Blob([body], { type: 'application/json' }));
+
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + _googleToken },
+    body: form,
+  });
+  if (!res.ok) throw new Error('Upload error: ' + res.status);
+  return res.json();
+}
+
+async function driveListBackups() {
+  const folderRes = await driveRequest(
+    `/files?q=name='${DRIVE_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false&fields=files(id)`
+  );
+  if (!folderRes.files?.length) return [];
+
+  const folderId = folderRes.files[0].id;
+  const filesRes = await driveRequest(
+    `/files?q='${folderId}' in parents and name contains 'ecosystemku-backup' and trashed=false&orderBy=createdTime desc&fields=files(id,name,createdTime,size)&pageSize=20`
+  );
+  return filesRes.files || [];
+}
+
+async function driveDownload(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': 'Bearer ' + _googleToken },
+  });
+  if (!res.ok) throw new Error('Download error: ' + res.status);
+  return res.json();
+}
+
+// ── Cloud Backup ──────────────────────────────────────────────
+function cloudBackup() {
+  ensureGoogleAuth(async () => {
+    const btn = document.getElementById('btn-cloud-backup');
+    btn.textContent = '⏳ Menyiapkan...';
+    btn.disabled = true;
+    _showProgress(true);
+
+    try {
+      await EcosystemDB.open();
+      const date = todayStr();
+      const meta = { exportedAt: new Date().toISOString(), version: 2 };
+      const backup = { ...meta };
+
+      // Kumpulkan data sama seperti exportZip
+      _setAppStatus('dailyos', 'Daily OS', 'loading');
+      backup.dailyos = {
+        habits: await EcosystemDB.habits.getAll(),
+        todos:  await EcosystemDB.todos.getAll(),
+        localStorage: {
+          dailyos_xp: localStorage.getItem('dailyos_xp'),
+          dailyos_coach_memory: (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })(),
+        },
+      };
+      _setAppStatus('dailyos', 'Daily OS', 'ok');
+
+      _setAppStatus('ideku', 'IdeKu', 'loading');
+      backup.ideku = {
+        ideas: await EcosystemDB.ideas.getAll(),
+        localStorage: { 'ideku-categories': (() => { try { return JSON.parse(localStorage.getItem('ideku-categories') || 'null'); } catch(e) { return null; } })() },
+      };
+      _setAppStatus('ideku', 'IdeKu', 'ok');
+
+      _setAppStatus('kronik', 'Kronik', 'loading');
+      backup.kronik = {
+        entries:  await EcosystemDB.journal.getAll(),
+        profile: {
+          profile_name:   await EcosystemDB.kv.kronik.get('profile_name'),
+          profile_avatar: await EcosystemDB.kv.kronik.get('profile_avatar'),
+        },
+      };
+      _setAppStatus('kronik', 'Kronik', 'ok');
+
+      _setAppStatus('cucimoney', 'CuciMoney+', 'loading');
+      const finDb = await EcosystemDB.kv.finances.get('db');
+      backup.cucimoney = {
+        db:            finDb ?? {},
+        budgets:       await EcosystemDB.kv.finances.get('budgets')       ?? [],
+        masterBudgets: await EcosystemDB.kv.finances.get('masterBudgets') ?? [],
+      };
+      _setAppStatus('cucimoney', 'CuciMoney+', finDb ? 'ok' : 'warn');
+
+      _setAppStatus('linkku', 'LinkKu', 'loading');
+      btn.textContent = '⏳ Mengambil LinkKu...';
+      try {
+        const linkkuBackup = await requestBackupFromApp('/linkku/');
+        backup.linkku = linkkuBackup.data;
+        _setAppStatus('linkku', 'LinkKu', 'ok');
+      } catch(e) {
+        console.warn('[Drive Backup] LinkKu:', e.message);
+        _setAppStatus('linkku', 'LinkKu', 'warn');
+      }
+
+      // Upload ke Drive
+      btn.textContent = '⏳ Mengupload ke Drive...';
+      const filename = `ecosystemku-backup-${date}.json`;
+      await driveUpload(filename, backup);
+
+      localStorage.setItem('ecosystemku_last_backup', new Date().toISOString());
+      document.getElementById('backup-last').textContent = 'Backup hari ini ☁️';
+
+      const warnCount = Object.values(_backupStatus).filter(s => s === 'warn').length;
+      btn.textContent = warnCount === 0 ? '✅ Tersimpan di Drive!' : '⚠️ Selesai';
+      setTimeout(() => { btn.textContent = '☁️ Cloud Backup'; }, 3000);
+
+    } catch(e) {
+      alert('Gagal cloud backup: ' + e.message);
+      console.error(e);
+      btn.textContent = '☁️ Cloud Backup';
+    } finally {
+      btn.disabled = false;
+      setTimeout(() => _showProgress(false), 6000);
+    }
+  });
+}
+
+// ── Cloud Restore ─────────────────────────────────────────────
+function cloudRestore() {
+  ensureGoogleAuth(async () => {
+    const btn = document.getElementById('btn-cloud-restore');
+    btn.textContent = '⏳ Memuat...';
+    btn.disabled = true;
+
+    try {
+      const files = await driveListBackups();
+
+      if (files.length === 0) {
+        alert('Belum ada backup di Google Drive.');
+        return;
+      }
+
+      // Tampilkan list file di modal
+      const list = document.getElementById('drive-file-list');
+      list.innerHTML = '';
+
+      files.forEach(file => {
+        const date  = new Date(file.createdTime);
+        const label = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        const size  = file.size ? (file.size / 1024).toFixed(0) + ' KB' : '';
+
+        const item = document.createElement('div');
+        item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent;';
+        item.innerHTML = `
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">📄 ${file.name}</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:2px">${label} ${size ? '· ' + size : ''}</div>
+          </div>
+          <span style="font-size:16px;color:var(--text-3)">›</span>
+        `;
+        item.addEventListener('click', () => {
+          closeDriveModal();
+          _selectDriveFile(file);
+        });
+        list.appendChild(item);
+      });
+
+      document.getElementById('drive-modal').classList.add('active');
+
+    } catch(e) {
+      alert('Gagal memuat daftar backup: ' + e.message);
+      console.error(e);
+    } finally {
+      btn.textContent = '☁️ Restore Cloud';
+      btn.disabled = false;
+    }
+  });
+}
+
+function closeDriveModal() {
+  document.getElementById('drive-modal').classList.remove('active');
+}
+
+async function _selectDriveFile(file) {
+  const btn = document.getElementById('btn-cloud-restore');
+  btn.textContent = '⏳ Mengunduh...';
+  btn.disabled = true;
+
+  try {
+    const backup = await driveDownload(file.id);
+
+    // Parsing sama seperti handleRestoreZip — konversi format cloud ke format restore
+    const data = {};
+    if (backup.dailyos)   data.dailyos   = backup.dailyos;
+    if (backup.ideku)     data.ideku     = backup.ideku;
+    if (backup.kronik)    data.kronik    = backup.kronik;
+    if (backup.cucimoney) data.cucimoney = backup.cucimoney;
+    if (backup.linkku)    data.linkku    = backup.linkku;
+
+    if (Object.keys(data).length === 0) {
+      alert('File backup tidak valid atau kosong.');
+      return;
+    }
+
+    // Tampilkan tanggal di modal restore
+    const dateMatch = file.name.match(/(\d{4}-\d{2}-\d{2})/);
+    const dateLabel = dateMatch ? dateMatch[1] : file.name;
+    const appNames  = Object.keys(data).map(k => ({ dailyos:'Daily OS', ideku:'IdeKu', kronik:'Kronik', cucimoney:'CuciMoney+', linkku:'LinkKu' }[k])).filter(Boolean);
+
+    document.getElementById('restore-modal-sub').innerHTML =
+      `Backup dari <strong>${dateLabel}</strong><br>Berisi: ${appNames.join(', ')}`;
+
+    _pendingRestoreData = data;
+    document.getElementById('restore-modal').classList.add('active');
+
+  } catch(e) {
+    alert('Gagal mengunduh backup: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '☁️ Restore Cloud';
+    btn.disabled = false;
+  }
+}
+
 // ── Boot ──────────────────────────────────────────────────────
 initBackupInfo();
 loadSnapshot();
+// Init Google Auth setelah GIS library load
+window.addEventListener('load', () => {
+  if (window.google?.accounts?.oauth2) initGoogleAuth();
+  else {
+    // GIS belum siap — tunggu
+    const t = setInterval(() => {
+      if (window.google?.accounts?.oauth2) {
+        clearInterval(t);
+        initGoogleAuth();
+      }
+    }, 500);
+  }
+});
 </script>
 </body>
 </html>
