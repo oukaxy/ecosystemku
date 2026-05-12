@@ -1391,34 +1391,97 @@ window.addEventListener('message', async (e) => {
     'http://127.0.0.1',
   ];
   if (!allowed.some(o => e.origin.startsWith(o))) return;
-  if (!e.data || e.data.type !== 'REQUEST_BACKUP') return;
+  if (!e.data) return;
 
-  try {
-    const pinHash   = await gpin();
-    const privLinks = L.filter(l => l.p);
-    const pubLinks  = L.filter(l => !l.p);
+  // ── BACKUP ──────────────────────────────────────────────────
+  if (e.data.type === 'REQUEST_BACKUP') {
+    try {
+      const pinHash   = await gpin();
+      const privLinks = L.filter(l => l.p);
+      const pubLinks  = L.filter(l => !l.p);
 
-    let payload;
-    if (privLinks.length > 0 && pinHash) {
-      // Link private — enkripsi dulu seperti exportData()
-      const encryptedPriv = await encryptObj({ links: privLinks, cats: PC }, pinHash);
-      payload = { L: pubLinks, C, ep: encryptedPriv, ts: Date.now(), v: 5 };
-    } else {
-      payload = { L: pubLinks, C, PC, ts: Date.now(), v: 5 };
+      let payload;
+      if (privLinks.length > 0 && pinHash) {
+        const encryptedPriv = await encryptObj({ links: privLinks, cats: PC }, pinHash);
+        payload = { L: pubLinks, C, ep: encryptedPriv, ts: Date.now(), v: 5 };
+      } else {
+        payload = { L: pubLinks, C, PC, ts: Date.now(), v: 5 };
+      }
+
+      e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', data: payload }, e.origin);
+    } catch(err) {
+      e.source.postMessage({ type: 'BACKUP_RESPONSE', app: 'linkku', error: err.message }, e.origin);
     }
+    return;
+  }
 
-    e.source.postMessage({
-      type: 'BACKUP_RESPONSE',
-      app:  'linkku',
-      data: payload,
-    }, e.origin);
+  // ── RESTORE ─────────────────────────────────────────────────
+  if (e.data.type === 'REQUEST_RESTORE') {
+    const inData = e.data.data;
+    const mode   = e.data.mode || 'merge'; // 'merge' | 'replace'
+    const src    = e.source;
+    const origin = e.origin;
 
-  } catch(err) {
-    e.source.postMessage({
-      type:  'BACKUP_RESPONSE',
-      app:   'linkku',
-      error: err.message,
-    }, e.origin);
+    try {
+      const pubLinks  = inData.L || inData.links || [];
+      const hasPrivate = !!inData.ep;
+
+      // Fungsi eksekusi restore setelah keputusan private selesai
+      async function doRestoreLinks(allLinks, privCats = []) {
+        try {
+          if (mode === 'replace') {
+            L = allLinks;
+            C = inData.C || inData.cats || [];
+            PC = privCats.length > 0 ? privCats : (inData.PC || []);
+          } else {
+            // Merge — skip duplikat by id
+            const exIds = new Set(L.map(l => l.id));
+            const newLinks = allLinks.filter(l => !exIds.has(l.id));
+            L = [...newLinks, ...L];
+
+            const exCats = new Set(C.map(c => c.id));
+            C = [...C, ...(inData.C || []).filter(c => !exCats.has(c.id))];
+
+            const exPC = new Set(PC.map(c => c.id));
+            PC = [...PC, ...privCats.filter(c => !exPC.has(c.id))];
+          }
+
+          await save();
+          render();
+          src.postMessage({
+            type: 'RESTORE_RESPONSE',
+            app:  'linkku',
+            restored: allLinks.length,
+            skipped:  0,
+          }, origin);
+        } catch(err) {
+          src.postMessage({ type: 'RESTORE_RESPONSE', app: 'linkku', error: err.message }, origin);
+        }
+      }
+
+      if (hasPrivate) {
+        // Ada link private terenkripsi — minta PIN via popup
+        // Pastikan app tampil dulu (bukan iframe tersembunyi)
+        openPin('Masukkan PIN untuk restore link private', async (rawPin) => {
+          try {
+            const priv = await decryptObj(inData.ep, await hashPin(rawPin));
+            const allLinks = [...pubLinks, ...(priv.links || [])];
+            await doRestoreLinks(allLinks, priv.cats || []);
+          } catch {
+            // PIN salah — restore link biasa saja
+            toast('PIN salah — hanya link biasa yang di-restore', 'warn');
+            await doRestoreLinks(pubLinks, []);
+          }
+        }, true);
+      } else {
+        // Tidak ada private — langsung restore
+        await doRestoreLinks(pubLinks, inData.PC || []);
+      }
+
+    } catch(err) {
+      src.postMessage({ type: 'RESTORE_RESPONSE', app: 'linkku', error: err.message }, origin);
+    }
+    return;
   }
 });
 </script>
