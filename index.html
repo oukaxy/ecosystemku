@@ -235,9 +235,25 @@
       animation: fadeUp 0.5s ease forwards;
       cursor: default;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+      display: block;
     }
 
     .snap-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .snap-card.clickable { cursor: pointer; }
+    .snap-card.clickable:active { transform: scale(0.97); }
+
+    /* Skeleton loading aktif */
+    .snap-card.loading .snap-value,
+    .snap-card.loading .snap-sub {
+      color: transparent;
+      background: linear-gradient(90deg, var(--bg-card-2) 25%, var(--border) 50%, var(--bg-card-2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 6px;
+      user-select: none;
+    }
 
     .snap-card.wide {
       grid-column: 1 / -1;
@@ -576,52 +592,52 @@
 
   <div class="snapshot-grid">
     <!-- Habit -->
-    <div class="snap-card delay-2" id="card-habit">
+    <a class="snap-card delay-2 clickable" id="card-habit" href="/daily-os/">
       <span class="snap-icon">🔥</span>
       <div class="snap-value" id="val-habit">—</div>
       <div class="snap-label">Habit selesai</div>
       <div class="snap-sub" id="sub-habit">memuat...</div>
-    </div>
+    </a>
 
     <!-- Todo -->
-    <div class="snap-card delay-3" id="card-todo">
+    <a class="snap-card delay-3 clickable" id="card-todo" href="/daily-os/">
       <span class="snap-icon">✅</span>
       <div class="snap-value" id="val-todo">—</div>
       <div class="snap-label">Todo pending</div>
       <div class="snap-sub" id="sub-todo">memuat...</div>
-    </div>
+    </a>
 
     <!-- Ide -->
-    <div class="snap-card delay-4" id="card-ide">
+    <a class="snap-card delay-4 clickable" id="card-ide" href="/ide-ku/">
       <span class="snap-icon">💡</span>
       <div class="snap-value" id="val-ide">—</div>
       <div class="snap-label">Ide in progress</div>
       <div class="snap-sub" id="sub-ide">memuat...</div>
-    </div>
+    </a>
 
     <!-- Streak -->
-    <div class="snap-card delay-5" id="card-streak">
+    <a class="snap-card delay-5 clickable" id="card-streak" href="/daily-os/">
       <span class="snap-icon">⚡</span>
       <div class="snap-value" id="val-streak">—</div>
       <div class="snap-label">Hari streak</div>
       <div class="snap-sub" id="sub-streak">memuat...</div>
-    </div>
+    </a>
 
     <!-- Saldo -->
-    <div class="snap-card delay-6" id="card-saldo">
+    <a class="snap-card delay-6 clickable" id="card-saldo" href="/cucimoney/">
       <span class="snap-icon">💰</span>
       <div class="snap-value small" id="val-saldo">—</div>
       <div class="snap-label">Total saldo</div>
       <div class="snap-sub" id="sub-saldo">memuat...</div>
-    </div>
+    </a>
 
     <!-- Pengeluaran -->
-    <div class="snap-card delay-7" id="card-keluar">
+    <a class="snap-card delay-7 clickable" id="card-keluar" href="/cucimoney/">
       <span class="snap-icon">📤</span>
       <div class="snap-value small" id="val-keluar">—</div>
       <div class="snap-label">Keluar hari ini</div>
       <div class="snap-sub" id="sub-keluar">memuat...</div>
-    </div>
+    </a>
   </div>
 
   <!-- Jurnal status -->
@@ -672,11 +688,11 @@
       </div>
       <span class="pwa-name">LinkKu</span>
     </a>
-    <a class="pwa-item delay-12" href="/vault/">
+    <a class="pwa-item delay-12" href="https://www.hesych.com/app.html" target="_blank" rel="noopener">
       <div class="pwa-icon-wrap">
-        <img src="/vault/icon-192.png" alt="Vault" />
+        <img src="/vault/icon-192.png" alt="Hesych" />
       </div>
-      <span class="pwa-name">Vault</span>
+      <span class="pwa-name">Hesych</span>
     </a>
     <a class="pwa-item delay-12" href="/assistant/">
       <div class="pwa-icon-wrap">
@@ -694,6 +710,13 @@
       <span class="backup-title">Export semua data</span>
       <span class="backup-last" id="backup-last">Belum pernah backup</span>
     </div>
+
+    <!-- Per-app status (hanya tampil saat backup berjalan) -->
+    <div id="backup-progress" style="display:none; margin-bottom:12px;">
+      <div style="font-size:11px; color:var(--text-3); margin-bottom:8px; font-weight:500;">Status per aplikasi:</div>
+      <div id="backup-status-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+    </div>
+
     <div class="backup-btns">
       <button class="btn btn-primary" id="btn-export" onclick="exportZip()">
         📦 Download ZIP
@@ -750,6 +773,11 @@ function initHeader(name) {
 
 // ── Load data dari EcosystemDB ────────────────────────────────
 async function loadSnapshot() {
+  // Aktifkan skeleton loading di semua card
+  ['card-habit','card-todo','card-ide','card-streak','card-saldo','card-keluar'].forEach(id => {
+    document.getElementById(id)?.classList.add('loading');
+  });
+
   try {
     await EcosystemDB.open();
 
@@ -891,33 +919,76 @@ async function loadSnapshot() {
       const sub = document.getElementById('sub-' + k);
       if (sub) sub.textContent = 'tidak tersedia';
     });
+  } finally {
+    // Matikan skeleton loading di semua card
+    ['card-habit','card-todo','card-ide','card-streak','card-saldo','card-keluar'].forEach(id => {
+      document.getElementById(id)?.classList.remove('loading');
+    });
+  }
+}
+
+// ── Backup status UI ──────────────────────────────────────────
+const _backupStatus = {};
+
+function _setAppStatus(appId, label, state) {
+  // state: 'loading' | 'ok' | 'warn' | 'error'
+  _backupStatus[appId] = state;
+
+  const list = document.getElementById('backup-status-list');
+  let row = document.getElementById('bstatus-' + appId);
+  if (!row) {
+    row = document.createElement('div');
+    row.id = 'bstatus-' + appId;
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-size:11px;';
+    list.appendChild(row);
+  }
+
+  const icons = { loading: '⏳', ok: '✅', warn: '⚠️', error: '❌' };
+  const colors = { loading: 'var(--text-3)', ok: 'var(--green)', warn: 'var(--amber)', error: 'var(--red)' };
+  row.innerHTML = `
+    <span style="color:var(--text-2)">${label}</span>
+    <span style="color:${colors[state]};font-weight:600">${icons[state]} ${state === 'loading' ? 'mengambil...' : state === 'ok' ? 'OK' : state === 'warn' ? 'partial' : 'gagal'}</span>
+  `;
+}
+
+function _showProgress(show) {
+  document.getElementById('backup-progress').style.display = show ? 'block' : 'none';
+  if (show) {
+    document.getElementById('backup-status-list').innerHTML = '';
+    Object.keys(_backupStatus).forEach(k => delete _backupStatus[k]);
   }
 }
 
 // ── Request backup dari iframe app ───────────────────────────
-function requestBackupFromApp(url) {
+function requestBackupFromApp(url, timeoutMs = 20000) {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement('iframe');
     iframe.src = url;
     iframe.style.cssText = 'position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none;';
 
-    // Timeout keseluruhan 15 detik
+    let resolved = false;
+    let loadFallbackTimer = null;
+
     const timeout = setTimeout(() => {
+      if (resolved) return;
       cleanup();
-      reject(new Error('Timeout: ' + url));
-    }, 15000);
+      reject(new Error('Timeout setelah ' + (timeoutMs/1000) + 's'));
+    }, timeoutMs);
 
     function onMessage(e) {
-      const allowed = ['https://ecosystemku.vercel.app','http://localhost','http://127.0.0.1'];
-      if (!allowed.some(o => e.origin.startsWith(o))) return;
+      if (resolved) return;
+      // Cek origin sama (same-origin: both window.location.origin)
+      if (e.origin !== window.location.origin) return;
 
-      // Tunggu sinyal READY dari app, baru kirim request
+      // App kirim READY → request backup
       if (e.data?.type === 'APP_READY' && e.source === iframe.contentWindow) {
-        iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, '*');
+        clearTimeout(loadFallbackTimer);
+        iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, window.location.origin);
         return;
       }
 
       if (!e.data || e.data.type !== 'BACKUP_RESPONSE') return;
+      resolved = true;
       cleanup();
       if (e.data.error) reject(new Error(e.data.error));
       else resolve({ app: e.data.app, data: e.data.data });
@@ -925,15 +996,19 @@ function requestBackupFromApp(url) {
 
     function cleanup() {
       clearTimeout(timeout);
+      clearTimeout(loadFallbackTimer);
       window.removeEventListener('message', onMessage);
-      if (iframe.parentNode) iframe.remove();
+      // Delay kecil sebelum remove agar postMessage terakhir sempat diproses
+      setTimeout(() => { if (iframe.parentNode) iframe.remove(); }, 200);
     }
 
-    // Fallback: kalau READY tidak datang, coba kirim setelah 3 detik
+    // Fallback: kalau READY tidak datang, coba kirim setelah load + 2 detik
     iframe.addEventListener('load', () => {
-      setTimeout(() => {
-        try { iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, '*'); } catch(e) {}
-      }, 3000);
+      loadFallbackTimer = setTimeout(() => {
+        if (resolved) return;
+        try { iframe.contentWindow.postMessage({ type: 'REQUEST_BACKUP' }, window.location.origin); }
+        catch(e) { /* cross-origin guard */ }
+      }, 2000);
     });
 
     window.addEventListener('message', onMessage);
@@ -946,63 +1021,105 @@ async function exportZip() {
   const btn = document.getElementById('btn-export');
   btn.textContent = '⏳ Menyiapkan...';
   btn.disabled = true;
+  _showProgress(true);
 
   try {
     await EcosystemDB.open();
 
     const zip  = new JSZip();
     const date = todayStr();
-    const meta = { exportedAt: new Date().toISOString(), version: 1 };
+    const meta = { exportedAt: new Date().toISOString(), version: 2 };
 
     // ── Daily OS ──────────────────────────────────────────────
-    const habits = await EcosystemDB.habits.getAll();
-    const todos  = await EcosystemDB.todos.getAll();
-    zip.file(`daily-os-${date}.json`, JSON.stringify({
-      ...meta, habits, todos
-    }, null, 2));
+    _setAppStatus('dailyos', 'Daily OS', 'loading');
+    try {
+      const habits = await EcosystemDB.habits.getAll();
+      const todos  = await EcosystemDB.todos.getAll();
+      // localStorage extras (coach memory, xp)
+      const coachMemory = (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })();
+      const xp          = localStorage.getItem('dailyos_xp') ?? null;
+      zip.file(`daily-os-${date}.json`, JSON.stringify({
+        ...meta, habits, todos,
+        localStorage: { dailyos_xp: xp, dailyos_coach_memory: coachMemory }
+      }, null, 2));
+      _setAppStatus('dailyos', 'Daily OS', 'ok');
+    } catch(e) {
+      zip.file(`daily-os-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('dailyos', 'Daily OS', 'error');
+    }
 
     // ── IdeKu ─────────────────────────────────────────────────
-    const ideas = await EcosystemDB.ideas.getAll();
-    zip.file(`ideku-${date}.json`, JSON.stringify({
-      ...meta, ideas
-    }, null, 2));
+    _setAppStatus('ideku', 'IdeKu', 'loading');
+    try {
+      const ideas      = await EcosystemDB.ideas.getAll();
+      const categories = (() => { try { return JSON.parse(localStorage.getItem('ideku-categories') || 'null'); } catch(e) { return null; } })();
+      zip.file(`ideku-${date}.json`, JSON.stringify({
+        ...meta, ideas,
+        localStorage: { 'ideku-categories': categories }
+      }, null, 2));
+      _setAppStatus('ideku', 'IdeKu', 'ok');
+    } catch(e) {
+      zip.file(`ideku-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('ideku', 'IdeKu', 'error');
+    }
 
     // ── Kronik ────────────────────────────────────────────────
-    const entries = await EcosystemDB.journal.getAll();
-    zip.file(`jurnal-${date}.json`, JSON.stringify({
-      ...meta, entries
-    }, null, 2));
+    _setAppStatus('kronik', 'Kronik', 'loading');
+    try {
+      const entries        = await EcosystemDB.journal.getAll();
+      const profileName    = await EcosystemDB.kv.kronik.get('profile_name');
+      const profileAvatar  = await EcosystemDB.kv.kronik.get('profile_avatar');
+      const rpgCache       = await EcosystemDB.kv.kronik.get('rpg_profile_cache');
+      zip.file(`kronik-${date}.json`, JSON.stringify({
+        ...meta, entries,
+        profile: { profile_name: profileName, profile_avatar: profileAvatar, rpg_profile_cache: rpgCache }
+      }, null, 2));
+      _setAppStatus('kronik', 'Kronik', 'ok');
+    } catch(e) {
+      zip.file(`kronik-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('kronik', 'Kronik', 'error');
+    }
 
     // ── CuciMoney+ ────────────────────────────────────────────
-    const finDb            = await EcosystemDB.kv.finances.get('db');
-    const finBudgets       = await EcosystemDB.kv.finances.get('budgets');
-    const finMasterBudgets = await EcosystemDB.kv.finances.get('masterBudgets');
-    zip.file(`cucimoney-${date}.json`, JSON.stringify({
-      ...meta,
-      db:            finDb            ?? {},
-      budgets:       finBudgets       ?? [],
-      masterBudgets: finMasterBudgets ?? [],
-    }, null, 2));
+    _setAppStatus('cucimoney', 'CuciMoney+', 'loading');
+    try {
+      const finDb            = await EcosystemDB.kv.finances.get('db');
+      const finBudgets       = await EcosystemDB.kv.finances.get('budgets');
+      const finMasterBudgets = await EcosystemDB.kv.finances.get('masterBudgets');
+      zip.file(`cucimoney-${date}.json`, JSON.stringify({
+        ...meta,
+        db:            finDb            ?? {},
+        budgets:       finBudgets       ?? [],
+        masterBudgets: finMasterBudgets ?? [],
+      }, null, 2));
+      _setAppStatus('cucimoney', 'CuciMoney+', finDb ? 'ok' : 'warn');
+    } catch(e) {
+      zip.file(`cucimoney-${date}.error.txt`, 'Error: ' + e.message);
+      _setAppStatus('cucimoney', 'CuciMoney+', 'error');
+    }
 
-    // ── LinkKu (sebagian encrypted) ──────────────────────────────
-    btn.textContent = '⏳ Mengambil data LinkKu...';
+    // ── LinkKu (IndexedDB terpisah — via iframe postMessage) ──
+    _setAppStatus('linkku', 'LinkKu', 'loading');
+    btn.textContent = '⏳ Mengambil LinkKu...';
     try {
       const linkkuBackup = await requestBackupFromApp('/linkku/');
       zip.file(`linkku-${date}.json`, JSON.stringify(linkkuBackup.data, null, 2));
+      _setAppStatus('linkku', 'LinkKu', 'ok');
     } catch(e) {
-      console.warn('[Backup] LinkKu tidak tersedia:', e.message);
+      console.warn('[Backup] LinkKu:', e.message);
       zip.file(`linkku-${date}.error.txt`, 'LinkKu tidak tersedia: ' + e.message);
+      _setAppStatus('linkku', 'LinkKu', 'warn');
     }
 
-    // ── Vault (encrypted) ────────────────────────────────────────
-    btn.textContent = '⏳ Mengambil data Vault...';
-    try {
-      const vaultBackup = await requestBackupFromApp('/vault/');
-      zip.file(`vault-${date}.json`, JSON.stringify(vaultBackup.data, null, 2));
-    } catch(e) {
-      console.warn('[Backup] Vault tidak tersedia:', e.message);
-      zip.file(`vault-${date}.error.txt`, 'Vault tidak tersedia: ' + e.message);
-    }
+    // ── Hesych — app terpisah, sync otomatis di hesych.com ───
+    // Tidak perlu backup dari dashboard.
+
+    // ── Manifest ringkasan ────────────────────────────────────
+    zip.file('_manifest.json', JSON.stringify({
+      exportedAt: meta.exportedAt,
+      version: meta.version,
+      apps: Object.entries(_backupStatus).map(([id, status]) => ({ id, status })),
+    }, null, 2));
 
     // ── Generate & download ───────────────────────────────────
     btn.textContent = '⏳ Membuat ZIP...';
@@ -1018,12 +1135,25 @@ async function exportZip() {
     localStorage.setItem('ecosystemku_last_backup', new Date().toISOString());
     document.getElementById('backup-last').textContent = 'Baru saja';
 
+    // Tampilkan ringkasan singkat
+    const failCount = Object.values(_backupStatus).filter(s => s === 'error').length;
+    const warnCount = Object.values(_backupStatus).filter(s => s === 'warn').length;
+    if (failCount === 0 && warnCount === 0) {
+      btn.textContent = '✅ Berhasil!';
+      setTimeout(() => { btn.textContent = '📦 Download ZIP'; }, 3000);
+    } else {
+      btn.textContent = '⚠️ Selesai (ada peringatan)';
+      setTimeout(() => { btn.textContent = '📦 Download ZIP'; }, 4000);
+    }
+
   } catch(e) {
     alert('Gagal export: ' + e.message);
     console.error(e);
-  } finally {
     btn.textContent = '📦 Download ZIP';
+  } finally {
     btn.disabled = false;
+    // Sembunyikan progress setelah 6 detik
+    setTimeout(() => _showProgress(false), 6000);
   }
 }
 
@@ -1077,7 +1207,26 @@ async function refreshApp() {
 // ── Reload data snapshot ──────────────────────────────────────
 function reloadData() {
   closeSheet();
-  loadSnapshot();
+
+  // Beri jeda singkat agar sheet selesai animasi tutup dulu
+  setTimeout(async () => {
+    // Visual feedback: fade semua val agar user tahu data sedang dimuat ulang
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) { el.style.transition = 'opacity 0.15s ease'; el.style.opacity = '0.3'; }
+    });
+    const journalSub = document.getElementById('journal-sub');
+    if (journalSub) journalSub.style.opacity = '0.3';
+
+    await loadSnapshot();
+
+    // Restore opacity setelah data masuk
+    ['habit','todo','ide','streak','saldo','keluar'].forEach(k => {
+      const el = document.getElementById('val-' + k);
+      if (el) el.style.opacity = '1';
+    });
+    if (journalSub) journalSub.style.opacity = '1';
+  }, 300);
 }
 
 // ── Hapus semua data lokal ────────────────────────────────────
@@ -1092,7 +1241,15 @@ async function confirmClearData() {
     await EcosystemDB.clear('todos');
     await EcosystemDB.clear('journal_entries');
     await EcosystemDB.clear('kv');
+    // Hapus juga localStorage yang dipakai app-app ecosystem
+    [
+      'dailyos_xp', 'dailyos_coach_memory', 'dailyos_done_open',
+      'dailyos_theme', 'dailyos_memory_date',
+      'ideku-categories', 'ideku-theme',
+      'ecosystemku_last_backup',
+    ].forEach(k => localStorage.removeItem(k));
     alert('Data berhasil dihapus.');
+    initBackupInfo();
     loadSnapshot();
   } catch(e) {
     alert('Gagal hapus data: ' + e.message);
