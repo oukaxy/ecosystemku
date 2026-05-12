@@ -905,6 +905,9 @@
       <div class="modal-handle"></div>
       <div class="modal-title">Pilih metode restore</div>
       <div class="modal-sub" id="restore-modal-sub">Memuat info backup...</div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:-8px;margin-bottom:4px;text-align:center">
+        💡 LinkKu perlu direstore manual dari dalam app LinkKu
+      </div>
       <div class="modal-btns">
         <button class="modal-btn" onclick="confirmRestore('merge')">
           <span class="modal-btn-icon">🔀</span>
@@ -1882,18 +1885,8 @@ async function _doRestore(data, mode) {
       }
     }
 
-    // ── LinkKu (via iframe postMessage) ────────────────────
-    if (data.linkku) {
-      _setRestoreStatus('linkku', 'LinkKu', 'loading');
-      document.getElementById('btn-restore-text').textContent = '⏳ Memulihkan LinkKu...';
-      try {
-        const result = await sendRestoreToApp('/linkku/', data.linkku, mode, 30000);
-        _setRestoreStatus('linkku', 'LinkKu', 'ok');
-      } catch(e) {
-        console.warn('[Restore] LinkKu:', e.message);
-        _setRestoreStatus('linkku', 'LinkKu', 'warn');
-      }
-    }
+    // ── LinkKu — restore manual dari dalam app LinkKu ──────
+    // (IndexedDB terpisah, tidak bisa diakses dari dashboard)
 
     // ── Selesai ─────────────────────────────────────────────
     const failCount = Object.values(_restoreStatus).filter(s => s === 'error').length;
