@@ -652,10 +652,13 @@
     .modal-sheet {
       background: var(--surface);
       border-radius: 20px 20px 0 0;
-      width: 100%; max-width: 480px;
+      width: 100%;
+      max-width: 480px;
+      box-sizing: border-box;
       padding: 0 0 40px;
       max-height: 90vh;
       overflow-y: auto;
+      overflow-x: hidden;
       transform: translateY(100%);
       transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
     }
@@ -688,7 +691,7 @@
       cursor: pointer;
       font-family: 'DM Sans', sans-serif;
     }
-    .modal-body { padding: 16px; }
+    .modal-body { padding: 16px; box-sizing: border-box; width: 100%; overflow-x: hidden; }
     .form-group { margin-bottom: 14px; }
     .form-label {
       font-size: 11px;
@@ -713,7 +716,8 @@
       transition: border-color 0.15s;
     }
     .form-input:focus { border-color: var(--text); }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; min-width: 0; }
+    .form-row .form-group { min-width: 0; }
     .priority-toggle {
       display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
     }
@@ -744,15 +748,32 @@
       background: var(--normal-bg);
       color: var(--normal);
     }
-    .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+    .color-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding: 4px 4px 4px 2px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .color-picker::-webkit-scrollbar { display: none; }
     .color-dot {
       width: 28px; height: 28px;
       border-radius: 50%;
       cursor: pointer;
       border: 2px solid transparent;
       transition: transform 0.15s, border-color 0.15s;
+      flex-shrink: 0;
     }
     .color-dot.active { border-color: var(--text); transform: scale(1.15); }
+    /* Warna terang selalu kasih border biar terlihat di dark mode */
+    .color-dot[data-color="#FFFFFF"] { border-color: var(--border) !important; }
+    body.dark .color-dot[data-color="#FFFFFF"] { border-color: #555 !important; }
+    body.dark .color-dot[data-color="#FFFFFF"].active { border-color: #fff !important; }
+    /* Warna gelap kasih border di dark mode */
+    body.dark .color-dot[data-color="#1A1917"] { border-color: #555 !important; }
+    body.dark .color-dot[data-color="#1A1917"].active { border-color: #fff !important; }
 
     .sub-input-row {
       display: flex; gap: 8px; margin-bottom: 8px; align-items: center;
@@ -881,9 +902,44 @@
     .checkbox.disabled { cursor: not-allowed; pointer-events: none; }
 
     /* ===== ICON PICKER ===== */
+    .icon-picker-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .icon-picker-toggle {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: none; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: var(--text-2);
+      gap: 10px;
+      min-height: 42px;
+    }
+    .icon-picker-toggle:hover { background: var(--border); }
+    .icon-picker-preview {
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--text);
+    }
+    .icon-picker-preview svg { width: 18px; height: 18px; display: block; }
+    .icon-picker-label { flex: 1; text-align: left; color: var(--text); font-size: 13px; }
+    .icon-picker-chevron {
+      color: var(--text-3);
+      transition: transform 0.2s;
+    }
+    .icon-picker-chevron.open { transform: rotate(180deg); }
+    .icon-picker-body {
+      display: none;
+      padding: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .icon-picker-body.open { display: block; }
     .icon-picker {
       display: grid; grid-template-columns: repeat(6, 1fr);
-      gap: 6px; margin-top: 4px;
+      gap: 6px;
     }
     .icon-opt {
       aspect-ratio: 1; border-radius: 8px;
@@ -1529,79 +1585,132 @@
         <label class="form-label">Nama Habit</label>
         <input type="text" id="habitName" class="form-input" placeholder="Contoh: Olahraga Pagi" autocomplete="off">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Kategori</label>
-          <select id="habitCategorySelect" class="form-input" onchange="handleCategoryChange(this.value)" style="cursor:pointer">
-            <option value="General" selected>General</option>
-            <option value="Kesehatan">Kesehatan</option>
-            <option value="Olahraga">Olahraga / Fisik</option>
-            <option value="Produktivitas">Produktivitas</option>
-            <option value="Karir & Bisnis">Karir & Bisnis</option>
-            <option value="Belajar">Belajar</option>
-            <option value="Kreativitas">Kreativitas</option>
-            <option value="Sosial">Sosial</option>
-            <option value="Keuangan">Keuangan</option>
-            <option value="Spiritual">Spiritual</option>
-            <option value="__other__">Lainnya...</option>
-          </select>
-          <input type="text" id="habitCategoryCustom" class="form-input" placeholder="Tulis kategori..." autocomplete="off" style="display:none;margin-top:6px">
-          <input type="hidden" id="habitCategory" value="General">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Warna</label>
+      <div class="form-group">
+        <label class="form-label">Kategori</label>
+        <select id="habitCategorySelect" class="form-input" onchange="handleCategoryChange(this.value)" style="cursor:pointer">
+          <option value="General" selected>General</option>
+          <option value="Kesehatan">Kesehatan</option>
+          <option value="Olahraga">Olahraga / Fisik</option>
+          <option value="Produktivitas">Produktivitas</option>
+          <option value="Karir & Bisnis">Karir & Bisnis</option>
+          <option value="Belajar">Belajar</option>
+          <option value="Kreativitas">Kreativitas</option>
+          <option value="Sosial">Sosial</option>
+          <option value="Keuangan">Keuangan</option>
+          <option value="Spiritual">Spiritual</option>
+          <option value="__other__">Lainnya...</option>
+        </select>
+        <input type="text" id="habitCategoryCustom" class="form-input" placeholder="Tulis kategori..." autocomplete="off" style="display:none;margin-top:6px">
+        <input type="hidden" id="habitCategory" value="General">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Warna</label>
           <div class="color-picker" id="colorPicker">
-            <div class="color-dot" data-color="#FFFFFF" style="background:#FFFFFF;border:1.5px solid #ddd"></div>
+            <div class="color-dot" data-color="#FFFFFF" style="background:#FFFFFF"></div>
+            <div class="color-dot" data-color="#1A1917" style="background:#1A1917"></div>
             <div class="color-dot" data-color="#C0392B" style="background:#C0392B"></div>
-            <div class="color-dot" data-color="#2C7A7B" style="background:#2C7A7B"></div>
-            <div class="color-dot" data-color="#7C6F4A" style="background:#7C6F4A"></div>
-            <div class="color-dot" data-color="#6B4FBB" style="background:#6B4FBB"></div>
-            <div class="color-dot" data-color="#3B82F6" style="background:#3B82F6"></div>
+            <div class="color-dot" data-color="#E8735A" style="background:#E8735A"></div>
             <div class="color-dot" data-color="#F59E0B" style="background:#F59E0B"></div>
-            <div class="color-dot active" data-color="#22C55E" style="background:#22C55E"></div>
+            <div class="color-dot" data-color="#EAB308" style="background:#EAB308"></div>
+            <div class="color-dot" data-color="#22C55E" style="background:#22C55E"></div>
+            <div class="color-dot" data-color="#2C7A7B" style="background:#2C7A7B"></div>
+            <div class="color-dot" data-color="#3B82F6" style="background:#3B82F6"></div>
+            <div class="color-dot" data-color="#6366F1" style="background:#6366F1"></div>
+            <div class="color-dot" data-color="#6B4FBB" style="background:#6B4FBB"></div>
+            <div class="color-dot" data-color="#A855F7" style="background:#A855F7"></div>
+            <div class="color-dot" data-color="#EC4899" style="background:#EC4899"></div>
+            <div class="color-dot" data-color="#F472B6" style="background:#F472B6"></div>
+            <div class="color-dot" data-color="#7C6F4A" style="background:#7C6F4A"></div>
+            <div class="color-dot" data-color="#64748B" style="background:#64748B"></div>
           </div>
           <input type="hidden" id="habitColor" value="#1A1917">
-        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Icon</label>
-        <div class="icon-picker" id="iconPicker">
-          <button type="button" class="icon-opt active" data-icon="star" title="Default">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <div class="icon-picker-wrap">
+          <button type="button" class="icon-picker-toggle" id="iconPickerToggle" onclick="toggleIconPicker()">
+            <div class="icon-picker-preview" id="iconPickerPreview">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <span class="icon-picker-label" id="iconPickerLabel">Default (Star)</span>
+            <svg class="icon-picker-chevron" id="iconPickerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <button type="button" class="icon-opt" data-icon="dumbbell" title="Olahraga">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 9.5h3v5H3zM18 9.5h3v5h-3z"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="book" title="Baca">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="briefcase" title="Kerja">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="film" title="Hiburan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="apple" title="Makan/Diet">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20.94c1.5 0 4-1.73 4-6.94 0-4-3-7-4-7s-4 3-4 7c0 5.21 2.5 6.94 4 6.94z"/><path d="M12 7c0 0 1-4 4-4"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="moon" title="Tidur">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="feather" title="Menulis">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="dollar" title="Keuangan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="gamepad" title="Gaming">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="walk" title="Jalan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l-2 5h3l1 5M15 8l2 5h-3l-1 5M9 8l3 2 3-2"/></svg>
-          </button>
-          <button type="button" class="icon-opt" data-icon="heart" title="Kesehatan">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          </button>
+          <div class="icon-picker-body" id="iconPickerBody">
+            <div class="icon-picker" id="iconPicker">
+              <button type="button" class="icon-opt active" data-icon="star" title="Default">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="dumbbell" title="Olahraga">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5h11M6.5 17.5h11M3 9.5h3v5H3zM18 9.5h3v5h-3z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="book" title="Baca">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="briefcase" title="Kerja">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="film" title="Hiburan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="apple" title="Makan/Diet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20.94c1.5 0 4-1.73 4-6.94 0-4-3-7-4-7s-4 3-4 7c0 5.21 2.5 6.94 4 6.94z"/><path d="M12 7c0 0 1-4 4-4"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="moon" title="Tidur">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="feather" title="Menulis">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="dollar" title="Keuangan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="gamepad" title="Gaming">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="walk" title="Jalan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l-2 5h3l1 5M15 8l2 5h-3l-1 5M9 8l3 2 3-2"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="heart" title="Kesehatan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="music" title="Musik">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="coffee" title="Kopi/Istirahat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="sun" title="Pagi/Siang">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="target" title="Target/Goal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="zap" title="Energi/Cepat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="droplet" title="Minum Air">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="globe" title="Bahasa/Dunia">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="smile" title="Mood/Mindset">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="phone" title="Digital Detox">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="flame" title="Semangat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 01-7 7 7 7 0 01-4.5-12.5"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="pencil" title="Belajar/Catat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+              </button>
+              <button type="button" class="icon-opt" data-icon="camera" title="Foto/Vlog">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
         <input type="hidden" id="habitIcon" value="star">
       </div>
@@ -2233,8 +2342,9 @@ function openHabitModal() {
   document.getElementById('habitModalTitle').textContent = 'Habit Baru';
   document.getElementById('habitName').value = '';
   setCategoryValue('General');
-  document.getElementById('habitColor').value = '#22C55E';
-  document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === '#22C55E'));
+  const defaultColor = '#22C55E';
+  document.getElementById('habitColor').value = defaultColor;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.toggle('active', d.dataset.color === defaultColor));
   setIconPickerValue('star');
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
   const sl = document.getElementById('subTaskList');
@@ -2575,8 +2685,20 @@ let dragType = null; // 'habit' | 'todo'
 let autoScrollRAF = null;
 
 function initDragDrop() {
-  document.getElementById('habitList').addEventListener('touchstart', onDragStart, { passive: false });
-  document.getElementById('habitList').addEventListener('mousedown', onDragStart);
+  const habitList = document.getElementById('habitList');
+  habitList.addEventListener('touchstart', (e) => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    // Pastikan handle ini milik habit-card, bukan todo-card
+    if (!handle.closest('.habit-card')) return;
+    onDragStart.call(null, e);
+  }, { passive: false });
+  habitList.addEventListener('mousedown', (e) => {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    if (!handle.closest('.habit-card')) return;
+    onDragStart.call(null, e);
+  });
 }
 
 function onDragStart(e) {
@@ -2658,11 +2780,9 @@ function onDragStart(e) {
 }
 
 function reorderHabits(srcCard, targetCard) {
-  const list = document.getElementById('habitList');
-  const cards = Array.from(list.querySelectorAll('.habit-card'));
-  const srcIdx = cards.indexOf(srcCard);
-  const tgtIdx = cards.indexOf(targetCard);
-  if (srcIdx === -1 || tgtIdx === -1 || srcIdx === tgtIdx) return;
+  const srcIdx = parseInt(srcCard.dataset.idx);
+  const tgtIdx = parseInt(targetCard.dataset.idx);
+  if (isNaN(srcIdx) || isNaN(tgtIdx) || srcIdx === tgtIdx) return;
   const moved = habits.splice(srcIdx, 1)[0];
   habits.splice(tgtIdx, 0, moved);
   save();
@@ -2683,6 +2803,7 @@ function reorderTodos(srcCard, targetCard) {
 }
 
 // Delegasi drag untuk todo (dirender ulang tiap kali)
+// Note: habit drag sudah di-handle oleh initDragDrop() via #habitList
 document.addEventListener('touchstart', (e) => {
   const handle = e.target.closest('.todo-drag-handle');
   if (!handle) return;
@@ -2738,18 +2859,53 @@ const HABIT_ICONS = {
   gamepad:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>`,
   walk:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="4" r="1.5"/><path d="M9 8l-2 5h3l1 5M15 8l2 5h-3l-1 5M9 8l3 2 3-2"/></svg>`,
   heart:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  music:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  coffee:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  sun:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+  target:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  zap:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  droplet:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>`,
+  globe:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,
+  smile:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+  phone:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+  flame:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 01-7 7 7 7 0 01-4.5-12.5"/></svg>`,
+  pencil:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`,
+  camera:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
 };
 
 function getHabitIcon(key) {
   return HABIT_ICONS[key] || HABIT_ICONS['star'];
 }
 
+const ICON_LABELS = {
+  star:'Default', dumbbell:'Olahraga', book:'Baca', briefcase:'Kerja',
+  film:'Hiburan', apple:'Diet', moon:'Tidur', feather:'Menulis',
+  dollar:'Keuangan', gamepad:'Gaming', walk:'Jalan', heart:'Kesehatan',
+  music:'Musik', coffee:'Kopi', sun:'Pagi', target:'Target',
+  zap:'Energi', droplet:'Minum Air', globe:'Bahasa', smile:'Mood',
+  phone:'Gadget', flame:'Semangat', pencil:'Belajar', camera:'Foto'
+};
+
+window.toggleIconPicker = function() {
+  const body = document.getElementById('iconPickerBody');
+  const chevron = document.getElementById('iconPickerChevron');
+  const isOpen = body.classList.toggle('open');
+  chevron.classList.toggle('open', isOpen);
+};
+
 function initIconPicker() {
   document.querySelectorAll('.icon-opt').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.icon-opt').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('habitIcon').value = btn.dataset.icon;
+      const iconKey = btn.dataset.icon;
+      document.getElementById('habitIcon').value = iconKey;
+      // Update preview di toggle button
+      document.getElementById('iconPickerPreview').innerHTML = btn.innerHTML;
+      document.getElementById('iconPickerLabel').textContent = ICON_LABELS[iconKey] || iconKey;
+      // Auto-close setelah pilih
+      document.getElementById('iconPickerBody').classList.remove('open');
+      document.getElementById('iconPickerChevron').classList.remove('open');
     });
   });
 }
@@ -2759,6 +2915,15 @@ function setIconPickerValue(iconKey) {
     b.classList.toggle('active', b.dataset.icon === iconKey);
   });
   document.getElementById('habitIcon').value = iconKey || 'star';
+  // Update preview
+  const activeBtn = document.querySelector(`.icon-opt[data-icon="${iconKey || 'star'}"]`);
+  if (activeBtn) {
+    document.getElementById('iconPickerPreview').innerHTML = activeBtn.innerHTML;
+    document.getElementById('iconPickerLabel').textContent = ICON_LABELS[iconKey] || iconKey || 'Default';
+  }
+  // Reset closed state
+  document.getElementById('iconPickerBody').classList.remove('open');
+  document.getElementById('iconPickerChevron').classList.remove('open');
 }
 
 // Helper: cek apakah warna terlalu gelap atau terlalu terang
