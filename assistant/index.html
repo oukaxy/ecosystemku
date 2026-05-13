@@ -1000,25 +1000,6 @@
   .app-linkku    { background: rgba(251,113,133,0.10); border-color: rgba(251,113,133,0.22); }
   .app-vault     { background: rgba(251,146,60,0.10);  border-color: rgba(251,146,60,0.22); }
   .app-dashboard { background: rgba(34,211,238,0.10);  border-color: rgba(34,211,238,0.22); }
-
-  /* ── Debug motion toast ───────────────────────────────────── */
-  #debug-motion-toast {
-    position: fixed;
-    top: 12px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.75);
-    border: 1px solid rgba(99,210,255,0.4);
-    color: #63d2ff;
-    font-size: 11px;
-    font-family: monospace;
-    padding: 6px 14px;
-    border-radius: 20px;
-    white-space: nowrap;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-  #debug-motion-toast.show { opacity: 1; }
 </style>
 </head>
 
@@ -1133,7 +1114,6 @@
     </div>
 
     <div id="chat-toast"></div>
-    <div id="debug-motion-toast"></div>
 
   </div>
 </div>
@@ -1535,6 +1515,10 @@
     for (const key of Object.keys(exprParams)) {
       exprParams[key].current = 0;
       exprParams[key].target  = 0;
+    }
+    for (const key of Object.keys(remFaceParams)) {
+      remFaceParams[key].current = 0;
+      remFaceParams[key].target  = 0;
     }
     currentExpr = 'none';
 
@@ -2111,9 +2095,63 @@
   }
 
   /* ── Tick expression ─────────────────────────────────────────── */
+
+  // Rem face params — smooth fade seperti Liro tapi pakai param Rem
+  let remFaceParams = {
+    PARAM_MOUTH_FORM_01: { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
+    PARAM_BROW_R_FORM:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
+    PARAM_BROW_L_FORM:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
+    PARAM_EYE_R_SMILE:   { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
+    PARAM_EYE_L_SMILE:   { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
+    PARAM_EYE_FORM:      { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
+    PARAM_CHEEK_01:      { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.02 },
+    PARAM_TEAR_01:       { current: 0, target: 0, fadeIn: 0.03, fadeOut: 0.02 },
+  };
+
+  // Mapping ekspresi → nilai target tiap param wajah
+  const REM_FACE_MAP = {
+    //              MOUTH_FORM  BROW_FORM  EYE_SMILE  EYE_FORM  CHEEK  TEAR
+    none:    { PARAM_MOUTH_FORM_01:  0,   PARAM_BROW_R_FORM:  0,   PARAM_BROW_L_FORM:  0,   PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    happy:   { PARAM_MOUTH_FORM_01:  1,   PARAM_BROW_R_FORM:  0,   PARAM_BROW_L_FORM:  0,   PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
+    smile:   { PARAM_MOUTH_FORM_01:  0.6, PARAM_BROW_R_FORM:  0.3, PARAM_BROW_L_FORM:  0.3, PARAM_EYE_R_SMILE: 0.5,PARAM_EYE_L_SMILE: 0.5,PARAM_EYE_FORM: 0.5, PARAM_CHEEK_01: 0.5, PARAM_TEAR_01: 0 },
+    proud:   { PARAM_MOUTH_FORM_01:  0.8, PARAM_BROW_R_FORM:  0.5, PARAM_BROW_L_FORM:  0.5, PARAM_EYE_R_SMILE: 0.3,PARAM_EYE_L_SMILE: 0.3,PARAM_EYE_FORM: 0.5, PARAM_CHEEK_01: 0.3, PARAM_TEAR_01: 0 },
+    shame:   { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.6, PARAM_BROW_L_FORM: -0.6, PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
+    sad:     { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_R_SMILE:-1,  PARAM_EYE_L_SMILE:-1,  PARAM_EYE_FORM: 1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    cry:     { PARAM_MOUTH_FORM_01: -1,   PARAM_BROW_R_FORM: -0.8, PARAM_BROW_L_FORM: -0.8, PARAM_EYE_R_SMILE:-1,  PARAM_EYE_L_SMILE:-1,  PARAM_EYE_FORM: 1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 1 },
+    angry:   { PARAM_MOUTH_FORM_01: -1,   PARAM_BROW_R_FORM: -1,   PARAM_BROW_L_FORM: -1,   PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
+    upset:   { PARAM_MOUTH_FORM_01: -0.6, PARAM_BROW_R_FORM: -0.7, PARAM_BROW_L_FORM: -0.7, PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    serious: { PARAM_MOUTH_FORM_01: -0.3, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    surprise:{ PARAM_MOUTH_FORM_01:  0.3, PARAM_BROW_R_FORM:  0.8, PARAM_BROW_L_FORM:  0.8, PARAM_EYE_R_SMILE:-0.5,PARAM_EYE_L_SMILE:-0.5,PARAM_EYE_FORM:-0.5, PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    doubt:   { PARAM_MOUTH_FORM_01: -0.2, PARAM_BROW_R_FORM: -0.3, PARAM_BROW_L_FORM:  0.3, PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    puzzle:  { PARAM_MOUTH_FORM_01:  0,   PARAM_BROW_R_FORM:  0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_R_SMILE: 0,  PARAM_EYE_L_SMILE: 0,  PARAM_EYE_FORM: 0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+  };
+
+  function setRemFace(exprName) {
+    const map = REM_FACE_MAP[exprName] || REM_FACE_MAP['none'];
+    for (const [param, targetVal] of Object.entries(map)) {
+      if (remFaceParams[param] !== undefined) {
+        remFaceParams[param].target = targetVal;
+      }
+    }
+  }
+
   function tickExpression() {
     if (!model) return;
-    for (const [paramId, s] of Object.entries(exprParams)) {
+
+    // Liro — smooth fade via exprParams
+    if (currentCharId !== 'rem') {
+      for (const [paramId, s] of Object.entries(exprParams)) {
+        if (s.current === s.target) continue;
+        const speed = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
+        s.current += (s.target - s.current) * speed;
+        if (Math.abs(s.current - s.target) < 0.001) s.current = s.target;
+        setCoreParam(paramId, s.current);
+      }
+      return;
+    }
+
+    // Rem — smooth fade via remFaceParams
+    for (const [paramId, s] of Object.entries(remFaceParams)) {
       if (s.current === s.target) continue;
       const speed = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
       s.current += (s.target - s.current) * speed;
@@ -2177,16 +2215,6 @@
     'none':     0,
   };
 
-  /* ── Debug motion toast (hapus setelah confirmed motion jalan) ── */
-  const _dbgMotionEl = document.getElementById('debug-motion-toast');
-  let _dbgMotionTimer = null;
-  function showMotionDebug(msg) {
-    _dbgMotionEl.textContent = msg;
-    _dbgMotionEl.classList.add('show');
-    clearTimeout(_dbgMotionTimer);
-    _dbgMotionTimer = setTimeout(() => _dbgMotionEl.classList.remove('show'), 3000);
-  }
-
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
     const count = REM_MOTION_MAP[name];
@@ -2194,14 +2222,10 @@
     const index = Math.floor(Math.random() * count);
     try {
       model.motion(name, index, 2);
-      showMotionDebug(`✅ motion("${name}", ${index})`);
-    } catch (e1) {
+    } catch (_) {
       try {
         model.internalModel.motionManager.startMotion(name, index, 2);
-        showMotionDebug(`✅ motionMgr("${name}", ${index})`);
-      } catch (e2) {
-        showMotionDebug(`❌ GAGAL: ${name} — ${e2.message?.slice(0,30)}`);
-      }
+      } catch (_2) {}
     }
   }
 
@@ -2210,10 +2234,11 @@
     currentExpr = name;
     if (DEBUG) dbgExpr.textContent = name;
 
-    // Rem — play motion
+    // Rem — play motion + set face params
     if (currentCharId === 'rem') {
       // 'none' = kembali ke idle motion
       playRemMotion(name === 'none' ? 'idle' : name);
+      setRemFace(name);
       statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
       return;
     }
