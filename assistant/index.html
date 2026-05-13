@@ -1724,6 +1724,10 @@
     const cleanText = text.replace(match[0], '').trim();
 
     // Normalisasi nama ekspresi
+    const VALID_EXPRS = ['blush','worried','cool','browlink','none',
+      'happy','sad','cry','angry','surprise','shame','upset','serious',
+      'proud','doubt','puzzle','appeal','navi','wait','bound','smile'];
+    if (!VALID_EXPRS.includes(expr)) return { cleanText: text };
     const exprName = expr === 'browlink' ? 'browLink' : expr;
 
     setExpression(exprName);
@@ -1937,6 +1941,7 @@
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
       showIdleBubble(pickRandom(getBubbles('idle')), 5000);
+      if (currentCharId === 'rem') playRemMotion(Math.random() > 0.5 ? 'wait' : 'bound');
       scheduleIdleBubble();
     }, IDLE_DELAY);
   }
@@ -2131,18 +2136,46 @@
   }
 
   /* ── Expression control ──────────────────────────────────────── */
+  // Rem motion map — semua 27 motion dipetakan ke tag ekspresi
+  const REM_MOTION_MAP = {
+    'happy':   ['motions/00_Happy_01.motion3.json', 'motions/00_Happy_02.motion3.json'],
+    'sad':     ['motions/00_Sad_01.motion3.json', 'motions/20_Expression_Sad_01.motion3.json'],
+    'cry':     ['motions/00_Cry_01.motion3.json'],
+    'angry':   ['motions/00_Anger_01.motion3.json', 'motions/20_Expression_Anger_01.motion3.json'],
+    'surprise':['motions/00_Surprise_01.motion3.json'],
+    'shame':   ['motions/00_Shame_01.motion3.json', 'motions/20_Expression_Shame_01.motion3.json'],
+    'upset':   ['motions/00_Upset_01.motion3.json'],
+    'serious': ['motions/00_Serious_01.motion3.json', 'motions/20_Expression_Serious_01.motion3.json'],
+    'proud':   ['motions/00_Pride_01.motion3.json'],
+    'doubt':   ['motions/00_Doubt_01.motion3.json', 'motions/20_Expression_Puzzle_01.motion3.json'],
+    'puzzle':  ['motions/00_Puzzle_01.motion3.json', 'motions/20_Expression_Puzzle_02.motion3.json'],
+    'appeal':  ['motions/00_Appeal_01.motion3.json'],
+    'navi':    ['motions/00_Navi_01.motion3.json'],
+    'wait':    ['motions/00_Wait_01.motion3.json'],
+    'bound':   ['motions/bound.motion3.json', 'motions/bound_double.motion3.json', 'motions/bound_down.motion3.json'],
+    'smile':   ['motions/20_Expression_Smile_01.motion3.json'],
+    'none':    [],
+  };
+
+  function playRemMotion(name) {
+    if (!model || currentCharId !== 'rem') return;
+    const list = REM_MOTION_MAP[name];
+    if (!list || list.length === 0) return;
+    const file = list[Math.floor(Math.random() * list.length)];
+    const base = './characters/rem/';
+    try {
+      model.internalModel.motionManager.startMotionByFile?.(base + file)?.catch(() => {});
+    } catch (_) {}
+  }
+
   function setExpression(name) {
     if (!model) return;
     currentExpr = name;
     if (DEBUG) dbgExpr.textContent = name;
 
-    // Untuk model dengan motions (Rem) — play motion sebagai ekspresi
-    if (currentChar?.expressions && currentChar.expressions[name]?.motion) {
-      try {
-        const motionPath = './' + currentChar.modelPath.replace('Character.model3.json', '') + currentChar.expressions[name].motion;
-        // pixi-live2d-display: motion via internalModel
-        model.internalModel.motionManager.startMotionByFile?.(motionPath)?.catch(() => {});
-      } catch (_) {}
+    // Rem — play motion
+    if (currentCharId === 'rem') {
+      playRemMotion(name);
       statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
       return;
     }
@@ -2224,13 +2257,16 @@
 
     if (isHeadZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('head')), 3500);
+      if (currentCharId === 'rem') playRemMotion('shame');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isBodyZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('body')), 3000);
       triggerNudge();
+      if (currentCharId === 'rem') playRemMotion('surprise');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isLegZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('leg')), 3000);
+      if (currentCharId === 'rem') playRemMotion('appeal');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     }
   }, { passive: true });
@@ -2265,6 +2301,7 @@
     if (petActive && !petBubbleShown && petHairT > 1.5) {
       petBubbleShown = true;
       showIdleBubble(pickRandom(getBubbles('pet')), 3000);
+      if (currentCharId === 'rem') playRemMotion('happy');
     }
 
     if (exprParams.ParamBlush) exprParams.ParamBlush.target = Math.max(currentExpr === 'blush' ? 1 : 0, i);
@@ -2407,6 +2444,11 @@
     } catch (_) {}
 
     const charName = currentChar?.name || 'Asisten';
+
+    // Rem greeting motion
+    if (currentCharId === 'rem') {
+      setTimeout(() => playRemMotion('appeal'), 500);
+    }
 
     let greeting;
     if (currentCharId === 'rem') {
