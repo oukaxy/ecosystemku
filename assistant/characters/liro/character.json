@@ -1,0 +1,17 @@
+{
+  "id": "liro",
+  "name": "Liro",
+  "modelPath": "characters/liro/LiveroiD_A-Y02.model3.json",
+  "audioBase": "characters/liro/audio/",
+  "tts": {
+    "voiceId": "",
+    "speed": 1.0,
+    "pitch": 1.0
+  },
+  "expressions": {
+    "blush":    { "param": "ParamBlush",    "value":  1 },
+    "browLink": { "param": "ParamBrowLink", "value": -1 },
+    "cool":     { "param": "ParamCool",     "value":  1 },
+    "worried":  { "param": "ParamBrowForm", "value":  1 }
+  }
+}
