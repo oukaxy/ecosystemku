@@ -1974,7 +1974,9 @@
     const isRem    = currentCharId === 'rem';
     const modelH   = m.internalModel?.height || 800;
 
-    const fitRatio = isMobile ? 1.20 : 1.10;
+    const fitRatio = isRem
+      ? (isMobile ? 1.55 : 1.40)
+      : (isMobile ? 1.20 : 1.10);
     const scale    = (H * fitRatio) / modelH;
 
     m.scale.set(scale);
