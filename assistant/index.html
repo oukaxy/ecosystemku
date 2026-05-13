@@ -1976,11 +1976,9 @@
     let scaleFactor, posY;
 
     if (isRem) {
-      // Rem: full body model, scale lebih besar, posY lebih bawah agar napak
-      scaleFactor = isMobile ? 1.10 : 0.95;
-      posY        = isMobile ? 1.08 : 1.04;
+      scaleFactor = isMobile ? 1.15 : 1.00;
+      posY        = isMobile ? 1.05 : 1.02;
     } else {
-      // Liro
       scaleFactor = isMobile ? 1.15 : 1.00;
       posY        = isMobile ? 1.05 : 1.02;
     }
