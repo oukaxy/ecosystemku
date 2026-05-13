@@ -1800,33 +1800,33 @@
 
   // Bubble texts — Rem (tanpa audio karena belum ada pre-recorded)
   const BUBBLE_IDLE_REM = [
-    { text: '💙 Rem siap membantu Tuan kapan saja.' },
-    { text: '💙 Apakah Tuan membutuhkan sesuatu?' },
-    { text: '💙 Rem akan selalu ada di sini.' },
-    { text: '💙 Sudahkah Tuan beristirahat dengan cukup?' },
-    { text: '💙 Rem senang menemani Tuan.' },
-    { text: '💙 Jangan ragu untuk berbicara dengan Rem.' },
-    { text: '💙 Apakah hari Tuan berjalan baik?' },
+    { text: '💙 Tuan sedang apa?' },
+    { text: '💙 Rem di sini, Tuan.' },
+    { text: '💙 Sudah makan belum, Tuan?' },
+    { text: '💙 Kalau perlu sesuatu, bilang Rem saja.' },
+    { text: '💙 Tuan tidak kelelahan?' },
+    { text: '💙 Rem senang bisa menemani Tuan.' },
+    { text: '💙 Tuan tampak sibuk… ada yang bisa Rem bantu?' },
   ];
 
   const BUBBLE_HEAD_REM = [
-    { text: '💙 T-Tuan, ini…!' },
-    { text: '💙 Rem tidak menyangka Tuan akan melakukan itu…' },
-    { text: '💙 A… Rem jadi salah tingkah.' },
-    { text: '💙 T-Tuan… tolong jangan begitu…' },
-    { text: '💙 Rem… merasa aneh jika diperlakukan seperti itu.' },
+    { text: '💙 T-Tuan…?!' },
+    { text: '💙 Rem jadi salah tingkah…' },
+    { text: '💙 A… apa yang Tuan lakukan…' },
+    { text: '💙 T-Tuan, ini tidak pantas…!' },
+    { text: '💙 Rem… tidak keberatan, tapi…' },
   ];
 
   const BUBBLE_PET_REM = [
     { text: '💙 T-Tuan…' },
     { text: '💙 Rem… tidak keberatan.' },
     { text: '💙 Ini membuat Rem bahagia.' },
-    { text: '💙 Tuan sangat baik kepada Rem…' },
-    { text: '💙 Rem… tersenyum tanpa sadar.' },
+    { text: '💙 Tuan sangat baik…' },
+    { text: '💙 Rem tersenyum tanpa sadar.' },
   ];
 
   const BUBBLE_BODY_REM = [
-    { text: '💙 Ada yang bisa Rem bantu, Tuan?' },
+    { text: '💙 Ada yang bisa Rem bantu?' },
     { text: '💙 Rem siap, Tuan.' },
     { text: '💙 Tuan mencari Rem?' },
     { text: '💙 Ada sesuatu yang ingin Tuan sampaikan?' },
@@ -1835,7 +1835,7 @@
   const BUBBLE_LEG_REM = [
     { text: '💙 T-Tuan… ke mana Tuan melihat?' },
     { text: '💙 Rem harap Tuan menjaga pandangan.' },
-    { text: '💙 Rem jadi malu…' },
+    { text: '💙 Rem… jadi malu.' },
   ];
 
   // Getter bubble berdasarkan karakter aktif
@@ -2633,8 +2633,11 @@
         finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan.`;
       }
 
+      // Trim history — kirim max 10 pesan terakhir biar hemat token
+      const trimmedHistory = chatHistory.slice(-10);
+
       const body = {
-        messages: chatHistory,
+        messages: trimmedHistory,
         context: {
           systemPrompt: finalSystemPrompt,
           expression:   currentExpr,
