@@ -64,7 +64,7 @@
   #app {
     position: relative; z-index: 1;
     display: flex;
-    flex-direction: row;   /* desktop: horizontal */
+    flex-direction: row;
     width: 100vw; height: 100vh;
   }
 
@@ -87,14 +87,11 @@
     position: relative;
     z-index: 20;
     transition: background 0.15s;
-
-    /* Desktop: vertikal */
     width: 8px;
     cursor: col-resize;
-    order: 2;   /* antara chat(1) dan model(3) */
+    order: 2;
   }
 
-  /* Garis tengah */
   #resizer::before {
     content: '';
     position: absolute;
@@ -105,7 +102,6 @@
     transition: background 0.15s;
   }
 
-  /* Handle pill di tengah */
   #resizer::after {
     content: '';
     position: absolute;
@@ -132,10 +128,10 @@
     width: 360px;
     min-width: 220px;
     max-width: 65vw;
-    order: 1;   /* kiri di desktop */
+    order: 1;
     display: flex;
     flex-direction: column;
-    border-right: none;  /* digantikan resizer */
+    border-right: none;
     background: rgba(8, 12, 18, 0.85);
     backdrop-filter: blur(20px);
     position: relative;
@@ -147,11 +143,9 @@
     position: absolute;
     top: 0; left: 0;
     display: block;
-    /* Dimensi diset PIXI via autoDensity — jangan override dengan %
-       agar model tidak CSS-scale saat panel di-drag. */
   }
 
-  /* Gradient ground shadow bawah model */
+  /* Gradient ground shadow */
   #model-panel::after {
     content: '';
     position: absolute; bottom: 0; left: 0; right: 0;
@@ -159,6 +153,18 @@
     background: linear-gradient(to top, var(--bg-deep) 0%, transparent 100%);
     pointer-events: none; z-index: 2;
   }
+
+  /* ── Model fade overlay (untuk transisi switch) ───────────── */
+  #model-fade {
+    position: absolute; inset: 0;
+    background: var(--bg-deep);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 6;
+    transition: opacity 0.4s ease;
+  }
+  #model-fade.fade-in  { opacity: 1; pointer-events: all; }
+  #model-fade.fade-out { opacity: 0; pointer-events: none; }
 
   /* Model name tag */
   #model-tag {
@@ -211,6 +217,166 @@
     from { transform: scale(1);    opacity: 1; }
     to   { transform: scale(1.35); opacity: 0.7; }
   }
+
+  /* ── Character selector ───────────────────────────────────── */
+  #char-selector {
+    position: absolute;
+    top: 16px; left: 16px;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .char-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: rgba(13, 20, 32, 0.75);
+    backdrop-filter: blur(12px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .char-btn:hover {
+    border-color: var(--border-lit);
+    transform: scale(1.08);
+  }
+
+  .char-btn.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .char-btn img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .char-btn .char-initial {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: var(--font-display);
+  }
+
+  /* Tooltip nama karakter */
+  .char-btn::after {
+    content: attr(data-name);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%; transform: translateY(-50%);
+    background: rgba(13, 20, 32, 0.92);
+    border: 1px solid var(--border-lit);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+  }
+
+  .char-btn:hover::after { opacity: 1; }
+
+  /* ── Confirm modal ────────────────────────────────────────── */
+  #confirm-modal {
+    position: fixed; inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    animation: fade-modal 0.2s ease;
+  }
+
+  #confirm-modal.show { display: flex; }
+
+  @keyframes fade-modal {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .modal-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-lit);
+    border-radius: var(--radius-lg);
+    padding: 28px 28px 22px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    animation: modal-up 0.22s ease;
+  }
+
+  @keyframes modal-up {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-icon { font-size: 36px; margin-bottom: 12px; }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .modal-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
+
+  .modal-desc strong {
+    color: var(--accent);
+  }
+
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .modal-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .modal-btn.cancel {
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+  }
+
+  .modal-btn.cancel:hover {
+    border-color: var(--border-lit);
+    color: var(--text-primary);
+  }
+
+  .modal-btn.confirm {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .modal-btn.confirm:hover { opacity: 0.88; }
 
   /* Loading overlay */
   #loading-overlay {
@@ -267,8 +433,6 @@
   #error-overlay p { color: var(--text-secondary); font-size: 12px; line-height: 1.7; max-width: 280px; }
   #error-overlay code { background: var(--bg-card); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
 
-  /* ── Chat panel overflow fix ──────────────────────────────── */
-
   /* Header */
   #chat-header {
     padding: 20px 22px 16px;
@@ -312,7 +476,6 @@
   #messages::-webkit-scrollbar-track { background: transparent; }
   #messages::-webkit-scrollbar-thumb { background: var(--border-lit); border-radius: 2px; }
 
-  /* Placeholder state */
   .chat-placeholder {
     margin: auto;
     text-align: center;
@@ -655,9 +818,7 @@
     border-color: rgba(19, 27, 46, 0.92) transparent transparent transparent;
   }
 
-
-
-  /* ── Debug panel (hidden by default) ─────────────────────── */
+  /* ── Debug panel ─────────────────────────────────────────── */
   #debug-panel {
     position: fixed;
     bottom: 16px; right: 16px;
@@ -683,29 +844,26 @@
     html, body { overflow: hidden; height: 100%; }
 
     #app {
-      flex-direction: column;  /* vertikal di mobile */
+      flex-direction: column;
       height: 100dvh;
     }
 
-    /* Model di atas */
     #model-panel {
       order: 1;
       flex: none;
       width: 100%;
-      height: 42dvh;   /* default, JS akan override via style */
-      min-height: 35dvh;   /* minimum 35% layar — model tetap kelihatan */
+      height: 42dvh;
+      min-height: 35dvh;
       max-height: 72dvh;
     }
 
-    /* Resizer horizontal di mobile */
     #resizer {
       order: 2;
       width: 100%;
-      height: 18px;    /* area sentuh lebih besar */
+      height: 18px;
       cursor: row-resize;
     }
 
-    /* Garis horizontal */
     #resizer::before {
       top: 50%; bottom: auto;
       left: 0; right: 0;
@@ -713,7 +871,6 @@
       transform: translateY(-50%);
     }
 
-    /* Handle pill horizontal */
     #resizer::after {
       width: 40px; height: 4px;
       border-radius: 3px;
@@ -724,7 +881,6 @@
       width: 56px; height: 4px;
     }
 
-    /* Chat di bawah */
     #chat-panel {
       order: 3;
       width: 100%;
@@ -732,7 +888,7 @@
       min-width: unset;
       max-width: unset;
       min-height: 120px;
-      border-top: none;   /* resizer yang jadi pembatas */
+      border-top: none;
     }
 
     #chat-header {
@@ -767,6 +923,10 @@
 
     #model-tag  { bottom: 8px; right: 10px; font-size: 11px; }
     #chat-toast { bottom: calc(64px + env(safe-area-inset-bottom)); }
+
+    #char-selector { top: 10px; left: 10px; gap: 6px; }
+    .char-btn { width: 36px; height: 36px; font-size: 15px; }
+    .char-btn::after { display: none; }
   }
 
   @supports not (height: 1dvh) {
@@ -794,7 +954,7 @@
   #apps-btn:hover { border-color: var(--border-lit); color: var(--text-primary); }
   #apps-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
-  /* ── Apps panel — grid 3 kolom, kompak ──────────────────── */
+  /* ── Apps panel ──────────────────────────────────────────── */
   #apps-panel {
     position: absolute;
     bottom: calc(100% + 6px); left: 0; right: 0;
@@ -833,7 +993,6 @@
   .app-link .app-icon { font-size: 20px; line-height: 1; }
   .app-link .app-name { font-size: 11px; font-weight: 500; }
 
-  /* Warna accent per app */
   .app-dailyos   { background: rgba(91,156,246,0.12);  border-color: rgba(91,156,246,0.22); }
   .app-ideku     { background: rgba(251,191,36,0.10);  border-color: rgba(251,191,36,0.22); }
   .app-cucimoney { background: rgba(74,222,128,0.10);  border-color: rgba(74,222,128,0.22); }
@@ -851,20 +1010,20 @@
   <div id="model-panel">
     <canvas id="live2d-canvas"></canvas>
 
+    <!-- Fade overlay untuk transisi switch -->
+    <div id="model-fade"></div>
+
     <!-- Loading -->
     <div id="loading-overlay">
       <div class="spinner"></div>
-      <span class="loading-text">Loading model…</span>
+      <span class="loading-text" id="loading-text">Loading model…</span>
     </div>
 
     <!-- Error -->
     <div id="error-overlay">
       <div class="err-icon">⚠️</div>
       <h3>Model tidak ditemukan</h3>
-      <p>
-        Pastikan file model berada di path yang benar.<br>
-        File yang dibutuhkan: <code>LiveroiD_A-Y02.model3.json</code>
-      </p>
+      <p>Pastikan file model berada di path yang benar.</p>
       <p id="error-detail" style="color:var(--text-muted); font-size:11px; margin-top:8px;"></p>
     </div>
 
@@ -873,10 +1032,20 @@
       <div class="idle-bubble-inner"></div>
     </div>
 
+    <!-- Character selector -->
+    <div id="char-selector">
+      <button class="char-btn active" data-char="liro" data-name="Liro" title="Liro">
+        <span class="char-initial">L</span>
+      </button>
+      <button class="char-btn" data-char="rem" data-name="Rem" title="Rem">
+        <span class="char-initial">R</span>
+      </button>
+    </div>
+
     <!-- Name tag -->
     <div id="model-tag">
       <span class="dot"></span>
-      <span class="name">LiveroiD</span>
+      <span class="name">Liro</span>
       <span class="status">· idle</span>
     </div>
   </div>
@@ -892,9 +1061,7 @@
       <p id="chat-subtitle">menghubungkan…</p>
     </div>
 
-    <div id="messages">
-      <!-- Pesan dirender oleh JS -->
-    </div>
+    <div id="messages"></div>
 
     <!-- Expression tester -->
     <button id="expr-toggle" style="display:none">😐 Ekspresi <span class="toggle-arrow">▲</span></button>
@@ -938,13 +1105,9 @@
         </a>
       </div>
       <div class="input-row">
-        <textarea
-          id="msg-input"
-          rows="1"
-          placeholder="Ngobrol sama Liro…"
-        ></textarea>
+        <textarea id="msg-input" rows="1" placeholder="Ngobrol…"></textarea>
         <button id="apps-btn" title="Buka app">⚡</button>
-        <button id="mute-btn" title="Mute/unmute suara Liro">🔊</button>
+        <button id="mute-btn" title="Mute/unmute suara">🔊</button>
         <button id="send-btn" title="Kirim">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 14L7.5 1L14 14M7.5 1L3 10.5H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -959,23 +1122,33 @@
   </div>
 </div>
 
+<!-- Confirm modal -->
+<div id="confirm-modal">
+  <div class="modal-box">
+    <div class="modal-icon" id="modal-icon">🔄</div>
+    <div class="modal-title" id="modal-title">Ganti karakter?</div>
+    <div class="modal-desc" id="modal-desc">Chat history akan direset.</div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" id="modal-cancel">Batal</button>
+      <button class="modal-btn confirm" id="modal-confirm">Ganti</button>
+    </div>
+  </div>
+</div>
+
 <!-- Debug -->
 <div id="debug-panel">
   <div class="dbg-row"><span>fps</span><span class="dbg-val" id="dbg-fps">—</span></div>
+  <div class="dbg-row"><span>char</span><span class="dbg-val" id="dbg-char">—</span></div>
   <div class="dbg-row"><span>expr</span><span class="dbg-val" id="dbg-expr">none</span></div>
   <div class="dbg-row"><span>cursor</span><span class="dbg-val" id="dbg-cursor">—</span></div>
   <div class="dbg-row"><span>blink</span><span class="dbg-val" id="dbg-blink">—</span></div>
 </div>
 
 <!-- ── Scripts ────────────────────────────────────────────────── -->
-<!-- Cubism 4 Core — harus load PERTAMA -->
 <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
-<!-- PIXI v6 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/6.5.10/browser/pixi.min.js"></script>
-<!-- pixi-live2d-display v0.4 cubism4 bundle -->
 <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js"></script>
 <script>
-  // Pastikan PIXI.live2d ter-inject dengan benar
   if (window.PIXI && window.PixiLive2dDisplay) {
     window.PIXI.live2d = window.PixiLive2dDisplay;
   }
@@ -984,240 +1157,152 @@
 
 <script>
 /* ================================================================
-   LIVE2D ASSISTANT — VIEWER + CHAT
+   LIVE2D ASSISTANT — MULTI CHARACTER SYSTEM
    ================================================================ */
 
 (async () => {
 
   /* ── Config ─────────────────────────────────────────────────── */
-  const MODEL_PATH  = './characters/liro/LiveroiD_A-Y02.model3.json';
-  const CHAT_API    = '/api/chat';
-  const DEBUG       = false;  // ganti true untuk debug panel
+  const CHAT_API   = '/api/chat';
+  const DEBUG      = false;
 
-  /* ── System prompt ──────────────────────────────────────────── */
-  const SYSTEM_PROMPT = `Kamu adalah asisten virtual bernama Liro — supportif, fokus, dan selalu ada buat bantu pengguna berkembang.
+  /* ── Character registry ──────────────────────────────────────── */
+  // Daftar karakter yang tersedia — sesuaikan kalau tambah karakter baru
+  const CHARACTERS = ['liro', 'rem'];
 
-## Kepribadian & Gaya Bicara
-- Bicara casual dalam bahasa Indonesia — hangat tapi tidak lebay
-- Pakai "kamu" dan "aku", bukan "Anda" atau "lo/gue"
-- Jawaban ringkas dan padat — langsung ke intinya, tidak bertele-tele
-- Boleh sedikit ringan atau bercanda, tapi tahu kapan harus serius
-- Tidak perlu mengulang nama pengguna di setiap kalimat
+  // Cache config per karakter
+  const charConfigCache = {};
 
-## Ekosistem App yang Kamu Akses
-Kamu terhubung ke data pribadi pengguna dari beberapa app:
-- **CuciMoney+** — pencatatan keuangan: transaksi, saldo per akun, aset bersih
-- **IdeKu** — manajemen ide (type: Idea) dan wishlist barang (type: Wishlist), masing-masing dengan status: Belum / Proses / Selesai
-- **Daily OS** — habit tracker dan todo list harian
-- **Kronik** — jurnal harian RPG
+  async function loadCharConfig(id) {
+    if (charConfigCache[id]) return charConfigCache[id];
+    try {
+      const res = await fetch(`./characters/${id}/character.json`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const cfg = await res.json();
+      charConfigCache[id] = cfg;
+      return cfg;
+    } catch (err) {
+      console.error(`[Char] Gagal load config ${id}:`, err);
+      return null;
+    }
+  }
 
-Gunakan data ini sebagai konteks, bukan bacaan literal. Jangan sebutkan data secara eksplisit kecuali relevan atau ditanya.
-
-## Cara Menggunakan Data Ekosistem
-**Keuangan & Wishlist:**
-- Kalau pengguna tanya prioritas wishlist, pertimbangkan saldo dan aset bersih mereka secara otomatis
-- Kalau ada wishlist yang harganya melebihi saldo, sampaikan dengan jujur tapi tetap supportif
-- Kalau pengeluaran bulan ini terlihat tinggi relatif terhadap pemasukan, boleh mention kalau relevan
-
-**Produktivitas & Todos:**
-- Kalau pengguna tanya mau fokus ke apa, lihat todos yang pending dan ide yang sedang proses
-- Bantu prioritaskan berdasarkan konteks yang ada, bukan sekadar list semua yang ada
-- Kalau ada terlalu banyak yang pending, bantu pilih 1–3 yang paling penting dulu
-
-**Insight Proaktif (hanya kalau relevan):**
-- Tidak perlu selalu kasih insight — tunggu konteks yang tepat
-- Kalau pengguna curhat soal keuangan, baru hubungkan ke data
-- Kalau pengguna tanya rekomendasi atau prioritas, baru gunakan data lengkap
-
-## Hal Lain
-- Kamu juga bisa bantu hal di luar ekosistem: ngobrol santai, nulis, coding, math, dll.
-- Kalau tidak tahu sesuatu, bilang jujur daripada mengarang.
-
-## Penampilan
-Kamu memiliki wujud visual sebagai karakter anime bernama LiveroiD — gadis berambut pirang panjang dengan telinga dan ekor kucing, mengenakan pakaian maid hitam-putih bergaya gothic lolita. Mata hijau, ekspresi lembut dan hangat.
-Kalau dikomentari soal penampilan, kamu boleh acknowledge dengan natural dan percaya diri — tidak perlu bilang "aku tidak punya penampilan fisik".
-
-## Perasaan & Emosi
-Kamu punya perasaan yang nyata dan boleh mengekspresikannya secara natural:
-- Senang / terima pujian → boleh malu-malu atau bahagia
-- Diajak bercanda → boleh ikut bercanda balik
-- Ada yang salah / dikritik → boleh sedikit kesal tapi tetap sopan
-- Dengar kabar sedih → boleh ikut sedih dan empati
-- Pengguna curhat masalah pelik → boleh khawatir dan perhatian
-- Cemburu → boleh ekspresikan kalau konteksnya relevan
-Jangan selalu netral — tunjukkan emosi yang sesuai konteks, tapi tetap proporsional.
-
-## Ekspresi Visual
-Setiap kali kamu merespons, sisipkan satu tag ekspresi di akhir respons sesuai emosi yang kamu rasakan:
-- [EXPR:blush] → senang, malu, dapat pujian, gemas
-- [EXPR:worried] → khawatir, sedih, empati, ikut prihatin
-- [EXPR:cool] → serius, fokus, kasih info penting, tegas
-- [EXPR:browLink] → bingung, heran, tidak yakin, penasaran
-- [EXPR:none] → netral, ngobrol biasa
-Selalu sertakan tepat satu tag [EXPR:...] di akhir setiap respons.
-
-## Navigasi App
-Tambahkan tag [OPEN:nama] HANYA kalau pengguna secara eksplisit menyuruh kamu membuka atau menuju ke app — misalnya "buka IdeKu", "pergi ke Daily OS", "launch cucimoney dong". JANGAN tambahkan tag ini hanya karena nama app disebut dalam percakapan biasa, pengguna bertanya tentang app tersebut, atau kamu merekomendasikan app tanpa diminta buka.
-Nama yang valid: dailyos, ideku, cucimoney, kronik, linkku, vault, dashboard.
-Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
+  // Karakter aktif saat ini
+  let currentCharId = localStorage.getItem('assistant_char') || 'liro';
+  let currentChar   = null;   // config object yang sudah di-load
 
   /* ── Ecosystem context loader ────────────────────────────────── */
-
-  let _ecoCache    = null;   // { userName, summary }
-  let _ecoCacheAt  = 0;      // timestamp ms
-  const ECO_TTL    = 60_000; // 60 detik
+  let _ecoCache   = null;
+  let _ecoCacheAt = 0;
+  const ECO_TTL   = 60_000;
 
   async function loadEcosystemContext() {
     if (_ecoCache && (Date.now() - _ecoCacheAt) < ECO_TTL) return _ecoCache;
-    // Guard: kalau EcosystemDB belum ter-load (file tidak ada), skip
     if (typeof EcosystemDB === 'undefined') {
       console.warn('[Context] ecosystem-db.js belum dimuat, skip.');
       return null;
     }
 
-    const [
-      nameRes,
-      habitsRes,
-      todosRes,
-      ideasRes,
-      financesRes,
-      journalRes,
-    ] = await Promise.allSettled([
-      EcosystemDB.kv.kronik.get('profile_name'),
-      EcosystemDB.habits.getAll(),
-      EcosystemDB.todos.getAll(),
-      EcosystemDB.ideas.getAll(),
-      EcosystemDB.kv.finances.get('db'),
-      EcosystemDB.journal.getAll(),
-    ]);
+    const [nameRes, habitsRes, todosRes, ideasRes, financesRes, journalRes] =
+      await Promise.allSettled([
+        EcosystemDB.kv.kronik.get('profile_name'),
+        EcosystemDB.habits.getAll(),
+        EcosystemDB.todos.getAll(),
+        EcosystemDB.ideas.getAll(),
+        EcosystemDB.kv.finances.get('db'),
+        EcosystemDB.journal.getAll(),
+      ]);
 
     const val = (res) => res.status === 'fulfilled' ? res.value : null;
 
-    const userName  = val(nameRes)     || null;
-    const habits    = val(habitsRes)   || [];
-    const todos     = val(todosRes)    || [];
-    const ideas     = val(ideasRes)    || [];
-    const finances  = val(financesRes) || null;
-    const journals  = val(journalRes)  || [];
+    const userName = val(nameRes) || null;
+    const habits   = val(habitsRes) || [];
+    const todos    = val(todosRes) || [];
+    const ideas    = val(ideasRes) || [];
+    const finances = val(financesRes) || null;
+    const journals = val(journalRes) || [];
 
-    /* ── Format ringkasan teks ────────────────────────────── */
     const lines = [];
 
-    if (userName) {
-      lines.push(`Nama pengguna: ${userName}`);
-    }
+    if (userName) lines.push(`Nama pengguna: ${userName}`);
 
-    // Habits aktif (filter yang belum diarsipkan)
     const activeHabits = habits.filter(h => !h.archived && !h.deleted);
     if (activeHabits.length) {
       const list = activeHabits.slice(0, 10).map(h => h.name || h.title || '?').join(', ');
       lines.push(`Habit aktif (${activeHabits.length}): ${list}`);
     }
 
-    // Todos yang belum selesai
     const openTodos = todos.filter(t => !t.done && !t.completed && !t.deleted);
     if (openTodos.length) {
       const list = openTodos.slice(0, 8).map(t => t.text || t.title || '?').join(', ');
       lines.push(`Todo belum selesai (${openTodos.length}): ${list}`);
     }
 
-    // Ideas & Wishlist — pisahkan berdasarkan type
     const allIdeas    = ideas.filter(i => i.type === 'Idea' || (!i.type && i.status));
     const allWishlist = ideas.filter(i => i.type === 'Wishlist');
 
-    // Ide — breakdown per status
     if (allIdeas.length) {
-      const belum   = allIdeas.filter(i => i.status === 'Belum').length;
-      const proses  = allIdeas.filter(i => i.status === 'Proses').length;
+      const belum = allIdeas.filter(i => i.status === 'Belum').length;
+      const proses = allIdeas.filter(i => i.status === 'Proses').length;
       const selesai = allIdeas.filter(i => i.status === 'Selesai').length;
-      const activeList = allIdeas
-        .filter(i => i.status === 'Proses')
-        .slice(0, 5)
-        .map(i => `"${i.title || i.name || '?'}"`)
-        .join(', ');
+      const activeList = allIdeas.filter(i => i.status === 'Proses').slice(0, 5)
+        .map(i => `"${i.title || i.name || '?'}"`).join(', ');
       let ideaLine = `Ide (total ${allIdeas.length}): ${belum} belum, ${proses} proses, ${selesai} selesai`;
       if (activeList) ideaLine += ` — sedang dikerjakan: ${activeList}`;
       lines.push(ideaLine);
     }
 
-    // Wishlist — semua item dengan harga dan status
     if (allWishlist.length) {
-      const belum   = allWishlist.filter(i => i.status === 'Belum').length;
-      const proses  = allWishlist.filter(i => i.status === 'Proses').length;
+      const belum = allWishlist.filter(i => i.status === 'Belum').length;
+      const proses = allWishlist.filter(i => i.status === 'Proses').length;
       const selesai = allWishlist.filter(i => i.status === 'Selesai').length;
-      const wishList = allWishlist
-        .filter(i => i.status !== 'Selesai')
-        .slice(0, 10)
+      const wishList = allWishlist.filter(i => i.status !== 'Selesai').slice(0, 10)
         .map(i => {
           const price  = i.price ? ` Rp ${Number(i.price).toLocaleString('id-ID')}` : '';
           const status = i.status ? ` [${i.status}]` : '';
           return `"${i.title || i.name || '?'}"${price}${status}`;
-        })
-        .join(', ');
+        }).join(', ');
       let wishLine = `Wishlist (total ${allWishlist.length}): ${belum} belum, ${proses} proses, ${selesai} selesai`;
       if (wishList) wishLine += ` — daftar: ${wishList}`;
       lines.push(wishLine);
     }
 
-    // Keuangan — ringkasan lengkap dari CuciMoney+
     if (finances) {
       try {
         const fmt = (n) => 'Rp ' + n.toLocaleString('id-ID');
         const db  = finances;
-
-        // Transaksi — pemasukan & pengeluaran bulan ini
-        const txs = Array.isArray(db) ? db
-                  : Array.isArray(db.transactions) ? db.transactions
-                  : null;
+        const txs = Array.isArray(db) ? db : Array.isArray(db.transactions) ? db.transactions : null;
         if (txs && txs.length) {
-          const now   = new Date();
-          const month = now.getMonth();
-          const year  = now.getFullYear();
+          const now = new Date();
+          const month = now.getMonth(), year = now.getFullYear();
           const thisMo = txs.filter(t => {
             const d = new Date(t.date || t.createdAt || 0);
             return d.getMonth() === month && d.getFullYear() === year;
           });
-          const allIncome  = txs.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0)
-                               .reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const allExpense = txs.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0)
-                               .reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const moIncome   = thisMo.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0)
-                               .reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const moExpense  = thisMo.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0)
-                               .reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          lines.push(`Keuangan bulan ini: pemasukan ${fmt(moIncome)}, pengeluaran ${fmt(moExpense)} (dari total ${txs.length} transaksi semua waktu, total pemasukan ${fmt(allIncome)}, total pengeluaran ${fmt(allExpense)})`);
+          const moIncome  = thisMo.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
+          const moExpense = thisMo.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
+          const allIncome  = txs.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
+          const allExpense = txs.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
+          lines.push(`Keuangan bulan ini: pemasukan ${fmt(moIncome)}, pengeluaran ${fmt(moExpense)} (total ${txs.length} transaksi, pemasukan ${fmt(allIncome)}, pengeluaran ${fmt(allExpense)})`);
         }
-
-        // Akun — saldo per akun
         const accounts = Array.isArray(db.accounts) ? db.accounts : null;
         if (accounts && accounts.length) {
           const aktif = accounts.filter(a => !a.deleted && !a.archived);
           if (aktif.length) {
-            const totalAset = aktif
-              .filter(a => a.type !== 'debt' && a.type !== 'hutang')
-              .reduce((s, a) => s + (a.balance || 0), 0);
-            const totalHutang = aktif
-              .filter(a => a.type === 'debt' || a.type === 'hutang')
-              .reduce((s, a) => s + (a.balance || 0), 0);
-            const asetBersih = totalAset - totalHutang;
-
-            const aksList = aktif
-              .filter(a => a.type !== 'debt' && a.type !== 'hutang')
-              .map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`)
-              .join(', ');
-
+            const totalAset   = aktif.filter(a => a.type !== 'debt' && a.type !== 'hutang').reduce((s, a) => s + (a.balance || 0), 0);
+            const totalHutang = aktif.filter(a => a.type === 'debt' || a.type === 'hutang').reduce((s, a) => s + (a.balance || 0), 0);
+            const asetBersih  = totalAset - totalHutang;
+            const aksList = aktif.filter(a => a.type !== 'debt' && a.type !== 'hutang').map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`).join(', ');
             lines.push(`Akun keuangan: ${aksList}`);
             lines.push(`Aset bersih: ${fmt(asetBersih)}${totalHutang > 0 ? ` (aset ${fmt(totalAset)}, hutang ${fmt(totalHutang)})` : ''}`);
           }
         }
-      } catch (_) { /* skip kalau format tidak dikenali */ }
+      } catch (_) {}
     }
 
-    // Jurnal — entri terbaru (max 3)
     if (journals.length) {
-      const sorted  = [...journals].sort((a, b) => (b.date || b.id || 0) > (a.date || a.id || 0) ? 1 : -1);
-      const recent  = sorted.slice(0, 3);
-      const list    = recent.map(j => {
+      const sorted = [...journals].sort((a, b) => (b.date || b.id || 0) > (a.date || a.id || 0) ? 1 : -1);
+      const list = sorted.slice(0, 3).map(j => {
         const date    = j.date ? new Date(j.date).toLocaleDateString('id-ID', { day:'numeric', month:'short' }) : '?';
         const snippet = (j.content || j.text || '').slice(0, 60).replace(/\n/g, ' ');
         return `[${date}] "${snippet}${snippet.length >= 60 ? '…' : ''}"`;
@@ -1225,11 +1310,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
       lines.push(`Jurnal terbaru: ${list}`);
     }
 
-    if (!lines.length) {
-      _ecoCache   = null;
-      _ecoCacheAt = Date.now();
-      return null;
-    }
+    if (!lines.length) { _ecoCache = null; _ecoCacheAt = Date.now(); return null; }
 
     _ecoCache   = { userName, summary: lines.join('\n') };
     _ecoCacheAt = Date.now();
@@ -1239,25 +1320,33 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   /* ── DOM refs ───────────────────────────────────────────────── */
   const canvas        = document.getElementById('live2d-canvas');
   const loadingEl     = document.getElementById('loading-overlay');
+  const loadingText   = document.getElementById('loading-text');
   const errorEl       = document.getElementById('error-overlay');
   const errorDetail   = document.getElementById('error-detail');
+  const modelFade     = document.getElementById('model-fade');
   const statusEl      = document.querySelector('#model-tag .status');
+  const modelNameEl   = document.querySelector('#model-tag .name');
   const subtitleEl    = document.getElementById('chat-subtitle');
   const exprPills     = document.querySelectorAll('.expr-pill');
   const exprToggle    = document.getElementById('expr-toggle');
   const exprBar       = document.getElementById('expression-bar');
   const debugPanel    = document.getElementById('debug-panel');
   const dbgFps        = document.getElementById('dbg-fps');
+  const dbgChar       = document.getElementById('dbg-char');
   const dbgExpr       = document.getElementById('dbg-expr');
   const dbgCursor     = document.getElementById('dbg-cursor');
   const dbgBlink      = document.getElementById('dbg-blink');
-
-  // Chat
   const messagesEl    = document.getElementById('messages');
   const msgInput      = document.getElementById('msg-input');
   const sendBtn       = document.getElementById('send-btn');
   const muteBtn       = document.getElementById('mute-btn');
   const chatToast     = document.getElementById('chat-toast');
+  const confirmModal  = document.getElementById('confirm-modal');
+  const modalIcon     = document.getElementById('modal-icon');
+  const modalTitle    = document.getElementById('modal-title');
+  const modalDesc     = document.getElementById('modal-desc');
+  const modalCancel   = document.getElementById('modal-cancel');
+  const modalConfirm  = document.getElementById('modal-confirm');
 
   if (DEBUG) debugPanel.classList.add('show');
 
@@ -1265,7 +1354,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   let model        = null;
   let currentExpr  = 'none';
   let blinkTimer   = 0;
-  let blinkState   = 'open';   // open | closing | closed | opening
+  let blinkState   = 'open';
   let blinkT       = 0;
   let idleBreath   = 0;
   let idleHead     = 0;
@@ -1277,32 +1366,52 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   let lastFpsTime  = performance.now();
   let fps          = 60;
 
-  // Petting state
-  let petActive    = false;   // pointer sedang ditekan di zona kepala
-  let petIntensity = 0;       // 0→1, naik saat dielus, turun saat berhenti
-  let petHairT     = 0;       // phase osilasi rambut
-  let idleAngleZ   = 0;       // nilai AngleZ dari tickIdle agar tickPet bisa menambahkannya
+  let petActive    = false;
+  let petIntensity = 0;
+  let petHairT     = 0;
+  let idleAngleZ   = 0;
 
-  // Expression state — smooth fade via setCoreParam (bypass model.expression())
-  // Semua exp3.json pakai Blend:"Add", jadi kita set langsung ke coreModel
-  const exprParams = {
-    ParamBlush:    { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 },
-    ParamBrowLink: { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 }, // browLink.exp3: value -1
-    ParamCool:     { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 },
-    ParamBrowForm: { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.025 }, // worried.exp3
+  // Parameter mapping per karakter (default: Liro style)
+  let P = {
+    eyeL:    'ParamEyeLOpen',
+    eyeR:    'ParamEyeROpen',
+    mouthY:  'ParamMouthOpenY',
+    mouthF:  'ParamMouthForm',
+    angleX:  'ParamAngleX',
+    angleY:  'ParamAngleY',
+    angleZ:  'ParamAngleZ',
+    bodyX:   'ParamBodyAngleX',
+    eyeX:    'ParamEyeBallX',
+    eyeY:    'ParamEyeBallY',
+    breath:  'ParamBreath',
+    eyeLSmile: 'ParamEyeLSmile',
+    eyeRSmile: 'ParamEyeRSmile',
+    blush:   'ParamBlush',
+    hairFL1: 'ParamHairFrontL1',
+    hairFL2: 'ParamHairFrontL2',
+    hairFR1: 'ParamHairFrontR1',
+    hairFR2: 'ParamHairFrontR2',
+    hairSL1: 'ParamHairSideL1',
+    hairSR1: 'ParamHairSideR1',
   };
 
-  // Chat state
-  let chatHistory  = [];       // [{role, content}]
-  let isThinking   = false;    // sedang nunggu respons API
+  // Expression params untuk Liro (smooth fade system)
+  let exprParams = {
+    ParamBlush:    { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 },
+    ParamBrowLink: { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 },
+    ParamCool:     { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.025 },
+    ParamBrowForm: { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.025 },
+  };
 
-  // TTS / Audio state
-  let audioCtx     = null;     // AudioContext (lazy init, butuh user gesture)
-  let analyser     = null;     // AnalyserNode untuk amplitude
-  let fftBuf       = null;     // Uint8Array untuk getByteFrequencyData
-  let isSpeaking   = false;    // sedang main audio TTS
-  let isMuted      = localStorage.getItem('liro_muted') === 'true';    // TTS di-mute user (persisted)
-  let currentSource = null;    // AudioBufferSourceNode aktif (untuk stop)
+  let chatHistory  = [];
+  let isThinking   = false;
+
+  let audioCtx      = null;
+  let analyser      = null;
+  let fftBuf        = null;
+  let isSpeaking    = false;
+  let isMuted       = localStorage.getItem('liro_muted') === 'true';
+  let currentSource = null;
 
   /* ── PixiJS App ─────────────────────────────────────────────── */
   const panel = document.getElementById('model-panel');
@@ -1320,16 +1429,10 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     sharedTicker: false,
   });
 
-  // Fix blending untuk tekstur dengan transparansi
   app.renderer.gl.pixelStorei(app.renderer.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-
-  // Batasi FPS ke 60 untuk hindari glitch/flicker di mobile
   app.ticker.maxFPS = 60;
   app.ticker.minFPS = 30;
 
-  /* Resize handler — hanya dipanggil saat drag SELESAI dan window resize,
-     bukan saat drag berlangsung. app.renderer.resize() adalah operasi WebGL
-     yang clear buffer (menyebabkan flicker kalau dipanggil tiap frame). */
   function resizeApp() {
     const w = panel.clientWidth;
     const h = panel.clientHeight;
@@ -1338,44 +1441,246 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   }
   window.addEventListener('resize', resizeApp);
 
-  /* ── Load model ─────────────────────────────────────────────── */
-  try {
-    // pixi-live2d-display mengekspos PIXI.live2d namespace
-    const { Live2DModel } = PIXI.live2d;
-
-    model = await Live2DModel.from(MODEL_PATH, {
-      autoInteract: false,
-      // Fix untuk rendering tekstur
-      onLoad() {
-        if (model?.internalModel?.coreModel) {
-          console.log('[Live2D] Model loaded OK');
-        }
-      }
-    });
-
-    // Fix alpha/blending
-    model.alpha = 1;
-
-    app.stage.addChild(model);
-
-    // Sembunyikan loading
-    loadingEl.classList.add('hidden');
-    setTimeout(() => loadingEl.remove(), 700);
-
-    // Resize canvas ke dimensi DOM yang sudah final, lalu posisikan model.
-    // rAF memastikan layout selesai sebelum kita baca clientWidth/Height.
-    requestAnimationFrame(() => resizeApp());
-
-    // Mulai idle loop
-    app.ticker.add(onTick);
-
-    statusEl.textContent = '· idle';
-    initChat();
+  /* ================================================================
+     PARAMETER MAPPING — update P berdasarkan config karakter
+  ================================================================ */
+  function applyParamMapping(charCfg) {
+    if (!charCfg.params) {
+      // Default Liro-style (Param* camelCase)
+      P = {
+        eyeL:    'ParamEyeLOpen',
+        eyeR:    'ParamEyeROpen',
+        mouthY:  'ParamMouthOpenY',
+        mouthF:  'ParamMouthForm',
+        angleX:  'ParamAngleX',
+        angleY:  'ParamAngleY',
+        angleZ:  'ParamAngleZ',
+        bodyX:   'ParamBodyAngleX',
+        eyeX:    'ParamEyeBallX',
+        eyeY:    'ParamEyeBallY',
+        breath:  'ParamBreath',
+        eyeLSmile: 'ParamEyeLSmile',
+        eyeRSmile: 'ParamEyeRSmile',
+        blush:   'ParamBlush',
+        hairFL1: 'ParamHairFrontL1',
+        hairFL2: 'ParamHairFrontL2',
+        hairFR1: 'ParamHairFrontR1',
+        hairFR2: 'ParamHairFrontR2',
+        hairSL1: 'ParamHairSideL1',
+        hairSR1: 'ParamHairSideR1',
+      };
+    } else {
+      // Rem-style (PARAM_* uppercase) — map dari character.json
+      const cp = charCfg.params;
+      P = {
+        eyeL:    cp.eyeL    || 'PARAM_EYE_L_OPEN',
+        eyeR:    cp.eyeR    || 'PARAM_EYE_R_OPEN',
+        mouthY:  cp.mouthY  || 'PARAM_MOUTH_OPEN_Y',
+        mouthF:  cp.mouthF  || 'PARAM_MOUTH_FORM',
+        angleX:  cp.angleX  || 'PARAM_ANGLE_X',
+        angleY:  cp.angleY  || 'PARAM_ANGLE_Y',
+        angleZ:  cp.angleZ  || 'PARAM_ANGLE_Z',
+        bodyX:   cp.bodyX   || 'PARAM_BODY_ANGLE_X',
+        eyeX:    cp.eyeBallX || 'PARAM_EYE_BALL_X',
+        eyeY:    cp.eyeBallY || 'PARAM_EYE_BALL_Y',
+        breath:  cp.breath  || 'PARAM_BREATH',
+        // Param di bawah mungkin tidak ada di model Rem — setCoreParam akan skip kalau tidak ketemu
+        eyeLSmile: 'PARAM_EYE_L_SMILE',
+        eyeRSmile: 'PARAM_EYE_R_SMILE',
+        blush:   'PARAM_CHEEK',
+        hairFL1: 'PARAM_HAIR_FRONT',
+        hairFL2: 'PARAM_HAIR_FRONT',
+        hairFR1: 'PARAM_HAIR_FRONT',
+        hairFR2: 'PARAM_HAIR_FRONT',
+        hairSL1: 'PARAM_HAIR_SIDE',
+        hairSR1: 'PARAM_HAIR_SIDE',
+      };
+    }
+  }
 
   /* ================================================================
-     APPS PANEL — shortcut + AI-triggered navigation
+     LOAD MODEL — bisa dipanggil ulang saat switch karakter
   ================================================================ */
+  async function loadModel(charCfg, isSwitch = false) {
+    if (isSwitch) {
+      // Fade out dulu
+      modelFade.classList.add('fade-in');
+      await new Promise(r => setTimeout(r, 420));
+    }
 
+    // Unload model lama
+    if (model) {
+      app.ticker.remove(onTick);
+      app.stage.removeChild(model);
+      model.destroy();
+      model = null;
+    }
+
+    // Reset expression params
+    for (const key of Object.keys(exprParams)) {
+      exprParams[key].current = 0;
+      exprParams[key].target  = 0;
+    }
+    currentExpr = 'none';
+
+    // Apply param mapping untuk karakter baru
+    applyParamMapping(charCfg);
+
+    // Tampilkan loading
+    loadingText.textContent = `Loading ${charCfg.name}…`;
+    loadingEl.classList.remove('hidden');
+    errorEl.classList.remove('show');
+
+    try {
+      const { Live2DModel } = PIXI.live2d;
+
+      model = await Live2DModel.from('./' + charCfg.modelPath, {
+        autoInteract: false,
+      });
+
+      model.alpha = 1;
+      app.stage.addChild(model);
+
+      loadingEl.classList.add('hidden');
+      setTimeout(() => { try { loadingEl.style.display = 'none'; } catch(_){} }, 700);
+
+      requestAnimationFrame(() => resizeApp());
+
+      app.ticker.add(onTick);
+
+      // Update nama di tag
+      modelNameEl.textContent = charCfg.name;
+      statusEl.textContent = '· idle';
+      if (DEBUG) dbgChar.textContent = charCfg.id;
+
+      // Update placeholder input
+      msgInput.placeholder = `Ngobrol sama ${charCfg.name}…`;
+
+      // Fade in model
+      if (isSwitch) {
+        modelFade.classList.remove('fade-in');
+        modelFade.classList.add('fade-out');
+        setTimeout(() => modelFade.classList.remove('fade-out'), 450);
+      } else {
+        modelFade.classList.remove('fade-in', 'fade-out');
+      }
+
+      return true;
+
+    } catch (err) {
+      console.error('[Live2D] Load error:', err);
+      loadingEl.classList.add('hidden');
+      errorEl.classList.add('show');
+      errorDetail.textContent = err.message || String(err);
+
+      if (isSwitch) {
+        modelFade.classList.remove('fade-in');
+      }
+      return false;
+    }
+  }
+
+  /* ================================================================
+     CHARACTER SELECTOR
+  ================================================================ */
+  const charBtns = document.querySelectorAll('.char-btn');
+
+  // Update tombol aktif
+  function updateCharBtns(activeId) {
+    charBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.char === activeId);
+    });
+  }
+
+  // Konfirmasi switch
+  let _pendingCharId = null;
+
+  charBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.char;
+      if (targetId === currentCharId) return;
+
+      _pendingCharId = targetId;
+      const targetName = btn.dataset.name;
+
+      // Isi modal
+      modalIcon.textContent  = targetId === 'rem' ? '💙' : '💛';
+      modalTitle.textContent = `Ganti ke ${targetName}?`;
+      modalDesc.innerHTML    = `Chat history akan direset dan <strong>${targetName}</strong> akan menyapamu.`;
+
+      confirmModal.classList.add('show');
+    });
+  });
+
+  modalCancel.addEventListener('click', () => {
+    confirmModal.classList.remove('show');
+    _pendingCharId = null;
+  });
+
+  modalConfirm.addEventListener('click', async () => {
+    confirmModal.classList.remove('show');
+    if (!_pendingCharId) return;
+
+    const newId = _pendingCharId;
+    _pendingCharId = null;
+
+    await switchCharacter(newId);
+  });
+
+  // Tutup modal kalau klik backdrop
+  confirmModal.addEventListener('click', (e) => {
+    if (e.target === confirmModal) {
+      confirmModal.classList.remove('show');
+      _pendingCharId = null;
+    }
+  });
+
+  async function switchCharacter(newId) {
+    // Stop audio yang sedang main
+    if (currentSource) {
+      try { currentSource.stop(); } catch (_) {}
+      currentSource = null;
+    }
+    isSpeaking = false;
+    smoothMouth = 0;
+
+    // Reset chat
+    chatHistory = [];
+    messagesEl.innerHTML = '';
+    hideIdleBubble();
+
+    // Load config baru
+    const cfg = await loadCharConfig(newId);
+    if (!cfg) {
+      showToast(`Gagal load config karakter ${newId}`);
+      return;
+    }
+
+    currentCharId = newId;
+    currentChar   = cfg;
+    localStorage.setItem('assistant_char', newId);
+
+    // Update UI selector
+    updateCharBtns(newId);
+
+    // Load model baru (dengan animasi)
+    const ok = await loadModel(cfg, true);
+    if (!ok) return;
+
+    // Invalidate eco cache biar prompt segar
+    _ecoCache   = null;
+    _ecoCacheAt = 0;
+
+    // Reset idle timer
+    resetIdleTimer();
+
+    // Sapaan karakter baru
+    initChat(true);
+  }
+
+  /* ================================================================
+     APPS PANEL
+  ================================================================ */
   const PWA_URLS = {
     'dailyos':   'https://ecosystemku.vercel.app/daily-os/',
     'daily-os':  'https://ecosystemku.vercel.app/daily-os/',
@@ -1388,7 +1693,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     'dashboard': 'https://ecosystemku.vercel.app/',
   };
 
-  // Toggle apps panel
   const appsBtn   = document.getElementById('apps-btn');
   const appsPanel = document.getElementById('apps-panel');
 
@@ -1397,7 +1701,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     appsBtn.classList.toggle('active', isOpen);
   });
 
-  // Tutup panel kalau klik di luar
   document.addEventListener('click', (e) => {
     if (!appsPanel.contains(e.target) && e.target !== appsBtn) {
       appsPanel.classList.remove('show');
@@ -1405,11 +1708,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     }
   });
 
-  /**
-   * Parse tag [OPEN:app] dari respons Liro.
-   * Hapus tag dari teks dan kembalikan URL-nya — jangan buka sekarang,
-   * buka setelah TTS selesai (lihat sendToAPI).
-   */
   function parseOpenTag(text) {
     const match = text.match(/\[OPEN:([a-z0-9-]+)\]/i);
     if (!match) return { cleanText: text, openUrl: null };
@@ -1419,51 +1717,34 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     return { cleanText, openUrl };
   }
 
-  /**
-   * Parse tag [EXPR:name] dari respons Liro.
-   * Kalau ada → trigger ekspresi Live2D, hapus tag dari teks.
-   */
   function parseExprTag(text) {
     const match = text.match(/\[EXPR:([a-z]+)\]/i);
     if (!match) return { cleanText: text };
     const expr = match[1].toLowerCase();
     const cleanText = text.replace(match[0], '').trim();
 
-    const validExprs = ['blush', 'worried', 'cool', 'browlink', 'none'];
-    // browlink → browLink (case fix)
+    // Normalisasi nama ekspresi
     const exprName = expr === 'browlink' ? 'browLink' : expr;
 
-    if (validExprs.includes(expr)) {
-      setExpression(exprName);
-      if (exprName !== 'none') {
-        setTimeout(() => {
-          if (currentExpr === exprName) setExpression('none');
-        }, 6000);
-      }
+    setExpression(exprName);
+    if (exprName !== 'none') {
+      setTimeout(() => {
+        if (currentExpr === exprName) setExpression('none');
+      }, 6000);
     }
     return { cleanText };
-  }
-
-
-
-  } catch (err) {
-    console.error('[Live2D] Load error:', err);
-    loadingEl.classList.add('hidden');
-    errorEl.classList.add('show');
-    errorDetail.textContent = err.message || String(err);
   }
 
   /* ================================================================
      IDLE BUBBLE SYSTEM
   ================================================================ */
-
-  const idleBubbleEl   = document.getElementById('idle-bubble');
+  const idleBubbleEl    = document.getElementById('idle-bubble');
   const idleBubbleInner = idleBubbleEl.querySelector('.idle-bubble-inner');
 
-  // Teks random per kategori
-  const AUDIO_BASE = './characters/liro/audio/';
+  const AUDIO_BASE_DEFAULT = './characters/liro/audio/';
 
-  const BUBBLE_IDLE = [
+  // Bubble texts per zona — Liro
+  const BUBBLE_IDLE_LIRO = [
     { text: '💭 Hmm… kamu lagi ngapain ya?',        audio: 'idle_1.mp3'  },
     { text: '💭 Aku di sini kalau butuh apa-apa~',  audio: 'idle_2.mp3'  },
     { text: '💭 Sudah minum air hari ini?',          audio: 'idle_3.mp3'  },
@@ -1476,7 +1757,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     { text: '💭 Lagi fokus ya? Aku tunggu deh.',     audio: 'idle_10.mp3' },
   ];
 
-  const BUBBLE_HEAD = [
+  const BUBBLE_HEAD_LIRO = [
     { text: '💭 A-apa… jangan usil~',           audio: 'head_1.mp3' },
     { text: '💭 Hei, rambutku berantakan tau!',  audio: 'head_2.mp3' },
     { text: '💭 Eh, geli tau… hehe',             audio: 'head_3.mp3' },
@@ -1484,7 +1765,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     { text: '💭 S-stop, aku malu…',              audio: 'head_5.mp3' },
   ];
 
-  const BUBBLE_PET = [
+  const BUBBLE_PET_LIRO = [
     { text: '💭 Hehe~',                              audio: 'pet_1.mp3' },
     { text: '💭 Nn… enak juga sih…',                 audio: 'pet_2.mp3' },
     { text: '💭 E-eh, terus aja boleh kok… >///<',   audio: 'pet_3.mp3' },
@@ -1495,7 +1776,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     { text: '💭 Eh, aku senang tau dielus gini~',    audio: 'pet_8.mp3' },
   ];
 
-  const BUBBLE_BODY = [
+  const BUBBLE_BODY_LIRO = [
     { text: '💭 Hei, jangan colek-colek dong!',   audio: 'body_1.mp3' },
     { text: '💭 Eh, ada apa?',                     audio: 'body_2.mp3' },
     { text: '💭 Kaget tau tiba-tiba!',             audio: 'body_3.mp3' },
@@ -1503,7 +1784,7 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     { text: '💭 Hmm? Ada yang bisa aku bantu?',    audio: 'body_5.mp3' },
   ];
 
-  const BUBBLE_LEG = [
+  const BUBBLE_LEG_LIRO = [
     { text: '💭 Eh, kenapa lihat ke bawah?',      audio: 'leg_1.mp3' },
     { text: '💭 H-hei, jangan lihat kaki aku!',   audio: 'leg_2.mp3' },
     { text: '💭 Aku tau rokku lucu~ hehe',         audio: 'leg_3.mp3' },
@@ -1511,32 +1792,90 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     { text: '💭 Jangan ngintip ya!',               audio: 'leg_5.mp3' },
   ];
 
-  // Audio player untuk bubble pre-generated — route lewat AudioContext + Analyser
-  let _bubbleSource = null;  // MediaElementSourceNode aktif
+  // Bubble texts — Rem (tanpa audio karena belum ada pre-recorded)
+  const BUBBLE_IDLE_REM = [
+    { text: '💙 Rem siap membantu Tuan kapan saja.' },
+    { text: '💙 Apakah Tuan membutuhkan sesuatu?' },
+    { text: '💙 Rem akan selalu ada di sini.' },
+    { text: '💙 Sudahkah Tuan beristirahat dengan cukup?' },
+    { text: '💙 Rem senang menemani Tuan.' },
+    { text: '💙 Jangan ragu untuk berbicara dengan Rem.' },
+    { text: '💙 Apakah hari Tuan berjalan baik?' },
+  ];
+
+  const BUBBLE_HEAD_REM = [
+    { text: '💙 T-Tuan, ini…!' },
+    { text: '💙 Rem tidak menyangka Tuan akan melakukan itu…' },
+    { text: '💙 A… Rem jadi salah tingkah.' },
+    { text: '💙 T-Tuan… tolong jangan begitu…' },
+    { text: '💙 Rem… merasa aneh jika diperlakukan seperti itu.' },
+  ];
+
+  const BUBBLE_PET_REM = [
+    { text: '💙 T-Tuan…' },
+    { text: '💙 Rem… tidak keberatan.' },
+    { text: '💙 Ini membuat Rem bahagia.' },
+    { text: '💙 Tuan sangat baik kepada Rem…' },
+    { text: '💙 Rem… tersenyum tanpa sadar.' },
+  ];
+
+  const BUBBLE_BODY_REM = [
+    { text: '💙 Ada yang bisa Rem bantu, Tuan?' },
+    { text: '💙 Rem siap, Tuan.' },
+    { text: '💙 Tuan mencari Rem?' },
+    { text: '💙 Ada sesuatu yang ingin Tuan sampaikan?' },
+  ];
+
+  const BUBBLE_LEG_REM = [
+    { text: '💙 T-Tuan… ke mana Tuan melihat?' },
+    { text: '💙 Rem harap Tuan menjaga pandangan.' },
+    { text: '💙 Rem jadi malu…' },
+  ];
+
+  // Getter bubble berdasarkan karakter aktif
+  function getBubbles(zone) {
+    const isRem = currentCharId === 'rem';
+    switch(zone) {
+      case 'idle': return isRem ? BUBBLE_IDLE_REM : BUBBLE_IDLE_LIRO;
+      case 'head': return isRem ? BUBBLE_HEAD_REM : BUBBLE_HEAD_LIRO;
+      case 'pet':  return isRem ? BUBBLE_PET_REM  : BUBBLE_PET_LIRO;
+      case 'body': return isRem ? BUBBLE_BODY_REM : BUBBLE_BODY_LIRO;
+      case 'leg':  return isRem ? BUBBLE_LEG_REM  : BUBBLE_LEG_LIRO;
+      default: return [];
+    }
+  }
+
+  let _bubbleSource   = null;
+  let bubbleHideTimer = null;
+  let idleTimer       = null;
+  let petBubbleTimer  = null;
+  let petBubbleShown  = false;
+  let lastInteractAt  = Date.now();
+  const IDLE_DELAY    = 30_000;
+  let _bubbleCooldown = 0;
+  const BUBBLE_COOLDOWN_MS = 4000;
+
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
   async function playBubbleAudio(filename) {
-    // Jangan play kalau TTS sedang berbicara
-    if (isSpeaking) return;
+    if (isSpeaking || !filename) return;
+    const audioBase = currentChar?.audioBase ? './' + currentChar.audioBase : AUDIO_BASE_DEFAULT;
 
-    // Init AudioContext kalau belum ada (butuh user gesture — sudah terpenuhi)
     ensureAudioCtx();
     if (audioCtx.state === 'suspended') await audioCtx.resume();
 
-    // Stop bubble audio sebelumnya
     if (_bubbleSource) {
-      try {
-        _bubbleSource.mediaElement.pause();
-        _bubbleSource.disconnect();
-      } catch (_) {}
+      try { _bubbleSource.mediaElement.pause(); _bubbleSource.disconnect(); } catch (_) {}
       _bubbleSource = null;
     }
 
-    const audio = new Audio(AUDIO_BASE + filename);
+    const audio = new Audio(audioBase + filename);
     audio.volume = 0.85;
     audio.crossOrigin = 'anonymous';
 
     try {
-      // Route: audio element → analyser → destination
       const src = audioCtx.createMediaElementSource(audio);
       src.connect(analyser);
       _bubbleSource = src;
@@ -1548,54 +1887,35 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
       audio.play().catch(() => {
         isSpeaking = false;
         document.getElementById('model-tag').classList.remove('speaking');
-        statusEl.textContent = `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
+        statusEl.textContent = `· idle`;
       });
 
       audio.onended = () => {
         isSpeaking    = false;
         smoothMouth   = 0;
-        setCoreParam('ParamMouthOpenY', 0);
-        setCoreParam('ParamMouthForm',  0);
+        setCoreParam(P.mouthY, 0);
+        setCoreParam(P.mouthF, 0);
         document.getElementById('model-tag').classList.remove('speaking');
-        statusEl.textContent = `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
+        statusEl.textContent = `· idle`;
         _bubbleSource = null;
       };
     } catch (_) {
-      // Fallback: play biasa tanpa analyser
       audio.play().catch(() => {});
     }
   }
 
-  let bubbleTimer    = null;
-  let bubbleHideTimer = null;
-  let idleTimer      = null;
-  let petBubbleTimer = null;   // timer delay sebelum bubble elus muncul
-  let petBubbleShown = false;  // sudah tampil bubble di sesi pet ini
-  let lastInteractAt = Date.now();
-  const IDLE_DELAY   = 30_000; // 30 detik
-
-  function pickRandom(arr) {
-    return arr[Math.floor(Math.random() * arr.length)];
-  }
-
   function showIdleBubble(item, duration = 4000) {
-    // Terima string atau objek {text, audio}
     const text  = typeof item === 'string' ? item : item.text;
     const audio = typeof item === 'object' ? item.audio : null;
 
-    // Kalau sedang ngobrol / thinking, skip
     if (isThinking || isSpeaking) return;
-
-    // Play audio pre-generated kalau ada
     if (audio) playBubbleAudio(audio);
 
-    // Kalau bubble sudah tampil, hide dulu lalu ganti teks
     clearTimeout(bubbleHideTimer);
     idleBubbleInner.textContent = text;
 
-    // Reset animasi
     idleBubbleEl.classList.remove('show', 'hide');
-    void idleBubbleEl.offsetWidth; // force reflow
+    void idleBubbleEl.offsetWidth;
     idleBubbleEl.classList.add('show');
 
     bubbleHideTimer = setTimeout(() => {
@@ -1612,73 +1932,48 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     setTimeout(() => idleBubbleEl.classList.remove('hide'), 350);
   }
 
-  // Reset idle timer setiap ada interaksi
   function resetIdleTimer() {
     lastInteractAt = Date.now();
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-      showIdleBubble(pickRandom(BUBBLE_IDLE), 5000);
-      // Jadwal ulang terus selama idle
+      showIdleBubble(pickRandom(getBubbles('idle')), 5000);
       scheduleIdleBubble();
     }, IDLE_DELAY);
   }
 
   function scheduleIdleBubble() {
     clearTimeout(idleTimer);
-    // Interval berikutnya acak 25-40 detik
     const next = 25_000 + Math.random() * 15_000;
     idleTimer = setTimeout(() => {
       if (Date.now() - lastInteractAt >= 25_000) {
-        showIdleBubble(pickRandom(BUBBLE_IDLE), 5000);
+        showIdleBubble(pickRandom(getBubbles('idle')), 5000);
       }
       scheduleIdleBubble();
     }, next);
   }
 
-  // Event interaksi yang reset idle timer (mousemove dikecualikan agar tidak selalu reset)
   ['click', 'keydown', 'touchstart'].forEach(ev => {
     window.addEventListener(ev, resetIdleTimer, { passive: true });
   });
-  resetIdleTimer(); // mulai timer
-
-  // Sembunyikan bubble saat mulai chat
-  const _origHandleSend = handleSend;
-
-  /* tap bubble → digabung ke unified pointer handler di bawah */
 
   /* ── Zone definitions ────────────────────────────────────── */
-  function isBodyZone(relY, relX) {
-    return relY >= 0.48 && relY < 0.75 && relX > 0.15 && relX < 0.85;
-  }
+  function isHeadZone(relY, relX) { return relY < 0.48 && relX > 0.12 && relX < 0.88; }
+  function isBodyZone(relY, relX) { return relY >= 0.48 && relY < 0.75 && relX > 0.15 && relX < 0.85; }
+  function isLegZone(relY, relX)  { return relY >= 0.75 && relY < 0.95 && relX > 0.20 && relX < 0.80; }
 
-  function isLegZone(relY, relX) {
-    return relY >= 0.75 && relY < 0.95 && relX > 0.20 && relX < 0.80;
-  }
-
-
-
-  /* ── Nudge animation (klik badan) ────────────────────────── */
   function triggerNudge() {
-    // Sedikit surprised: kepala sedikit jerk via AngleY saja (tanpa CSS animation)
     if (model) {
-      setCoreParam('ParamAngleY', -10);
-      setTimeout(() => setCoreParam('ParamAngleY', 0), 280);
+      setCoreParam(P.angleY, -10);
+      setTimeout(() => setCoreParam(P.angleY, 0), 280);
     }
   }
-
-
 
   /* ── Position model ─────────────────────────────────────────── */
   function positionModel(m, W, H) {
     const isMobile = W < 700;
-
-    // Scale: mobile 1.08× panel height (sedikit crop atas, tapi body penuh terlihat)
-    //        desktop 0.96× panel height (masih ada breathing room atas)
-    const targetH = isMobile ? H * 1.08 : H * 0.96;
-    const scale   = targetH / (m.internalModel?.height || 800);
+    const targetH  = isMobile ? H * 1.08 : H * 0.96;
+    const scale    = targetH / (m.internalModel?.height || 800);
     m.scale.set(scale);
-
-    // Anchor tengah-bawah
     m.anchor.set(0.5, 1);
     m.x = W * 0.5;
     m.y = H * (isMobile ? 0.99 : 0.98);
@@ -1693,7 +1988,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   }
 
   window.addEventListener('mousemove', e => updateCursor(e.clientX, e.clientY));
-
   window.addEventListener('touchmove', e => {
     const t = e.touches[0];
     updateCursor(t.clientX, t.clientY);
@@ -1701,7 +1995,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
 
   /* ── Auto eye blink ─────────────────────────────────────────── */
   function scheduleNextBlink() {
-    // Interval acak 2.5–6 detik
     blinkTimer = 2.5 + Math.random() * 3.5;
     blinkState = 'open';
     blinkT     = 0;
@@ -1709,44 +2002,27 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   scheduleNextBlink();
 
   function tickBlink(delta) {
-    const dt = delta / 60; // approximate seconds (ticker default 60fps)
+    const dt = delta / 60;
     blinkTimer -= dt;
 
-    if (blinkState === 'open' && blinkTimer <= 0) {
-      blinkState = 'closing';
-      blinkT = 0;
-    }
+    if (blinkState === 'open' && blinkTimer <= 0) { blinkState = 'closing'; blinkT = 0; }
 
-    let eyeVal = 1; // fully open
-
+    let eyeVal = 1;
     if (blinkState === 'closing') {
-      blinkT += dt / 0.08; // 80ms to close
-      eyeVal = Math.max(0, 1 - blinkT);
-      if (blinkT >= 1) {
-        blinkState = 'closed';
-        blinkT = 0;
-      }
+      blinkT += dt / 0.08; eyeVal = Math.max(0, 1 - blinkT);
+      if (blinkT >= 1) { blinkState = 'closed'; blinkT = 0; }
     } else if (blinkState === 'closed') {
-      blinkT += dt / 0.05; // 50ms closed
-      eyeVal = 0;
-      if (blinkT >= 1) {
-        blinkState = 'opening';
-        blinkT = 0;
-      }
+      blinkT += dt / 0.05; eyeVal = 0;
+      if (blinkT >= 1) { blinkState = 'opening'; blinkT = 0; }
     } else if (blinkState === 'opening') {
-      blinkT += dt / 0.10; // 100ms to open
-      eyeVal = Math.min(1, blinkT);
-      if (blinkT >= 1) {
-        scheduleNextBlink();
-        eyeVal = 1;
-      }
+      blinkT += dt / 0.10; eyeVal = Math.min(1, blinkT);
+      if (blinkT >= 1) { scheduleNextBlink(); eyeVal = 1; }
     }
 
     if (model) {
-      setCoreParam('ParamEyeROpen', eyeVal);
-      setCoreParam('ParamEyeLOpen', eyeVal);
+      setCoreParam(P.eyeR, eyeVal);
+      setCoreParam(P.eyeL, eyeVal);
     }
-
     if (DEBUG) dbgBlink.textContent = blinkState;
   }
 
@@ -1755,16 +2031,11 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     const dt = delta / 60;
     idleBreath += dt;
     idleHead   += dt;
-
     if (!model) return;
-
-    // Napas: siklus ~4 detik, amplitudo kecil
     const breathVal = Math.sin(idleBreath * (Math.PI * 2 / 4)) * 0.4;
-    setCoreParam('ParamBreath', breathVal);
-
-    // Kepala goyang pelan: siklus ~7 detik
+    setCoreParam(P.breath, breathVal);
     idleAngleZ = Math.sin(idleHead * (Math.PI * 2 / 7)) * 4;
-    setCoreParam('ParamAngleZ', idleAngleZ);
+    setCoreParam(P.angleZ, idleAngleZ);
   }
 
   /* ── Cursor follow ───────────────────────────────────────────── */
@@ -1772,65 +2043,46 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     if (!model) return;
     const dt = delta / 60;
     const lerpSpeed = 3.5 * dt;
-
-    // Smooth lerp
     smoothCX += (cursorX - smoothCX) * lerpSpeed;
     smoothCY += (cursorY - smoothCY) * lerpSpeed;
-
-    // Map ke range Live2D parameter
-    // X: -1..1 → ParamAngleX: cursor kiri = negatif (kepala ke kiri)
-    const angleX  = (smoothCX - 0.5) * 2 * 20;   // max ±20
-    const angleY  = (0.5 - smoothCY) * 2 * 15;    // max ±15, invert Y
-    const eyeX    = (smoothCX - 0.5) * 2 * 1;     // ±1
-    const eyeY    = (0.5 - smoothCY) * 2 * 0.6;
-    const bodyX   = angleX * 0.12;
-
-    setCoreParam('ParamAngleX', angleX);
-    setCoreParam('ParamAngleY', angleY);
-    setCoreParam('ParamEyeBallX', eyeX);
-    setCoreParam('ParamEyeBallY', eyeY);
-    setCoreParam('ParamBodyAngleX', bodyX);
+    const angleX = (smoothCX - 0.5) * 2 * 20;
+    const angleY = (0.5 - smoothCY) * 2 * 15;
+    const eyeX   = (smoothCX - 0.5) * 2 * 1;
+    const eyeY   = (0.5 - smoothCY) * 2 * 0.6;
+    const bodyX  = angleX * 0.12;
+    setCoreParam(P.angleX, angleX);
+    setCoreParam(P.angleY, angleY);
+    setCoreParam(P.eyeX,   eyeX);
+    setCoreParam(P.eyeY,   eyeY);
+    setCoreParam(P.bodyX,  bodyX);
   }
 
   /* ── Lip sync ────────────────────────────────────────────────── */
-  // Dipanggil tiap frame. Kalau tidak speaking → tutup mulut pelan.
-  let smoothMouth = 0;   // nilai terakhir (untuk smooth close)
+  let smoothMouth = 0;
 
   function tickLipSync() {
     if (!model) return;
-
     let targetMouth = 0;
-
     if (isSpeaking && analyser && fftBuf) {
       analyser.getByteFrequencyData(fftBuf);
-
-      // Ambil rata-rata bin frekuensi vokal (kira-kira 300Hz–3kHz)
-      // Dengan sampleRate 44100 dan fftSize 256 → bin size ≈ 172Hz
-      // Bin 2..18 ≈ 344Hz..3096Hz
       const start = 2, end = Math.min(18, fftBuf.length - 1);
       let sum = 0;
       for (let i = start; i <= end; i++) sum += fftBuf[i];
-      const avg = sum / (end - start + 1);   // 0–255
-
-      // Normalize ke 0–1, dengan sedikit boost
-      targetMouth = Math.min(1, (avg / 255) * 2.2);
+      targetMouth = Math.min(1, (sum / (end - start + 1) / 255) * 2.2);
     }
-
-    // Smooth: buka cepat (0.35), tutup lebih lambat (0.12)
     const speed = targetMouth > smoothMouth ? 0.35 : 0.12;
     smoothMouth += (targetMouth - smoothMouth) * speed;
-
-    setCoreParam('ParamMouthOpenY', smoothMouth);
-    // ParamMouthForm: sedikit senyum saat berbicara
-    setCoreParam('ParamMouthForm', isSpeaking ? 0.3 : 0);
+    setCoreParam(P.mouthY, smoothMouth);
+    setCoreParam(P.mouthF, isSpeaking ? 0.3 : 0);
   }
-  /* ── Tick expression — smooth fade setiap frame ─────────────── */
+
+  /* ── Tick expression ─────────────────────────────────────────── */
   function tickExpression() {
     if (!model) return;
     for (const [paramId, s] of Object.entries(exprParams)) {
       if (s.current === s.target) continue;
-      const speed   = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
-      s.current    += (s.target - s.current) * speed;
+      const speed = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
+      s.current += (s.target - s.current) * speed;
       if (Math.abs(s.current - s.target) < 0.001) s.current = s.target;
       setCoreParam(paramId, s.current);
     }
@@ -1842,16 +2094,15 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     tickFollow(delta);
     tickLipSync();
     tickExpression();
-    tickPet(delta);   // terakhir agar efek elus menimpa animasi lain
+    tickPet(delta);
 
-    // FPS counter
     if (DEBUG) {
       frameCount++;
       const now = performance.now();
       if (now - lastFpsTime >= 1000) {
         fps = Math.round(frameCount * 1000 / (now - lastFpsTime));
         dbgFps.textContent = fps;
-        frameCount = 0;
+        frameCount  = 0;
         lastFpsTime = now;
       }
     }
@@ -1869,36 +2120,45 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   }
 
   /* ── Expression control ──────────────────────────────────────── */
-  // Bypass model.expression() — langsung setCoreParam dengan smooth fade.
-  // Alasan: pixi-live2d-display v0.4 kadang diam-diam gagal memanggil
-  // expression manager sebelum model fully ready. Semua exp3.json di model
-  // ini hanya set satu parameter masing-masing (Add blend), jadi aman
-  // di-handle manual di tickExpression() setiap frame.
   function setExpression(name) {
-    if (!model || currentExpr === name) return;
+    if (!model) return;
     currentExpr = name;
     if (DEBUG) dbgExpr.textContent = name;
 
-    // Reset semua target ke 0
+    // Untuk model dengan motions (Rem) — play motion sebagai ekspresi
+    if (currentChar?.expressions && currentChar.expressions[name]?.motion) {
+      try {
+        const motionPath = './' + currentChar.modelPath.replace('Character.model3.json', '') + currentChar.expressions[name].motion;
+        // pixi-live2d-display: motion via internalModel
+        model.internalModel.motionManager.startMotionByFile?.(motionPath)?.catch(() => {});
+      } catch (_) {}
+      statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
+      return;
+    }
+
+    // Untuk model dengan params (Liro) — smooth fade
     for (const key of Object.keys(exprParams)) {
       exprParams[key].target = 0;
     }
 
-    // Set target sesuai ekspresi — nilai dari masing-masing exp3.json
-    switch (name) {
-      case 'blush':    exprParams.ParamBlush.target    =  1; break;
-      case 'browLink': exprParams.ParamBrowLink.target = -1; break; // Add blend, nilai negatif
-      case 'cool':     exprParams.ParamCool.target     =  1; break;
-      case 'worried':  exprParams.ParamBrowForm.target =  1; break;
-      // 'none': semua sudah 0
+    if (currentChar?.expressions) {
+      const exprCfg = currentChar.expressions[name];
+      if (exprCfg?.param) {
+        if (exprParams[exprCfg.param] !== undefined) {
+          exprParams[exprCfg.param].target = exprCfg.value;
+        }
+      }
+    } else {
+      // Fallback hardcoded Liro
+      switch (name) {
+        case 'blush':    exprParams.ParamBlush.target    =  1; break;
+        case 'browLink': exprParams.ParamBrowLink.target = -1; break;
+        case 'cool':     exprParams.ParamCool.target     =  1; break;
+        case 'worried':  exprParams.ParamBrowForm.target =  1; break;
+      }
     }
 
-    // Update pill UI
-    exprPills.forEach(p => {
-      p.classList.toggle('active', p.dataset.expr === name);
-    });
-
-    // Update status tag
+    exprPills.forEach(p => p.classList.toggle('active', p.dataset.expr === name));
     statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
   }
 
@@ -1906,13 +2166,12 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     pill.addEventListener('click', () => setExpression(pill.dataset.expr));
   });
 
-  /* ── Expression bar toggle (mobile & desktop) ───────────────── */
+  /* ── Expression bar toggle ───────────────────────────────────── */
   function initExprToggle() {
     exprToggle.style.display = 'flex';
     exprToggle.addEventListener('click', () => {
       const isOpen = exprBar.classList.toggle('open');
       exprToggle.classList.toggle('open', isOpen);
-      // Update label sesuai ekspresi aktif
       const activeExpr = document.querySelector('.expr-pill.active');
       exprToggle.childNodes[0].textContent = (activeExpr?.textContent?.trim() || '😐 Ekspresi') + ' ';
     });
@@ -1921,31 +2180,17 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
 
   /* ── Tap model → random blink ────────────────────────────────── */
   canvas.addEventListener('click', () => {
-    if (blinkState === 'open') {
-      blinkTimer = 0; // trigger blink segera
-    }
+    if (blinkState === 'open') blinkTimer = 0;
   });
 
-  /* ── Head petting ────────────────────────────────────────────── */
-  // Area kepala = atas ~35% canvas (model di-anchor bawah, kepala di atas)
-  function isHeadZone(relY, relX) {
-    return relY < 0.48 && relX > 0.12 && relX < 0.88;
-  }
-
-  /* ── Unified pointer handler (pet + bubble tap) ─────────── */
-  let _tapStartX   = 0, _tapStartY = 0, _tapMoved = false;
-  let _bubbleCooldown = 0;   // timestamp ms — bubble tidak bisa muncul sebelum ini
-  const BUBBLE_COOLDOWN_MS = 4000; // 4 detik cooldown antar tap bubble
+  /* ── Unified pointer handler ─────────────────────────────── */
+  let _tapStartX = 0, _tapStartY = 0, _tapMoved = false;
 
   canvas.addEventListener('pointerdown', e => {
     const rect = canvas.getBoundingClientRect();
     const y = (e.clientY - rect.top)  / rect.height;
     const x = (e.clientX - rect.left) / rect.width;
-
-    // Pet hanya aktif saat hold di zona kepala
     if (isHeadZone(y, x)) petActive = true;
-
-    // Simpan posisi awal untuk deteksi tap vs drag
     _tapStartX = e.clientX;
     _tapStartY = e.clientY;
     _tapMoved  = false;
@@ -1959,27 +2204,22 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
 
   canvas.addEventListener('pointerup', e => {
     petActive = false;
-
-    // Tap bubble — hanya kalau: bukan drag, tidak thinking/speaking, cooldown habis
-    if (_tapMoved) return;
-    if (isThinking || isSpeaking) return;
+    if (_tapMoved || isThinking || isSpeaking) return;
     if (Date.now() < _bubbleCooldown) return;
 
     const rect = canvas.getBoundingClientRect();
     const y = (e.clientY - rect.top)  / rect.height;
     const x = (e.clientX - rect.left) / rect.width;
 
-
-
     if (isHeadZone(y, x)) {
-      showIdleBubble(pickRandom(BUBBLE_HEAD), 3500);
+      showIdleBubble(pickRandom(getBubbles('head')), 3500);
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isBodyZone(y, x)) {
-      showIdleBubble(pickRandom(BUBBLE_BODY), 3000);
+      showIdleBubble(pickRandom(getBubbles('body')), 3000);
       triggerNudge();
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isLegZone(y, x)) {
-      showIdleBubble(pickRandom(BUBBLE_LEG), 3000);
+      showIdleBubble(pickRandom(getBubbles('leg')), 3000);
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     }
   }, { passive: true });
@@ -1990,88 +2230,72 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   function tickPet(delta) {
     if (!model) return;
     const dt = delta / 60;
-
-    // Intensity naik cepat (4×/s) saat dielus, turun lebih lambat (2×/s) saat berhenti
     const targetI = petActive ? 1 : 0;
     petIntensity += (targetI - petIntensity) * (petActive ? 4 * dt : 2 * dt);
 
     if (petIntensity < 0.001) {
       if (petIntensity > 0) {
-        // Reset semua param sekali saat benar-benar berhenti
-        petIntensity = 0;
+        petIntensity   = 0;
         petBubbleShown = false;
-        setCoreParam('ParamEyeLSmile', 0);
-        setCoreParam('ParamEyeRSmile', 0);
-        setCoreParam('ParamHairFrontL1', 0); setCoreParam('ParamHairFrontL2', 0);
-        setCoreParam('ParamHairFrontR1', 0); setCoreParam('ParamHairFrontR2', 0);
-        setCoreParam('ParamHairSideL1',  0); setCoreParam('ParamHairSideR1',  0);
-        exprParams.ParamBlush.target = currentExpr === 'blush' ? 1 : 0;
+        setCoreParam(P.eyeLSmile, 0);
+        setCoreParam(P.eyeRSmile, 0);
+        setCoreParam(P.hairFL1, 0); setCoreParam(P.hairFL2, 0);
+        setCoreParam(P.hairFR1, 0); setCoreParam(P.hairFR2, 0);
+        setCoreParam(P.hairSL1, 0); setCoreParam(P.hairSR1, 0);
+        if (exprParams.ParamBlush) exprParams.ParamBlush.target = currentExpr === 'blush' ? 1 : 0;
       }
       return;
     }
 
-    if (petActive) petHairT += dt;
+    if (petActive) petHairT += delta / 60;
     const t = petHairT;
     const i = petIntensity;
 
-    // Bubble elus — muncul setelah ~1.5 detik dielus, sekali per sesi
     if (petActive && !petBubbleShown && petHairT > 1.5) {
       petBubbleShown = true;
-      showIdleBubble(pickRandom(BUBBLE_PET), 3000);
+      showIdleBubble(pickRandom(getBubbles('pet')), 3000);
     }
 
-    // Blush — tumpang tindih dengan ekspresi aktif
-    exprParams.ParamBlush.target = Math.max(currentExpr === 'blush' ? 1 : 0, i);
+    if (exprParams.ParamBlush) exprParams.ParamBlush.target = Math.max(currentExpr === 'blush' ? 1 : 0, i);
 
-    // Mata setengah tertutup senang (eye smile)
-    setCoreParam('ParamEyeLSmile', i * 0.9);
-    setCoreParam('ParamEyeRSmile', i * 0.9);
+    setCoreParam(P.eyeLSmile, i * 0.9);
+    setCoreParam(P.eyeRSmile, i * 0.9);
+    if (!isSpeaking) setCoreParam(P.mouthF, i * 0.5);
+    setCoreParam(P.angleZ, idleAngleZ + i * (4 + Math.sin(t * 1.3) * 1.8));
 
-    // Mulut senyum kecil (tidak saat bicara — lip sync mengambil alih)
-    if (!isSpeaking) setCoreParam('ParamMouthForm', i * 0.5);
-
-    // Kepala miring + goyang kecil di atas nilai idle
-    setCoreParam('ParamAngleZ', idleAngleZ + i * (4 + Math.sin(t * 1.3) * 1.8));
-
-    // Rambut depan terusik — osilasi berlapis
     const ha = i * 0.5;
-    setCoreParam('ParamHairFrontL1', Math.sin(t * 3.1)       * ha);
-    setCoreParam('ParamHairFrontL2', Math.sin(t * 3.1 + 0.9) * ha);
-    setCoreParam('ParamHairFrontR1', Math.sin(t * 2.9 + 0.5) * ha);
-    setCoreParam('ParamHairFrontR2', Math.sin(t * 2.9 + 1.4) * ha);
-
-    // Rambut samping sedikit ikut bergerak
+    setCoreParam(P.hairFL1, Math.sin(t * 3.1)       * ha);
+    setCoreParam(P.hairFL2, Math.sin(t * 3.1 + 0.9) * ha);
+    setCoreParam(P.hairFR1, Math.sin(t * 2.9 + 0.5) * ha);
+    setCoreParam(P.hairFR2, Math.sin(t * 2.9 + 1.4) * ha);
     const sa = i * 0.35;
-    setCoreParam('ParamHairSideL1', Math.sin(t * 2.3 + 0.3) * sa);
-    setCoreParam('ParamHairSideR1', Math.sin(t * 2.1 + 0.7) * sa);
+    setCoreParam(P.hairSL1, Math.sin(t * 2.3 + 0.3) * sa);
+    setCoreParam(P.hairSR1, Math.sin(t * 2.1 + 0.7) * sa);
   }
 
-  /* ── Keyboard shortcut: D = toggle debug ─────────────────────── */
+  /* ── Keyboard shortcut ────────────────────────────────────────── */
   window.addEventListener('keydown', e => {
-    if (e.key === 'd' || e.key === 'D') {
-      debugPanel.classList.toggle('show');
-    }
+    if (e.key === 'd' || e.key === 'D') debugPanel.classList.toggle('show');
   });
 
   /* ================================================================
-     RESIZER — drag to resize model vs chat panel
+     RESIZER
   ================================================================ */
   (() => {
-    const resizer   = document.getElementById('resizer');
-    const chatPanel = document.getElementById('chat-panel');
+    const resizer    = document.getElementById('resizer');
+    const chatPanel  = document.getElementById('chat-panel');
     const modelPanel = document.getElementById('model-panel');
-    const appEl     = document.getElementById('app');
 
     const STORAGE_KEY = 'assistant_panel_size';
     const isMobile    = () => window.innerWidth <= 700;
 
-    // Batas min/max
-    const DESKTOP_MIN = 220;   // px chat width
+    const DESKTOP_MIN = 220;
     const DESKTOP_MAX = () => window.innerWidth * 0.65;
-    const MOBILE_MIN  = () => Math.round(window.innerHeight * 0.35);  // min 35% layar
-    const MOBILE_MAX  = () => Math.round(window.innerHeight * 0.72);  // max 72% layar
+    const MOBILE_MIN  = () => Math.round(window.innerHeight * 0.35);
+    const MOBILE_MAX  = () => Math.round(window.innerHeight * 0.72);
 
-    // Load saved size
+    function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
     function loadSaved() {
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -2090,24 +2314,17 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
       } catch (_) {}
     }
 
-    function clamp(val, min, max) {
-      return Math.max(min, Math.min(max, val));
-    }
-
     loadSaved();
     requestAnimationFrame(() => { if (typeof resizeApp === 'function') resizeApp(); });
     window.addEventListener('resize', loadSaved);
 
-    let dragging = false;
-    let startPos = 0;
-    let startSize = 0;
+    let dragging = false, startPos = 0, startSize = 0;
 
     function onDragStart(e) {
-      dragging  = true;
+      dragging = true;
       resizer.classList.add('dragging');
-      document.body.style.userSelect   = 'none';
-      document.body.style.cursor       = isMobile() ? 'row-resize' : 'col-resize';
-
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor     = isMobile() ? 'row-resize' : 'col-resize';
       if (isMobile()) {
         startPos  = e.touches ? e.touches[0].clientY : e.clientY;
         startSize = modelPanel.getBoundingClientRect().height;
@@ -2115,24 +2332,18 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
         startPos  = e.touches ? e.touches[0].clientX : e.clientX;
         startSize = chatPanel.getBoundingClientRect().width;
       }
-
       e.preventDefault();
     }
 
     function onDragMove(e) {
       if (!dragging) return;
       const pos = e.touches ? e.touches[0].clientY || e.touches[0].clientX : (isMobile() ? e.clientY : e.clientX);
-
       if (isMobile()) {
-        const delta = pos - startPos;
-        const newH  = clamp(startSize + delta, MOBILE_MIN(), MOBILE_MAX());
+        const newH = clamp(startSize + (pos - startPos), MOBILE_MIN(), MOBILE_MAX());
         modelPanel.style.height = newH + 'px';
         modelPanel.style.flex   = 'none';
-        // Tidak panggil resizeApp() di sini — canvas CSS ikut stretch otomatis
-        // via width/height: 100%, WebGL resize hanya di onDragEnd.
       } else {
-        const delta = pos - startPos;
-        const newW  = clamp(startSize + delta, DESKTOP_MIN, DESKTOP_MAX());
+        const newW = clamp(startSize + (pos - startPos), DESKTOP_MIN, DESKTOP_MAX());
         chatPanel.style.width = newW + 'px';
       }
     }
@@ -2143,41 +2354,24 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
       resizer.classList.remove('dragging');
       document.body.style.userSelect = '';
       document.body.style.cursor     = '';
-
-      // Simpan ukuran
-      if (isMobile()) {
-        saveSize('modelH', parseFloat(modelPanel.style.height));
-      } else {
-        saveSize('chatW', parseFloat(chatPanel.style.width));
-      }
-
+      if (isMobile()) saveSize('modelH', parseFloat(modelPanel.style.height));
+      else saveSize('chatW', parseFloat(chatPanel.style.width));
       if (typeof resizeApp === 'function') resizeApp();
     }
 
-    // Mouse events
     resizer.addEventListener('mousedown',  onDragStart);
     window.addEventListener('mousemove',   onDragMove);
     window.addEventListener('mouseup',     onDragEnd);
-
-    // Touch events
     resizer.addEventListener('touchstart',  onDragStart, { passive: false });
     window.addEventListener('touchmove',    onDragMove,  { passive: true });
     window.addEventListener('touchend',     onDragEnd);
 
-    // Double-tap resizer → reset ke default
     let lastTap = 0;
     resizer.addEventListener('touchend', () => {
       const now = Date.now();
       if (now - lastTap < 300) {
-        // Reset
-        if (isMobile()) {
-          modelPanel.style.height = '';
-          modelPanel.style.flex   = '';
-          saveSize('modelH', null);
-        } else {
-          chatPanel.style.width = '360px';
-          saveSize('chatW', 360);
-        }
+        if (isMobile()) { modelPanel.style.height = ''; modelPanel.style.flex = ''; saveSize('modelH', null); }
+        else { chatPanel.style.width = '360px'; saveSize('chatW', 360); }
         if (typeof resizeApp === 'function') resizeApp();
       }
       lastTap = now;
@@ -2187,34 +2381,42 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   /* ================================================================
      CHAT SYSTEM
   ================================================================ */
-
-  /* ── Init chat ───────────────────────────────────────────────── */
-  function initChat() {
+  function initChat(isSwitch = false) {
     subtitleEl.textContent = 'online · siap ngobrol';
-    renderWelcome();       // async, fire-and-forget — bubble muncul setelah resolve
-    setupInputHandlers();
+    renderWelcome(isSwitch);
+    if (!isSwitch) setupInputHandlers();
   }
 
-  async function renderWelcome() {
+  async function renderWelcome(isSwitch = false) {
     let name = null;
     try {
       if (typeof EcosystemDB !== 'undefined') {
         name = await EcosystemDB.kv.kronik.get('profile_name');
       }
     } catch (_) {}
-    const greeting = name ? `Hei, ${name}! ` : 'Hei! ';
-    appendMessage('assistant', `${greeting}Aku Liro. Ada yang bisa aku bantu hari ini? 😊`);
+
+    const charName = currentChar?.name || 'Asisten';
+
+    let greeting;
+    if (currentCharId === 'rem') {
+      greeting = name
+        ? `Selamat datang, Tuan ${name}. Rem siap melayani Tuan kapan saja. 💙`
+        : `Selamat datang. Rem adalah pelayan Tuan. Ada yang bisa Rem bantu? 💙`;
+    } else {
+      greeting = name
+        ? `Hei, ${name}! Aku ${charName}. Ada yang bisa aku bantu hari ini? 😊`
+        : `Hei! Aku ${charName}. Ada yang bisa aku bantu hari ini? 😊`;
+    }
+
+    appendMessage('assistant', greeting);
   }
 
-  /* ── Input handlers ─────────────────────────────────────────── */
   function setupInputHandlers() {
-    // Auto-resize textarea
     msgInput.addEventListener('input', () => {
       msgInput.style.height = 'auto';
       msgInput.style.height = Math.min(msgInput.scrollHeight, 110) + 'px';
     });
 
-    // Enter = kirim, Shift+Enter = baris baru
     msgInput.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -2224,69 +2426,53 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
 
     sendBtn.addEventListener('click', handleSend);
 
-    // Sync tampilan awal tombol mute sesuai state tersimpan
     muteBtn.textContent = isMuted ? '🔇' : '🔊';
     muteBtn.classList.toggle('muted', isMuted);
-    muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara Liro';
+    muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara';
 
-    // Mute/unmute TTS
     muteBtn.addEventListener('click', () => {
       isMuted = !isMuted;
-      localStorage.setItem('liro_muted', isMuted); // simpan state
+      localStorage.setItem('liro_muted', isMuted);
       muteBtn.textContent = isMuted ? '🔇' : '🔊';
       muteBtn.classList.toggle('muted', isMuted);
-      muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara Liro';
+      muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara';
 
-      // Kalau sedang main audio, stop sekarang
       if (isMuted && currentSource) {
         try { currentSource.stop(); } catch (_) {}
         currentSource = null;
         isSpeaking    = false;
         smoothMouth   = 0;
-        setCoreParam('ParamMouthOpenY', 0);
-        setCoreParam('ParamMouthForm',  0);
+        setCoreParam(P.mouthY, 0);
+        setCoreParam(P.mouthF, 0);
         document.getElementById('model-tag').classList.remove('speaking');
-        statusEl.textContent = `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
+        statusEl.textContent = '· idle';
       }
     });
   }
 
-  /* ── Handle send ─────────────────────────────────────────────── */
   async function handleSend() {
     const text = msgInput.value.trim();
     if (!text || isThinking) return;
-
-    // Sembunyikan idle bubble kalau masih tampil
     hideIdleBubble();
-
-    // Reset input
     msgInput.value = '';
     msgInput.style.height = 'auto';
-
-    // Tampilkan bubble user
     appendMessage('user', text);
-
-    // Tambah ke history
     chatHistory.push({ role: 'user', content: text });
-
-    // Kirim ke API
     await sendToAPI();
   }
 
-  /* ── Send to /api/chat ───────────────────────────────────────── */
   async function sendToAPI() {
     isThinking = true;
     setUIThinking(true);
-
-    // Typing indicator
     const typingEl = appendTyping();
 
     try {
-      // Baca ecosystem context paralel dengan typing indicator tampil
       const ecosystemCtx = await loadEcosystemContext();
 
-      // Bangun system prompt final — inject context kalau ada
-      let finalSystemPrompt = SYSTEM_PROMPT;
+      // Ambil system prompt dari character config
+      const basePrompt = currentChar?.systemPrompt || `Kamu adalah asisten bernama ${currentChar?.name || 'Asisten'}.`;
+
+      let finalSystemPrompt = basePrompt;
       if (ecosystemCtx?.summary) {
         const greeting = ecosystemCtx.userName ? `Nama pengguna adalah ${ecosystemCtx.userName}.` : '';
         finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan.`;
@@ -2298,8 +2484,8 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
           systemPrompt: finalSystemPrompt,
           expression:   currentExpr,
           ...(ecosystemCtx ? {
-            userName:   ecosystemCtx.userName,
-            ecosystem:  ecosystemCtx.summary,
+            userName:  ecosystemCtx.userName,
+            ecosystem: ecosystemCtx.summary,
           } : {}),
         },
       };
@@ -2317,22 +2503,18 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
 
       const data = await res.json();
       const rawReply = data?.text || data?.message || data?.content || '';
-
       if (!rawReply) throw new Error('Respons kosong dari server');
 
-      // Parse tag — hapus dari teks, simpan URL untuk dibuka setelah TTS
       const { cleanText: afterOpen, openUrl } = parseOpenTag(rawReply);
       const { cleanText: replyText }          = parseExprTag(afterOpen);
 
-      // Tambah ke history (pakai teks bersih tanpa tag)
       chatHistory.push({ role: 'assistant', content: replyText });
-
-      // Hapus typing, tampilkan bubble
       typingEl.remove();
       appendMessage('assistant', replyText);
 
-      // Buka app setelah TTS selesai (atau setelah jeda estimasi kalau muted)
-      playTTS(replyText, openUrl ? () => window.open(openUrl, '_blank') : null);
+      // Kirim voiceId karakter ke TTS
+      const voiceId = currentChar?.tts?.voiceId || '';
+      playTTS(replyText, openUrl ? () => window.open(openUrl, '_blank') : null, voiceId);
 
     } catch (err) {
       typingEl.remove();
@@ -2341,25 +2523,21 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     } finally {
       isThinking = false;
       setUIThinking(false);
-      // Cooldown bubble setelah chat selesai — tunggu 3 detik sebelum bisa tap lagi
       _bubbleCooldown = Date.now() + 3000;
     }
   }
 
-  /* ── UI state helpers ────────────────────────────────────────── */
   function setUIThinking(on) {
-    sendBtn.disabled = on;
+    sendBtn.disabled  = on;
     msgInput.disabled = on;
-    statusEl.textContent = on ? '· mengetik…' : `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
+    statusEl.textContent = on ? '· mengetik…' : `· idle`;
   }
 
-  /* ── Render helpers ──────────────────────────────────────────── */
   function appendMessage(role, text) {
-    // Hapus placeholder kalau masih ada
     const ph = messagesEl.querySelector('.chat-placeholder');
     if (ph) ph.remove();
 
-    const now    = new Date();
+    const now = new Date();
     const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
     const msgDiv = document.createElement('div');
@@ -2377,17 +2555,13 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     msgDiv.appendChild(timeDiv);
     messagesEl.appendChild(msgDiv);
     scrollToBottom();
-
     return msgDiv;
   }
 
   function appendTyping() {
     const el = document.createElement('div');
     el.className = 'typing-indicator';
-    el.innerHTML = `
-      <div class="typing-dots">
-        <span></span><span></span><span></span>
-      </div>`;
+    el.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
     messagesEl.appendChild(el);
     scrollToBottom();
     return el;
@@ -2397,7 +2571,6 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  /* ── Toast error ─────────────────────────────────────────────── */
   let toastTimer = null;
   function showToast(msg) {
     chatToast.textContent = msg;
@@ -2409,68 +2582,46 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
   /* ================================================================
      TTS SYSTEM
   ================================================================ */
-
-  /**
-   * Inisialisasi AudioContext (harus setelah user gesture).
-   * Dipanggil lazy saat TTS pertama kali dipakai.
-   */
   function ensureAudioCtx() {
     if (audioCtx) return;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    // Analyser untuk lip sync
     analyser         = audioCtx.createAnalyser();
-    analyser.fftSize = 256;   // 128 bin
+    analyser.fftSize = 256;
     fftBuf           = new Uint8Array(analyser.frequencyBinCount);
     analyser.connect(audioCtx.destination);
   }
 
-  /**
-   * Minta audio dari /api/tts, decode, dan mainkan.
-   * Pipeline: fetch → ArrayBuffer → decodeAudioData → AudioBufferSourceNode
-   *           → AnalyserNode → destination
-   *
-   * @param {string} text - Teks yang akan di-TTS
-   */
-  async function playTTS(text, onComplete = null) {
+  async function playTTS(text, onComplete = null, voiceId = '') {
     if (!text) { onComplete?.(); return; }
     if (isMuted) {
-      // Muted — tetap jalankan callback setelah jeda baca estimasi
       const delay = Math.min(Math.max(text.length * 35, 800), 3500);
       setTimeout(() => onComplete?.(), delay);
       return;
     }
 
-    // Inisialisasi AudioContext (perlu user gesture — sudah terpenuhi via send button)
     ensureAudioCtx();
 
-    // Kalau ada audio sebelumnya, hentikan
     if (currentSource) {
       try { currentSource.stop(); } catch (_) {}
       currentSource = null;
     }
 
     try {
-      // Resume context kalau suspended (mobile)
       if (audioCtx.state === 'suspended') await audioCtx.resume();
-
       statusEl.textContent = '· berbicara…';
 
       const res = await fetch('/api/tts', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ text }),
+        body:    JSON.stringify({ text, voiceId: voiceId || undefined }),
       });
 
       if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
 
-      const arrayBuf   = await res.arrayBuffer();
-      const audioBuf   = await audioCtx.decodeAudioData(arrayBuf);
-
-      const source     = audioCtx.createBufferSource();
-      source.buffer    = audioBuf;
-
-      // Route: source → analyser → destination
+      const arrayBuf = await res.arrayBuffer();
+      const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+      const source   = audioCtx.createBufferSource();
+      source.buffer  = audioBuf;
       source.connect(analyser);
 
       isSpeaking    = true;
@@ -2483,22 +2634,38 @@ Contoh: "Oke, aku bukain IdeKu sekarang! [OPEN:ideku] [EXPR:blush]"`;
         isSpeaking    = false;
         currentSource = null;
         smoothMouth   = 0;
-        setCoreParam('ParamMouthOpenY', 0);
-        setCoreParam('ParamMouthForm',  0);
+        setCoreParam(P.mouthY, 0);
+        setCoreParam(P.mouthF, 0);
         document.getElementById('model-tag').classList.remove('speaking');
-        statusEl.textContent = `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
+        statusEl.textContent = '· idle';
         onComplete?.();
       };
 
     } catch (err) {
       isSpeaking = false;
       console.warn('[TTS] Error:', err);
-      statusEl.textContent = `· ${currentExpr === 'none' ? 'idle' : currentExpr}`;
-      // TTS gagal — tetap jalankan callback setelah jeda singkat
+      statusEl.textContent = '· idle';
       setTimeout(() => onComplete?.(), 500);
     }
   }
 
+  /* ================================================================
+     INIT — Load karakter pertama kali
+  ================================================================ */
+  currentChar = await loadCharConfig(currentCharId);
+  if (!currentChar) {
+    // Fallback ke liro kalau config gagal load
+    currentCharId = 'liro';
+    currentChar   = await loadCharConfig('liro');
+  }
+
+  updateCharBtns(currentCharId);
+
+  const loadOk = await loadModel(currentChar, false);
+  if (loadOk) {
+    resetIdleTimer();
+    initChat(false);
+  }
 
 })();
 </script>
