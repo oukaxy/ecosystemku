@@ -2336,6 +2336,33 @@
     if (e.key === 'd' || e.key === 'D') debugPanel.classList.toggle('show');
   });
 
+  /* ── Tap 5x nama tag → debug motion info ─────────────────────── */
+  let _tagTapCount = 0, _tagTapTimer = null;
+  document.getElementById('model-tag').addEventListener('click', () => {
+    _tagTapCount++;
+    clearTimeout(_tagTapTimer);
+    _tagTapTimer = setTimeout(() => { _tagTapCount = 0; }, 1000);
+    if (_tagTapCount >= 5) {
+      _tagTapCount = 0;
+      try {
+        const mm = model?.internalModel?.motionManager;
+        const defs = mm?.definitions || {};
+        const groups = Object.keys(defs);
+        const info = groups.length
+          ? groups.map(g => `${g}: ${defs[g].length} motions`).join('
+')
+          : 'Tidak ada motion groups';
+        alert('[Motion Debug]
+' + info + '
+
+startMotionByFile: ' + (typeof mm?.startMotionByFile) + '
+startMotion: ' + (typeof mm?.startMotion));
+      } catch(e) {
+        alert('Error: ' + e.message);
+      }
+    }
+  });
+
   /* ================================================================
      RESIZER
   ================================================================ */
