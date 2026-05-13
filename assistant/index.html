@@ -1970,9 +1970,16 @@
 
   /* ── Position model ─────────────────────────────────────────── */
   function positionModel(m, W, H) {
-    const isMobile = W < 700;
-    const targetH  = isMobile ? H * 1.08 : H * 0.96;
-    const scale    = targetH / (m.internalModel?.height || 800);
+    const isMobile    = W < 700;
+    const isRem       = currentCharId === 'rem';
+
+    // Rem lebih tinggi dari Liro, perlu scale lebih kecil agar tidak kepotong
+    const scaleFactor = isRem
+      ? (isMobile ? 0.88 : 0.80)
+      : (isMobile ? 1.08 : 0.96);
+
+    const targetH = H * scaleFactor;
+    const scale   = targetH / (m.internalModel?.height || 800);
     m.scale.set(scale);
     m.anchor.set(0.5, 1);
     m.x = W * 0.5;
