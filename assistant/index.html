@@ -1066,11 +1066,7 @@
     <!-- Expression tester -->
     <button id="expr-toggle" style="display:none">😐 Ekspresi <span class="toggle-arrow">▲</span></button>
     <div id="expression-bar">
-      <button class="expr-pill active" data-expr="none">😐 Default</button>
-      <button class="expr-pill" data-expr="blush">😳 Blush</button>
-      <button class="expr-pill" data-expr="browLink">🤨 BrowLink</button>
-      <button class="expr-pill" data-expr="cool">😎 Cool</button>
-      <button class="expr-pill" data-expr="worried">😟 Worried</button>
+      <!-- Diisi dinamis oleh renderExprBar() saat karakter dimuat -->
     </div>
 
     <div id="input-area">
@@ -1327,7 +1323,6 @@
   const statusEl      = document.querySelector('#model-tag .status');
   const modelNameEl   = document.querySelector('#model-tag .name');
   const subtitleEl    = document.getElementById('chat-subtitle');
-  const exprPills     = document.querySelectorAll('.expr-pill');
   const exprToggle    = document.getElementById('expr-toggle');
   const exprBar       = document.getElementById('expression-bar');
   const debugPanel    = document.getElementById('debug-panel');
@@ -1553,7 +1548,8 @@
       statusEl.textContent = '· idle';
       if (DEBUG) dbgChar.textContent = charCfg.id;
 
-
+      // Render expression bar sesuai karakter
+      renderExprBar(charCfg.id);
 
       // Update placeholder input
       msgInput.placeholder = `Ngobrol sama ${charCfg.name}…`;
@@ -1943,7 +1939,7 @@
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
       showIdleBubble(pickRandom(getBubbles('idle')), 5000);
-      if (currentCharId === 'rem') playRemMotion(Math.random() > 0.5 ? 'wait' : 'bound');
+      if (currentCharId === 'rem') playRemMotion('idle');
       scheduleIdleBubble();
     }, IDLE_DELAY);
   }
@@ -2138,36 +2134,42 @@
   }
 
   /* ── Expression control ──────────────────────────────────────── */
-  // Rem motion map — semua 27 motion dipetakan ke tag ekspresi
+  // Rem motion map — group name → jumlah motion (sesuai Character.model3.json)
+  // playRemMotion akan random index dari 0..(count-1)
   const REM_MOTION_MAP = {
-    'happy':   ['motions/00_Happy_01.motion3.json', 'motions/00_Happy_02.motion3.json'],
-    'sad':     ['motions/00_Sad_01.motion3.json', 'motions/20_Expression_Sad_01.motion3.json'],
-    'cry':     ['motions/00_Cry_01.motion3.json'],
-    'angry':   ['motions/00_Anger_01.motion3.json', 'motions/20_Expression_Anger_01.motion3.json'],
-    'surprise':['motions/00_Surprise_01.motion3.json'],
-    'shame':   ['motions/00_Shame_01.motion3.json', 'motions/20_Expression_Shame_01.motion3.json'],
-    'upset':   ['motions/00_Upset_01.motion3.json'],
-    'serious': ['motions/00_Serious_01.motion3.json', 'motions/20_Expression_Serious_01.motion3.json'],
-    'proud':   ['motions/00_Pride_01.motion3.json'],
-    'doubt':   ['motions/00_Doubt_01.motion3.json', 'motions/20_Expression_Puzzle_01.motion3.json'],
-    'puzzle':  ['motions/00_Puzzle_01.motion3.json', 'motions/20_Expression_Puzzle_02.motion3.json'],
-    'appeal':  ['motions/00_Appeal_01.motion3.json'],
-    'navi':    ['motions/00_Navi_01.motion3.json'],
-    'wait':    ['motions/00_Wait_01.motion3.json'],
-    'bound':   ['motions/bound.motion3.json', 'motions/bound_double.motion3.json', 'motions/bound_down.motion3.json'],
-    'smile':   ['motions/20_Expression_Smile_01.motion3.json'],
-    'none':    [],
+    'happy':    2,
+    'sad':      2,
+    'cry':      1,
+    'angry':    2,
+    'surprise': 1,
+    'shame':    2,
+    'upset':    1,
+    'serious':  2,
+    'proud':    1,
+    'doubt':    1,
+    'puzzle':   3,
+    'appeal':   3,
+    'smile':    1,
+    'idle':     5,
+    'wait':     0,
+    'bound':    0,
+    'navi':     0,
+    'none':     0,
   };
 
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
-    const list = REM_MOTION_MAP[name];
-    if (!list || list.length === 0) return;
-    const file = list[Math.floor(Math.random() * list.length)];
-    const base = './characters/rem/';
+    const count = REM_MOTION_MAP[name];
+    if (!count || count === 0) return;
+    const index = Math.floor(Math.random() * count);
     try {
-      model.internalModel.motionManager.startMotionByFile?.(base + file)?.catch(() => {});
-    } catch (_) {}
+      // pixi-live2d-display v0.4: model.motion(group, index, priority)
+      model.motion(name, index, 2);
+    } catch (_) {
+      try {
+        model.internalModel.motionManager.startMotion(name, index, 2);
+      } catch (_2) {}
+    }
   }
 
   function setExpression(name) {
@@ -2177,7 +2179,8 @@
 
     // Rem — play motion
     if (currentCharId === 'rem') {
-      playRemMotion(name);
+      // 'none' = kembali ke idle motion
+      playRemMotion(name === 'none' ? 'idle' : name);
       statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
       return;
     }
@@ -2204,13 +2207,51 @@
       }
     }
 
-    exprPills.forEach(p => p.classList.toggle('active', p.dataset.expr === name));
+    // Update active pill
+    document.querySelectorAll('.expr-pill').forEach(p =>
+      p.classList.toggle('active', p.dataset.expr === name)
+    );
     statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
   }
 
-  exprPills.forEach(pill => {
-    pill.addEventListener('click', () => setExpression(pill.dataset.expr));
-  });
+  // Config ekspresi per karakter — emoji + label + expr key
+  const EXPR_CONFIG = {
+    liro: [
+      { expr: 'none',     emoji: '😐', label: 'Default'  },
+      { expr: 'blush',    emoji: '😳', label: 'Blush'    },
+      { expr: 'browLink', emoji: '🤨', label: 'BrowLink' },
+      { expr: 'cool',     emoji: '😎', label: 'Cool'     },
+      { expr: 'worried',  emoji: '😟', label: 'Worried'  },
+    ],
+    rem: [
+      { expr: 'none',     emoji: '😐', label: 'Default'  },
+      { expr: 'happy',    emoji: '😊', label: 'Happy'    },
+      { expr: 'smile',    emoji: '🙂', label: 'Smile'    },
+      { expr: 'shame',    emoji: '😳', label: 'Shame'    },
+      { expr: 'sad',      emoji: '😢', label: 'Sad'      },
+      { expr: 'cry',      emoji: '😭', label: 'Cry'      },
+      { expr: 'angry',    emoji: '😠', label: 'Angry'    },
+      { expr: 'surprise', emoji: '😲', label: 'Surprise' },
+      { expr: 'serious',  emoji: '😤', label: 'Serious'  },
+      { expr: 'proud',    emoji: '😌', label: 'Proud'    },
+      { expr: 'doubt',    emoji: '🤔', label: 'Doubt'    },
+      { expr: 'puzzle',   emoji: '😕', label: 'Puzzle'   },
+      { expr: 'upset',    emoji: '😒', label: 'Upset'    },
+    ],
+  };
+
+  function renderExprBar(charId) {
+    const pills = EXPR_CONFIG[charId] || EXPR_CONFIG['liro'];
+    exprBar.innerHTML = pills.map(p =>
+      `<button class="expr-pill${p.expr === 'none' ? ' active' : ''}" data-expr="${p.expr}">${p.emoji} ${p.label}</button>`
+    ).join('');
+    // Re-attach listeners
+    exprBar.querySelectorAll('.expr-pill').forEach(pill => {
+      pill.addEventListener('click', () => setExpression(pill.dataset.expr));
+    });
+    // Reset expr toggle label
+    exprToggle.childNodes[0].textContent = '😐 Ekspresi ';
+  }
 
   /* ── Expression bar toggle ───────────────────────────────────── */
   function initExprToggle() {
