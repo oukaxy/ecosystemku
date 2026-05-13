@@ -1,0 +1,31 @@
+{
+  "id": "rem",
+  "name": "Rem",
+  "modelPath": "characters/rem/Character.model3.json",
+  "audioBase": "characters/rem/audio/",
+  "tts": {
+    "voiceId": "",
+    "speed": 1.0,
+    "pitch": 1.0
+  },
+  "expressions": {
+    "happy":   { "motion": "motions/00_Happy_01.motion3.json" },
+    "sad":     { "motion": "motions/00_Sad_01.motion3.json" },
+    "angry":   { "motion": "motions/00_Anger_01.motion3.json" },
+    "shame":   { "motion": "motions/00_Shame_01.motion3.json" },
+    "serious": { "motion": "motions/00_Serious_01.motion3.json" },
+    "surprise":{ "motion": "motions/00_Surprise_01.motion3.json" }
+  },
+  "params": {
+    "eyeL":    "PARAM_EYE_L_OPEN",
+    "eyeR":    "PARAM_EYE_R_OPEN",
+    "mouthY":  "PARAM_MOUTH_OPEN_Y",
+    "angleX":  "PARAM_ANGLE_X",
+    "angleY":  "PARAM_ANGLE_Y",
+    "angleZ":  "PARAM_ANGLE_Z",
+    "bodyX":   "PARAM_BODY_ANGLE_X",
+    "eyeBallX":"PARAM_EYE_BALL_X",
+    "eyeBallY":"PARAM_EYE_BALL_Y",
+    "breath":  "PARAM_BREATH"
+  }
+}
