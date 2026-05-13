@@ -742,15 +742,17 @@
       width: 56px;
       height: 56px;
       border-radius: 8px;
-      overflow: hidden;
       background: var(--input-bg);
       border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
     }
 
-    .wishlist-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .wishlist-image-wrap svg {
+      width: 24px;
+      height: 24px;
       display: block;
     }
 
@@ -913,44 +915,43 @@
       .wishlist-main { padding: 12px 12px 10px; gap: 10px; }
     }
 
-    /* ── Custom File Input ── */
-    .file-input-hidden { display: none !important; }
-    .file-input-btn {
-      width: 100%; padding: 10px 13px;
-      border: 1px dashed var(--border2); border-radius: 8px;
-      background: var(--input-bg); color: var(--text-muted);
-      font-size: 13px; font-family: 'Inter', sans-serif;
-      font-weight: 500; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 7px;
-      transition: all 0.15s;
+    /* ── Wishlist Icon Picker ── */
+    .wicon-picker-wrap { margin-top: 2px; }
+    .wicon-picker-toggle {
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border2); border-radius: 8px;
+      background: var(--input-bg); cursor: pointer;
+      display: flex; align-items: center; gap: 9px;
+      transition: background 0.15s;
     }
-    .file-input-btn:hover { border-color: var(--text-muted); color: var(--text); border-style: solid; }
-    .file-input-btn svg { flex-shrink: 0; }
-
-    /* ── Image preview thumbnail ── */
-    .img-preview-wrap {
-      display: flex; align-items: center; gap: 10px;
-      padding: 8px 10px; border-radius: 8px;
-      background: var(--input-bg); border: 1px solid var(--border);
-      margin-bottom: 8px;
+    .wicon-picker-toggle:hover { background: var(--border); }
+    .wicon-picker-preview {
+      width: 26px; height: 26px; border-radius: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text); flex-shrink: 0;
     }
-    .img-preview-thumb {
-      width: 52px; height: 52px; object-fit: cover;
-      border-radius: 6px; flex-shrink: 0;
-      border: 1px solid var(--border);
+    .wicon-picker-preview svg { width: 15px; height: 15px; display: block; }
+    .wicon-picker-label { flex: 1; text-align: left; color: var(--text); font-size: 13px; }
+    .wicon-picker-chevron { color: var(--text-faint); transition: transform 0.18s; }
+    .wicon-picker-chevron.open { transform: rotate(180deg); }
+    .wicon-picker-body { display: none; margin-top: 6px; }
+    .wicon-picker-body.open { display: block; }
+    .wicon-picker {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+      padding: 10px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 10px;
     }
-    .img-preview-info { flex: 1; min-width: 0; }
-    .img-preview-name { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .img-preview-size { font-size: 11px; color: var(--text-faint); margin-top: 2px; }
-    .img-preview-remove {
-      width: 24px; height: 24px; border-radius: 6px;
-      background: transparent; border: 1px solid transparent;
-      color: var(--text-faint); cursor: pointer; flex-shrink: 0;
+    .wicon-opt {
+      aspect-ratio: 1; border-radius: 8px;
+      border: 1.5px solid var(--border); background: var(--input-bg);
+      color: var(--text-muted); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.12s;
     }
-    .img-preview-remove:hover { background: #fef2f2; border-color: #fecaca; color: #ef4444; }
-    html.dark .img-preview-remove:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #ef4444; }
+    .wicon-opt:hover { border-color: var(--text-2); color: var(--text); }
+    .wicon-opt.active { border-color: var(--text); color: var(--text); background: var(--surface); }
+    .wicon-opt svg { width: 17px; height: 17px; }
 
     /* ── Fix 4: Compact type filter inline with status ── */
     .filters-type-inline {
@@ -1185,22 +1186,18 @@
           <input class="form-field" id="f-price" type="text" inputmode="numeric" placeholder="Contoh: 50.000" oninput="formatRupiah(this)" />
         </div>
         <div class="form-group">
-          <label class="form-label">Foto Produk</label>
-          <div id="f-image-preview" style="display:none" class="img-preview-wrap">
-            <img id="f-image-thumb" src="" alt="Preview" class="img-preview-thumb" />
-            <div class="img-preview-info">
-              <div class="img-preview-name" id="f-image-name">—</div>
-              <div class="img-preview-size" id="f-image-size"></div>
-            </div>
-            <button type="button" class="img-preview-remove" onclick="removeAddWishlistImage()" title="Hapus foto">
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+          <label class="form-label">Icon Produk</label>
+          <div class="wicon-picker-wrap">
+            <button type="button" class="wicon-picker-toggle" id="fIconPickerToggle" onclick="toggleWiconPicker('f')">
+              <div class="wicon-picker-preview" id="fIconPickerPreview"></div>
+              <span class="wicon-picker-label" id="fIconPickerLabel">Pilih icon</span>
+              <svg class="wicon-picker-chevron" id="fIconPickerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
+            <div class="wicon-picker-body" id="fIconPickerBody">
+              <div class="wicon-picker" id="fIconPicker"></div>
+            </div>
           </div>
-          <button type="button" class="file-input-btn" id="f-image-btn" onclick="document.getElementById('f-image').click()">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="12" height="9" rx="1.5"/><path d="M1 9l3-3 2.5 2.5L9 6l4 4"/><circle cx="4.5" cy="6.5" r="1"/></svg>
-            Upload Foto
-          </button>
-          <input class="file-input-hidden" id="f-image" type="file" accept="image/*" onchange="handleAddWishlistImageUpload(event)" />
+          <input type="hidden" id="f-image" value="bag" />
         </div>
       </div>
     </div>
@@ -1299,22 +1296,18 @@
         <input class="form-field" id="ew-price" type="text" inputmode="numeric" placeholder="Contoh: 250.000" oninput="formatRupiah(this)" />
       </div>
       <div class="form-group">
-        <label class="form-label">Foto Produk</label>
-        <div id="ew-image-preview" style="display:none" class="img-preview-wrap">
-          <img id="ew-image-thumb" src="" alt="Preview" class="img-preview-thumb" />
-          <div class="img-preview-info">
-            <div class="img-preview-name" id="ew-image-name">Foto tersimpan</div>
-            <div class="img-preview-size" id="ew-image-size"></div>
-          </div>
-          <button type="button" class="img-preview-remove" onclick="removeWishlistImage()" title="Hapus foto">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+        <label class="form-label">Icon Produk</label>
+        <div class="wicon-picker-wrap">
+          <button type="button" class="wicon-picker-toggle" id="ewIconPickerToggle" onclick="toggleWiconPicker('ew')">
+            <div class="wicon-picker-preview" id="ewIconPickerPreview"></div>
+            <span class="wicon-picker-label" id="ewIconPickerLabel">Pilih icon</span>
+            <svg class="wicon-picker-chevron" id="ewIconPickerChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
+          <div class="wicon-picker-body" id="ewIconPickerBody">
+            <div class="wicon-picker" id="ewIconPicker"></div>
+          </div>
         </div>
-        <button type="button" class="file-input-btn" id="ew-image-btn" onclick="document.getElementById('ew-image-file').click()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="12" height="9" rx="1.5"/><path d="M1 9l3-3 2.5 2.5L9 6l4 4"/><circle cx="4.5" cy="6.5" r="1"/></svg>
-          Ganti Foto
-        </button>
-        <input class="file-input-hidden" id="ew-image-file" type="file" accept="image/*" onchange="handleWishlistImageUpload(event)" />
+        <input type="hidden" id="ew-image-file" value="bag" />
       </div>
     </div>
     <div class="form-modal-footer">
@@ -1387,15 +1380,92 @@ function saveCategories() {
 }
 
 // ── Wishlist Image Fallback ──
-function getWishlistFallbackImage() {
-  return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='12' fill='%23f0f0f0'/%3E%3Cpath d='M34 48h8l13 26h22l7-19H43' stroke='%23c8c8c8' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='52' cy='77' r='3.5' fill='%23c8c8c8'/%3E%3Ccircle cx='70' cy='77' r='3.5' fill='%23c8c8c8'/%3E%3C/svg%3E";
+// ── Wishlist Icons ──
+const WISHLIST_ICONS = {
+  bag:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+  phone:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`,
+  laptop:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>`,
+  headphone:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 18v-6a9 9 0 0118 0v6"/><path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3z"/><path d="M3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/></svg>`,
+  watch:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="7"/><polyline points="12 9 12 12 13.5 13.5"/><path d="M16.51 17.35l-.35 3.83a2 2 0 01-2 1.82H9.83a2 2 0 01-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 019.83 1h4.35a2 2 0 012 1.82l.35 3.83"/></svg>`,
+  camera:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
+  shirt:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.57a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.57a2 2 0 00-1.34-2.23z"/></svg>`,
+  shoe:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 16l4-9 4 5 4-3 4 4"/><path d="M2 16h20v4H2z"/></svg>`,
+  book:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`,
+  gamepad:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4M15 12h.01M18 12h.01"/></svg>`,
+  furniture:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 9V7a2 2 0 00-2-2H6a2 2 0 00-2 2v2"/><path d="M2 11v5a2 2 0 002 2h16a2 2 0 002-2v-5a2 2 0 00-4 0v2H6v-2a2 2 0 00-4 0z"/><path d="M6 19v2M18 19v2"/></svg>`,
+  food:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>`,
+  bike:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 000-2h-3l-3 7-3 3"/><path d="M9 6L6 17"/></svg>`,
+  tool:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>`,
+  gift:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`,
+  beauty:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>`,
+  sport:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`,
+  car:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v9a2 2 0 01-2 2h-2M14 17H9m6 0a2 2 0 11-4 0 2 2 0 014 0zm-9 0a2 2 0 11-4 0 2 2 0 014 0z"/></svg>`,
+  music:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`,
+  health:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>`,
+  star:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  other:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+  tv:         `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="15" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>`,
+  glasses:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="14" r="4"/><circle cx="18" cy="14" r="4"/><path d="M2 14h0M22 14h0M10 14h4"/><path d="M2 10c0-2 1-3 3-3h14c2 0 3 1 3 3"/></svg>`,
+  ring:       `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="14" r="7"/><path d="M8.5 8.5L9.5 4h5l1 4.5"/><path d="M9 4l3 3 3-3"/></svg>`,
+  toy:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a4 4 0 00-4 4v2H4l-2 14h20L20 8h-4V6a4 4 0 00-4-4z"/><line x1="8" y1="12" x2="8" y2="16"/><line x1="6" y1="14" x2="10" y2="14"/><line x1="15" y1="13" x2="17" y2="15"/><line x1="17" y1="13" x2="15" y2="15"/></svg>`,
+  plant:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22V12"/><path d="M12 12C12 12 7 10 7 5a5 5 0 0110 0c0 5-5 7-5 7z"/><path d="M12 17c0 0-4-1-5-5"/></svg>`,
+  palette:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10a2 2 0 002-2v-1a2 2 0 012-2h2a2 2 0 002-2c0-5.523-4.477-10-10-10z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>`,
+  pen:        `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="3"/><path d="M8 7l4-4 4 4"/><path d="M9 19h6"/><path d="M8 22h8"/></svg>`,
+};
+
+const WISHLIST_ICON_LABELS = {
+  bag:'Tas/Belanja', phone:'HP', laptop:'Laptop', headphone:'Headphone',
+  watch:'Jam', camera:'Kamera', shirt:'Pakaian', shoe:'Sepatu',
+  book:'Buku', gamepad:'Gaming', furniture:'Furnitur', food:'Makanan',
+  bike:'Kendaraan', tool:'Alat', gift:'Hadiah', beauty:'Kecantikan',
+  sport:'Olahraga', car:'Mobil', music:'Musik', health:'Kesehatan',
+  star:'Lainnya', other:'Umum',
+  tv:'TV/Monitor', glasses:'Kacamata', ring:'Perhiasan', toy:'Mainan/Koleksi',
+  plant:'Tanaman', palette:'Art Supply', pen:'Stationery',
+};
+
+function getWishlistIcon(key) {
+  // Fallback: if key looks like base64 or URL (legacy data), return default icon
+  if (!key || key.length > 30 || key.startsWith('data:') || key.startsWith('http')) {
+    return WISHLIST_ICONS['bag'];
+  }
+  return WISHLIST_ICONS[key] || WISHLIST_ICONS['bag'];
 }
 
-function handleImageError(img) {
-  if (!img.dataset.fallbackLoaded) {
-    img.dataset.fallbackLoaded = "true";
-    img.src = getWishlistFallbackImage();
-  }
+function buildWiconPickerHTML(pickerId) {
+  return Object.keys(WISHLIST_ICONS).map(key =>
+    `<button type="button" class="wicon-opt" data-icon="${key}" data-picker="${pickerId}" title="${WISHLIST_ICON_LABELS[key] || key}">${WISHLIST_ICONS[key]}</button>`
+  ).join('');
+}
+
+function toggleWiconPicker(prefix) {
+  const body = document.getElementById(prefix + 'IconPickerBody');
+  const chevron = document.getElementById(prefix + 'IconPickerChevron');
+  const isOpen = body.classList.toggle('open');
+  chevron.classList.toggle('open', isOpen);
+}
+
+function setWiconPickerValue(prefix, iconKey) {
+  const hiddenId = prefix === 'f' ? 'f-image' : 'ew-image-file';
+  document.getElementById(hiddenId).value = iconKey;
+  document.getElementById(prefix + 'IconPickerPreview').innerHTML = WISHLIST_ICONS[iconKey] || WISHLIST_ICONS['bag'];
+  document.getElementById(prefix + 'IconPickerLabel').textContent = WISHLIST_ICON_LABELS[iconKey] || iconKey;
+  // Mark active
+  document.querySelectorAll(`#${prefix}IconPicker .wicon-opt`).forEach(b => {
+    b.classList.toggle('active', b.dataset.icon === iconKey);
+  });
+  // Close picker
+  document.getElementById(prefix + 'IconPickerBody').classList.remove('open');
+  document.getElementById(prefix + 'IconPickerChevron').classList.remove('open');
+}
+
+function initWiconPicker(prefix) {
+  const grid = document.getElementById(prefix + 'IconPicker');
+  if (!grid) return;
+  grid.innerHTML = buildWiconPickerHTML(prefix);
+  grid.querySelectorAll('.wicon-opt').forEach(btn => {
+    btn.addEventListener('click', () => setWiconPickerValue(prefix, btn.dataset.icon));
+  });
 }
 
 // ── Format Rupiah ──
@@ -1577,7 +1647,7 @@ function renderList() {
     const titleAttr = escAttr(idea.title);
     const categoryHtml = escHtml(idea.category || "-");
     const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : "—";
-    const imgSrc = idea.image || "";
+    const wishlistIconSvg = getWishlistIcon(idea.image);
     const metaLine = `${categoryHtml} · ${idea.priority}`;
     const statusDot = STATUS_DOT[idea.status] || "#d1d5db";
 
@@ -1641,7 +1711,7 @@ function renderList() {
 
           <div class="wishlist-main">
             <div class="wishlist-image-wrap">
-              <img src="${imgSrc}" alt="${titleHtml}" class="wishlist-image" onerror="handleImageError(this)" />
+              ${wishlistIconSvg}
             </div>
             <div class="wishlist-content">
               <div class="wishlist-top-row">
@@ -1770,13 +1840,11 @@ function selectType(type) {
   document.getElementById("f-title").value = "";
   document.getElementById("f-notes").value = "";
   document.getElementById("f-price").value = "";
-  document.getElementById("f-image").value = "";
+  document.getElementById("f-image").value = "bag";
   document.getElementById("f-pri").value = "Nanti";
-  _pendingAddImageBase64 = null;
-  const fPreview = document.getElementById("f-image-preview");
-  const fBtn = document.getElementById("f-image-btn");
-  if (fPreview) fPreview.style.display = "none";
-  if (fBtn) fBtn.style.display = "flex";
+  // Init wishlist icon picker
+  initWiconPicker('f');
+  setWiconPickerValue('f', 'bag');
 
   document.getElementById("add-modal").style.display = "flex";
   setTimeout(() => document.getElementById("f-title").focus(), 80);
@@ -1784,7 +1852,6 @@ function selectType(type) {
 
 function cancelAdd(e) {
   if (e && e.target !== document.getElementById("add-modal")) return;
-  _pendingAddImageBase64 = null;
   document.getElementById("add-modal").style.display = "none";
   document.getElementById("type-selector-modal").style.display = "none";
 }
@@ -1812,7 +1879,7 @@ function submitIdea() {
   // Handle Wishlist specific fields
   if (addingType === "Wishlist") {
     if (document.getElementById("f-price").value) newIdea.price = getRupiahRaw("f-price");
-    if (_pendingAddImageBase64) newIdea.image = _pendingAddImageBase64;
+    newIdea.image = document.getElementById("f-image").value || "bag";
   }
 
   putIdea(newIdea).then(() => {
@@ -1820,7 +1887,6 @@ function submitIdea() {
     renderStats();
     renderFilters();
     renderList();
-    _pendingAddImageBase64 = null;
     cancelAdd();
     showToast(addingType === "Wishlist" ? "Wishlist ditambahkan!" : "Ide ditambahkan!");
   });
@@ -2187,22 +2253,10 @@ function openEdit(e, id) {
     document.getElementById("ew-price").value = idea.price ? Number(idea.price).toLocaleString("id-ID") : "";
     document.getElementById("ew-price").dataset.raw = idea.price || "";
 
-    // Show image preview if exists
-    const preview = document.getElementById("ew-image-preview");
-    const thumb = document.getElementById("ew-image-thumb");
-    const btn = document.getElementById("ew-image-btn");
-    if (idea.image) {
-      thumb.src = idea.image;
-      document.getElementById("ew-image-name").textContent = "Foto tersimpan";
-      document.getElementById("ew-image-size").textContent = "";
-      preview.style.display = "flex";
-      btn.style.display = "none";
-    } else {
-      preview.style.display = "none";
-      thumb.src = "";
-      btn.style.display = "flex";
-    }
-    document.getElementById("ew-image-file").value = "";
+    // Init icon picker with current icon (fallback to 'bag' for legacy base64)
+    const currentIcon = (!idea.image || idea.image.length > 30 || idea.image.startsWith('data:') || idea.image.startsWith('http')) ? 'bag' : idea.image;
+    initWiconPicker('ew');
+    setWiconPickerValue('ew', currentIcon);
 
     document.getElementById("edit-wishlist-modal").style.display = "flex";
     setTimeout(() => document.getElementById("ew-title").focus(), 80);
@@ -2217,72 +2271,10 @@ function openEdit(e, id) {
   }
 }
 
-// Wishlist image stored as base64 in IndexedDB (via idea.image field)
-let _pendingWishlistImageBase64 = null;
-let _pendingAddImageBase64 = null;
-
-function handleAddWishlistImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
-    showToast("✗ Ukuran foto maks. 2MB");
-    event.target.value = "";
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    _pendingAddImageBase64 = ev.target.result;
-    document.getElementById("f-image-thumb").src = _pendingAddImageBase64;
-    document.getElementById("f-image-name").textContent = file.name;
-    document.getElementById("f-image-size").textContent = (file.size / 1024).toFixed(0) + " KB";
-    document.getElementById("f-image-preview").style.display = "flex";
-    document.getElementById("f-image-btn").style.display = "none";
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeAddWishlistImage() {
-  _pendingAddImageBase64 = null;
-  document.getElementById("f-image-thumb").src = "";
-  document.getElementById("f-image-preview").style.display = "none";
-  document.getElementById("f-image-btn").style.display = "flex";
-  document.getElementById("f-image").value = "";
-}
-
-function handleWishlistImageUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  if (file.size > 2 * 1024 * 1024) {
-    showToast("✗ Ukuran foto maks. 2MB");
-    event.target.value = "";
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    _pendingWishlistImageBase64 = ev.target.result;
-    document.getElementById("ew-image-thumb").src = _pendingWishlistImageBase64;
-    document.getElementById("ew-image-name").textContent = file.name;
-    document.getElementById("ew-image-size").textContent = (file.size / 1024).toFixed(0) + " KB";
-    document.getElementById("ew-image-preview").style.display = "flex";
-    document.getElementById("ew-image-btn").style.display = "none";
-  };
-  reader.readAsDataURL(file);
-}
-
-function removeWishlistImage() {
-  _pendingWishlistImageBase64 = "__remove__";
-  document.getElementById("ew-image-thumb").src = "";
-  document.getElementById("ew-image-name").textContent = "Foto tersimpan";
-  document.getElementById("ew-image-size").textContent = "";
-  document.getElementById("ew-image-preview").style.display = "none";
-  document.getElementById("ew-image-btn").style.display = "flex";
-  document.getElementById("ew-image-file").value = "";
-}
 
 function cancelEditWishlist(e) {
   if (e && e.target !== document.getElementById("edit-wishlist-modal")) return;
   editingId = null;
-  _pendingWishlistImageBase64 = null;
   document.getElementById("edit-wishlist-modal").style.display = "none";
 }
 
@@ -2297,17 +2289,10 @@ function saveEditWishlist() {
   idea.category = document.getElementById("ew-cat").value;
   idea.priority = document.getElementById("ew-pri").value;
   idea.price = getRupiahRaw("ew-price");
-
-  if (_pendingWishlistImageBase64 === "__remove__") {
-    idea.image = "";
-  } else if (_pendingWishlistImageBase64) {
-    idea.image = _pendingWishlistImageBase64;
-  }
-  // else: keep existing image
+  idea.image = document.getElementById("ew-image-file").value || "bag";
 
   putIdea(idea).then(() => {
     editingId = null;
-    _pendingWishlistImageBase64 = null;
     document.getElementById("edit-wishlist-modal").style.display = "none";
     render();
     showToast("Wishlist berhasil diperbarui");
@@ -2415,8 +2400,7 @@ document.addEventListener("keydown", e => {
     document.getElementById("type-selector-modal").style.display = "none";
     pendingDeleteId = null;
     editingId = null;
-    _pendingWishlistImageBase64 = null;
-    _pendingAddImageBase64 = null;
+
     _perkayaIdeaId = null;
     _perkayaResult = null;
     _breakdownResult = null;
