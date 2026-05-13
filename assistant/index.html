@@ -1970,25 +1970,25 @@
 
   /* ── Position model ─────────────────────────────────────────── */
   function positionModel(m, W, H) {
-    const isMobile = W < 700;
-    const isRem    = currentCharId === 'rem';
+    const isMobile   = W < 700;
+    const modelH     = m.internalModel?.originalController?.width
+                    || m.internalModel?.height
+                    || 800;
+    const modelW     = m.internalModel?.originalController?.height
+                    || m.internalModel?.width
+                    || 600;
 
-    let scaleFactor, posY;
+    // Fit otomatis: model memenuhi ~90% tinggi panel (desktop) atau ~85% (mobile)
+    const fitRatio   = isMobile ? 0.85 : 0.90;
+    const scale      = (H * fitRatio) / modelH;
 
-    if (isRem) {
-      scaleFactor = isMobile ? 0.85 : 0.75;
-      posY        = isMobile ? 1.00 : 0.98;
-    } else {
-      scaleFactor = isMobile ? 1.15 : 1.00;
-      posY        = isMobile ? 1.05 : 1.02;
-    }
-
-    const targetH = H * scaleFactor;
-    const scale   = targetH / (m.internalModel?.height || 800);
     m.scale.set(scale);
     m.anchor.set(0.5, 1);
     m.x = W * 0.5;
-    m.y = H * posY;
+
+    // Posisi Y: anchor bawah di 97% tinggi panel
+    // Model yang lebih tinggi otomatis terpotong atas, bukan ngambang
+    m.y = H * 0.97;
   }
 
   /* ── Cursor tracking ─────────────────────────────────────────── */
