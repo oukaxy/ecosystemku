@@ -1000,6 +1000,25 @@
   .app-linkku    { background: rgba(251,113,133,0.10); border-color: rgba(251,113,133,0.22); }
   .app-vault     { background: rgba(251,146,60,0.10);  border-color: rgba(251,146,60,0.22); }
   .app-dashboard { background: rgba(34,211,238,0.10);  border-color: rgba(34,211,238,0.22); }
+
+  /* ── Debug motion toast ───────────────────────────────────── */
+  #debug-motion-toast {
+    position: fixed;
+    top: 12px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    border: 1px solid rgba(99,210,255,0.4);
+    color: #63d2ff;
+    font-size: 11px;
+    font-family: monospace;
+    padding: 6px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  #debug-motion-toast.show { opacity: 1; }
 </style>
 </head>
 
@@ -1114,6 +1133,7 @@
     </div>
 
     <div id="chat-toast"></div>
+    <div id="debug-motion-toast"></div>
 
   </div>
 </div>
@@ -2157,18 +2177,31 @@
     'none':     0,
   };
 
+  /* ── Debug motion toast (hapus setelah confirmed motion jalan) ── */
+  const _dbgMotionEl = document.getElementById('debug-motion-toast');
+  let _dbgMotionTimer = null;
+  function showMotionDebug(msg) {
+    _dbgMotionEl.textContent = msg;
+    _dbgMotionEl.classList.add('show');
+    clearTimeout(_dbgMotionTimer);
+    _dbgMotionTimer = setTimeout(() => _dbgMotionEl.classList.remove('show'), 3000);
+  }
+
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
     const count = REM_MOTION_MAP[name];
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
     try {
-      // pixi-live2d-display v0.4: model.motion(group, index, priority)
       model.motion(name, index, 2);
-    } catch (_) {
+      showMotionDebug(`✅ motion("${name}", ${index})`);
+    } catch (e1) {
       try {
         model.internalModel.motionManager.startMotion(name, index, 2);
-      } catch (_2) {}
+        showMotionDebug(`✅ motionMgr("${name}", ${index})`);
+      } catch (e2) {
+        showMotionDebug(`❌ GAGAL: ${name} — ${e2.message?.slice(0,30)}`);
+      }
     }
   }
 
