@@ -1553,15 +1553,7 @@
       statusEl.textContent = '· idle';
       if (DEBUG) dbgChar.textContent = charCfg.id;
 
-      // Debug motion manager — log ke console
-      try {
-        const mm = model.internalModel.motionManager;
-        console.log('[Motion] motionManager:', mm);
-        console.log('[Motion] definitions:', mm.definitions);
-        console.log('[Motion] groups:', Object.keys(mm.definitions || {}));
-        window._mm = mm; // expose ke console browser
-        window._model = model;
-      } catch(e) { console.warn('[Motion] debug error:', e); }
+
 
       // Update placeholder input
       msgInput.placeholder = `Ngobrol sama ${charCfg.name}…`;
@@ -2336,32 +2328,6 @@
     if (e.key === 'd' || e.key === 'D') debugPanel.classList.toggle('show');
   });
 
-  /* ── Tap 5x nama tag → debug motion info ─────────────────────── */
-  let _tagTapCount = 0, _tagTapTimer = null;
-  document.getElementById('model-tag').addEventListener('click', () => {
-    _tagTapCount++;
-    clearTimeout(_tagTapTimer);
-    _tagTapTimer = setTimeout(() => { _tagTapCount = 0; }, 1000);
-    if (_tagTapCount >= 5) {
-      _tagTapCount = 0;
-      try {
-        const mm = model?.internalModel?.motionManager;
-        const defs = mm?.definitions || {};
-        const groups = Object.keys(defs);
-        const info = groups.length
-          ? groups.map(g => `${g}: ${defs[g].length} motions`).join('
-')
-          : 'Tidak ada motion groups';
-        alert('[Motion Debug]
-' + info + '
-
-startMotionByFile: ' + (typeof mm?.startMotionByFile) + '
-startMotion: ' + (typeof mm?.startMotion));
-      } catch(e) {
-        alert('Error: ' + e.message);
-      }
-    }
-  });
 
   /* ================================================================
      RESIZER
