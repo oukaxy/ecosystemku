@@ -1970,25 +1970,22 @@
 
   /* ── Position model ─────────────────────────────────────────── */
   function positionModel(m, W, H) {
-    const isMobile   = W < 700;
-    const modelH     = m.internalModel?.originalController?.width
-                    || m.internalModel?.height
-                    || 800;
-    const modelW     = m.internalModel?.originalController?.height
-                    || m.internalModel?.width
-                    || 600;
+    const isMobile = W < 700;
+    const isRem    = currentCharId === 'rem';
+    const modelH   = m.internalModel?.height || 800;
 
-    // Fit otomatis: model memenuhi ~90% tinggi panel (desktop) atau ~85% (mobile)
-    const fitRatio   = isMobile ? 0.85 : 0.90;
-    const scale      = (H * fitRatio) / modelH;
+    const fitRatio = isMobile ? 1.20 : 1.10;
+    const scale    = (H * fitRatio) / modelH;
 
     m.scale.set(scale);
     m.anchor.set(0.5, 1);
     m.x = W * 0.5;
 
-    // Posisi Y: anchor bawah di 97% tinggi panel
-    // Model yang lebih tinggi otomatis terpotong atas, bukan ngambang
-    m.y = H * 0.97;
+    // Rem full body — geser ke bawah supaya kaki tidak kelihatan,
+    // hanya bagian atas (torso) yang tampil seperti Liro
+    m.y = isRem
+      ? H * (isMobile ? 1.40 : 1.28)
+      : H * 0.97;
   }
 
   /* ── Cursor tracking ─────────────────────────────────────────── */
