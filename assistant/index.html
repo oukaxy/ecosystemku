@@ -1416,8 +1416,8 @@
 
   /* ── State ──────────────────────────────────────────────────── */
   let model        = null;
-  let currentExpr  = 'none';
-  let currentRemMotionKey = 'none_0'; // track motion Rem yang aktif untuk tickExpression
+  let currentExpr        = 'none';
+  let currentRemMotionKey = 'none_0';
   let blinkTimer   = 0;
   let blinkState   = 'open';
   let blinkT       = 0;
@@ -1576,10 +1576,6 @@
     // Unload model lama
     if (model) {
       app.ticker.remove(onTick);
-      if (window._remHandTicker) {
-        app.ticker.remove(window._remHandTicker);
-        window._remHandTicker = null;
-      }
       app.stage.removeChild(model);
       model.destroy();
       model = null;
@@ -1620,25 +1616,27 @@
 
       requestAnimationFrame(() => resizeApp());
 
-      // Remove dulu sebelum add — cegah numpuk
-      app.ticker.remove(onTick);
-      if (window._remHandTicker) app.ticker.remove(window._remHandTicker);
-
       app.ticker.add(onTick);
 
-      // Ticker terpisah — apply HAND+ARM params setelah motion engine
-      window._remHandTicker = () => {
-        if (!model || currentCharId !== 'rem') return;
-        try {
-          const activeMap  = REM_FACE_MAP[currentRemMotionKey] || REM_FACE_MAP['none_0'] || {};
-          const defaultMap = REM_FACE_MAP['none_0'] || {};
-          for (const paramId of REM_MOTION_OWNED) {
-            const val = activeMap[paramId] !== undefined ? activeMap[paramId] : (defaultMap[paramId] ?? 0);
-            setCoreParam(paramId, val);
-          }
-        } catch(_) {}
-      };
-      app.ticker.add(window._remHandTicker);
+      // Monkey-patch motionManager.update untuk Rem
+      // Inject HAND+ARM params SETELAH motion engine apply — dijamin menang
+      if (charCfg.id === 'rem') {
+        const mgr = model.internalModel.motionManager;
+        const _origUpdate = mgr.update.bind(mgr);
+        mgr.update = function(model, now) {
+          const result = _origUpdate(model, now);
+          // Apply HAND+ARM params setelah motion engine
+          try {
+            const activeMap  = REM_FACE_MAP[currentRemMotionKey] || REM_FACE_MAP['none_0'] || {};
+            const defaultMap = REM_FACE_MAP['none_0'] || {};
+            for (const paramId of REM_MOTION_OWNED) {
+              const val = activeMap[paramId] !== undefined ? activeMap[paramId] : (defaultMap[paramId] ?? 0);
+              setCoreParam(paramId, val);
+            }
+          } catch(_) {}
+          return result;
+        };
+      }
 
       // Update nama di tag
       modelNameEl.textContent = charCfg.name;
@@ -2283,7 +2281,7 @@
 
   function setRemFace(exprName, index = 0) {
     const key = `${exprName}_${index}`;
-    currentRemMotionKey = REM_FACE_MAP[key] ? key : (`${exprName}_0` in REM_FACE_MAP ? `${exprName}_0` : 'none_0');
+    currentRemMotionKey = REM_FACE_MAP[key] ? key : (REM_FACE_MAP[`${exprName}_0`] ? `${exprName}_0` : 'none_0');
     const map = REM_FACE_MAP[currentRemMotionKey] || {};
     const defaultMap = REM_FACE_MAP['none_0'] || {};
     for (const [param, s] of Object.entries(remFaceParams)) {
@@ -2291,6 +2289,8 @@
       if (REM_MOTION_OWNED.has(param)) {
         s.current = newTarget;
         s.target  = newTarget;
+        // Langsung apply — monkey-patch yang akan override tiap frame
+        setCoreParam(param, newTarget);
       } else {
         s.current = s.target;
         s.target  = newTarget;
@@ -2313,7 +2313,7 @@
       return;
     }
 
-    // Rem — smooth fade untuk face params
+    // Rem — smooth fade via remFaceParams (skip param yang di-handle motion engine)
     for (const [paramId, s] of Object.entries(remFaceParams)) {
       if (REM_MOTION_OWNED.has(paramId)) continue;
       if (s.current === s.target) continue;
@@ -2331,8 +2331,6 @@
     tickLipSync();
     tickExpression();
     tickPet(delta);
-
-    if (DEBUG) {
 
     if (DEBUG) {
       frameCount++;
