@@ -1171,6 +1171,39 @@
     <button class="hd-btn" id="hd-reset">↺ Reset Semua</button>
     <button class="hd-btn" id="hd-copy">📋 Copy Values</button>
   </div>
+  <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <select id="hd-motion-select" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:5px 8px;font-size:11px;flex:1">
+      <option value="happy,0">happy [0]</option>
+      <option value="happy,1">happy [1]</option>
+      <option value="smile,0">smile [0]</option>
+      <option value="appeal,0">appeal [0]</option>
+      <option value="appeal,1">appeal [1]</option>
+      <option value="appeal,2">appeal [2]</option>
+      <option value="proud,0">proud [0]</option>
+      <option value="shame,0">shame [0]</option>
+      <option value="shame,1">shame [1]</option>
+      <option value="sad,0">sad [0]</option>
+      <option value="sad,1">sad [1]</option>
+      <option value="cry,0">cry [0]</option>
+      <option value="angry,0">angry [0]</option>
+      <option value="angry,1">angry [1]</option>
+      <option value="upset,0">upset [0]</option>
+      <option value="serious,0">serious [0]</option>
+      <option value="serious,1">serious [1]</option>
+      <option value="surprise,0">surprise [0]</option>
+      <option value="doubt,0">doubt [0]</option>
+      <option value="puzzle,0">puzzle [0]</option>
+      <option value="puzzle,1">puzzle [1]</option>
+      <option value="puzzle,2">puzzle [2]</option>
+      <option value="idle,0">idle [0] - wait</option>
+      <option value="idle,1">idle [1] - navi</option>
+      <option value="idle,2">idle [2] - bound</option>
+      <option value="idle,3">idle [3] - bound_double</option>
+      <option value="idle,4">idle [4] - bound_down</option>
+      <option value="navi,0">navi [0]</option>
+    </select>
+    <button class="hd-btn" id="hd-trigger">▶ Trigger</button>
+  </div>
 
   <div class="hd-section">── HAND R (Tangan Kanan) ──</div>
   <div class="hd-row"><span class="hd-label">HAND_R_01</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_01"><span class="hd-val">0</span></div>
@@ -1620,13 +1653,11 @@
 
       // Monkey-patch motionManager.update untuk Rem
       if (charCfg.id === 'rem') {
-        const internal = model.internal || model.internalModel;
-        const mgr = internal?.motionManager;
-        if (mgr && typeof mgr.update === 'function') {
-          const _origUpdate = mgr.update;
-          let _patchCount = 0;
-          mgr.update = function(...args) {
-            const result = _origUpdate.call(mgr, ...args);
+        const internalModel = model.internalModel;
+        if (internalModel && typeof internalModel.update === 'function') {
+          const _origUpdate = internalModel.update;
+          internalModel.update = function(...args) {
+            const result = _origUpdate.call(internalModel, ...args);
             try {
               const activeMap  = REM_FACE_MAP[currentRemMotionKey] || REM_FACE_MAP['none_0'] || {};
               const defaultMap = REM_FACE_MAP['none_0'] || {};
@@ -1634,17 +1665,11 @@
                 const val = activeMap[paramId] !== undefined ? activeMap[paramId] : (defaultMap[paramId] ?? 0);
                 setCoreParam(paramId, val);
               }
-              // Debug — setiap 60 frame tampilkan konfirmasi
-              _patchCount++;
-              if (_patchCount % 60 === 0) showMotionToast(`patch running: ${_patchCount}`);
-            } catch(e) {
-              showMotionToast(`patch ERROR: ${e.message?.slice(0,20)}`);
-            }
+            } catch(_) {}
             return result;
           };
-          setTimeout(() => showMotionToast('patch OK ✅'), 1000);
         } else {
-          setTimeout(() => showMotionToast('patch FAIL ❌'), 1000);
+          setTimeout(() => showMotionToast('patch FAIL — cek console'), 2000);
         }
       }
 
@@ -2389,11 +2414,22 @@
     'none':     0,
   };
 
-  function playRemMotion(name) {
+  // Delay setRemFace sampai setelah motion apply keyframe pertama (~100ms)
+  function playRemMotionWithFace(name, index) {
+    const i = index !== undefined ? index : (() => {
+      const count = REM_MOTION_MAP[name];
+      return count ? Math.floor(Math.random() * count) : 0;
+    })();
+    playRemMotionByIndex(name, i);
+    // Apply sekali dulu
+    setRemFace(name === 'none' ? 'idle' : name, i);
+    // Apply lagi setelah motion keyframe pertama selesai
+    setTimeout(() => setRemFace(name === 'none' ? 'idle' : name, i), 150);
+    return i;
+  }
+
+  function playRemMotionByIndex(name, index = 0) {
     if (!model || currentCharId !== 'rem') return;
-    const count = REM_MOTION_MAP[name];
-    if (!count || count === 0) return;
-    const index = Math.floor(Math.random() * count);
     showMotionToast(`${name} [${index}]`);
     try {
       model.motion(name, index, 2);
@@ -2402,6 +2438,14 @@
         model.internalModel.motionManager.startMotion(name, index, 2);
       } catch (_2) {}
     }
+  }
+
+  // playRemMotion — random index, untuk call site lama
+  function playRemMotion(name) {
+    const count = REM_MOTION_MAP[name];
+    if (!count || count === 0) return 0;
+    const index = Math.floor(Math.random() * count);
+    playRemMotionByIndex(name, index);
     return index;
   }
 
@@ -2435,8 +2479,7 @@
     // Rem — play motion + set face params
     if (currentCharId === 'rem') {
       // 'none' = kembali ke idle motion
-      const idx = playRemMotion(name === 'none' ? 'idle' : name);
-      setRemFace(name === 'none' ? 'idle' : name, idx ?? 0);
+      const idx = playRemMotionWithFace(name === 'none' ? 'idle' : name);
       statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
       document.querySelectorAll('.expr-pill').forEach(p =>
         p.classList.toggle('active', p.dataset.expr === name)
@@ -2551,6 +2594,15 @@
     handDebugPanel.classList.remove('show');
   });
 
+  document.getElementById('hd-trigger').addEventListener('click', () => {
+    const val = document.getElementById('hd-motion-select').value;
+    const [name, idx] = val.split(',');
+    if (model && currentCharId === 'rem') {
+      playRemMotionByIndex(name, parseInt(idx));
+      showMotionToast(`▶ ${name} [${idx}]`);
+    }
+  });
+
   document.getElementById('hd-reset').addEventListener('click', () => {
     handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
       slider.value = slider.defaultValue;
@@ -2632,16 +2684,16 @@
 
     if (isHeadZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('head')), 3500);
-      if (currentCharId === 'rem') { const i = playRemMotion('shame');    setRemFace('shame',    i ?? 0); }
+      if (currentCharId === 'rem') playRemMotionWithFace('shame');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isBodyZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('body')), 3000);
       triggerNudge();
-      if (currentCharId === 'rem') { const i = playRemMotion('surprise'); setRemFace('surprise', i ?? 0); }
+      if (currentCharId === 'rem') playRemMotionWithFace('surprise');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isLegZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('leg')), 3000);
-      if (currentCharId === 'rem') { const i = playRemMotion('appeal');   setRemFace('appeal',   i ?? 0); }
+      if (currentCharId === 'rem') playRemMotionWithFace('appeal');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     }
   }, { passive: true });
@@ -2676,7 +2728,7 @@
     if (petActive && !petBubbleShown && petHairT > 1.5) {
       petBubbleShown = true;
       showIdleBubble(pickRandom(getBubbles('pet')), 3000);
-      if (currentCharId === 'rem') { const i = playRemMotion('happy'); setRemFace('happy', i ?? 0); }
+      if (currentCharId === 'rem') playRemMotionWithFace('happy');
     }
 
     if (exprParams.ParamBlush) exprParams.ParamBlush.target = Math.max(currentExpr === 'blush' ? 1 : 0, i);
