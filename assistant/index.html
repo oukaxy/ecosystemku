@@ -2132,10 +2132,19 @@
 
   function setRemFace(exprName) {
     const map = REM_FACE_MAP[exprName] || REM_FACE_MAP['none'];
-    // Reset semua ke none dulu biar tidak ketumpuk
     const noneMap = REM_FACE_MAP['none'];
     for (const [param, s] of Object.entries(remFaceParams)) {
-      s.target = map[param] !== undefined ? map[param] : (noneMap[param] ?? 0);
+      const newTarget = map[param] !== undefined ? map[param] : (noneMap[param] ?? 0);
+      // ARM_ORDER snap langsung — jangan di-fade, langsung apply
+      if (param === 'PARAM_ARM_R_ORDER' || param === 'PARAM_ARM_L_ORDER') {
+        s.current = newTarget;
+        s.target  = newTarget;
+        setCoreParam(param, newTarget);
+      } else {
+        // Snap current ke target lama dulu biar tidak drift
+        s.current = s.target;
+        s.target  = newTarget;
+      }
     }
   }
 
@@ -2244,6 +2253,9 @@
       playRemMotion(name === 'none' ? 'idle' : name);
       setRemFace(name);
       statusEl.textContent = name === 'none' ? '· idle' : `· ${name}`;
+      document.querySelectorAll('.expr-pill').forEach(p =>
+        p.classList.toggle('active', p.dataset.expr === name)
+      );
       return;
     }
 
