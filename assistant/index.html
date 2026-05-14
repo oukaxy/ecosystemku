@@ -2305,11 +2305,33 @@
     'none':     0,
   };
 
+  // Reset semua HAND params ke 0
+  function resetRemHandParams() {
+    if (!model) return;
+    const handParams = [
+      'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
+      'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
+      'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
+      'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
+      'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
+      'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
+      'PARAM_HAND_R_ROTATE','PARAM_HAND_L_ROTATE',
+      'PARAM_ARM_R_ORDER','PARAM_ARM_L_ORDER',
+      'PARAM_ARM_R_ROTATE','PARAM_ARM_L_ROTATE',
+    ];
+    handParams.forEach(p => setCoreParam(p, 0));
+    // ARM_ORDER default ke 1
+    setCoreParam('PARAM_ARM_R_ORDER', 1);
+    setCoreParam('PARAM_ARM_L_ORDER', 1);
+  }
+
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
     const count = REM_MOTION_MAP[name];
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
+    // Reset hand params dulu sebelum motion baru
+    resetRemHandParams();
     try {
       model.motion(name, index, 2);
     } catch (_) {
