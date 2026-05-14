@@ -2465,6 +2465,20 @@
       try { model.motion(name, i, 2); } catch(_) {
         try { model.internalModel.motionManager.startMotion(name, i, 2); } catch(_2) {}
       }
+      // Sync slider values setelah motion apply (~150ms)
+      setTimeout(() => {
+        handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+          try {
+            const core = model.internalModel.coreModel;
+            const idx2 = core.getParameterIndex(slider.dataset.param);
+            if (idx2 >= 0) {
+              const val = core.getParameterValueByIndex(idx2);
+              slider.value = val;
+              slider.nextElementSibling.textContent = Math.round(val * 100) / 100;
+            }
+          } catch(_) {}
+        });
+      }, 150);
     }
   });
   handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
