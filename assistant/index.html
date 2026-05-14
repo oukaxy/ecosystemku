@@ -2340,6 +2340,8 @@
     const count = REM_MOTION_MAP[name];
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
+    // Debug toast — hapus setelah selesai trial error
+    showMotionToast(`${name} [${index}]`);
     try {
       model.motion(name, index, 2);
     } catch (_) {
@@ -2347,6 +2349,28 @@
         model.internalModel.motionManager.startMotion(name, index, 2);
       } catch (_2) {}
     }
+  }
+
+  /* ── Motion debug toast ──────────────────────────────────────── */
+  let _motionToastTimer = null;
+  function showMotionToast(msg) {
+    let el = document.getElementById('motion-toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'motion-toast';
+      el.style.cssText = `
+        position:fixed; top:12px; left:50%; transform:translateX(-50%);
+        background:rgba(0,0,0,0.8); border:1px solid #63d2ff; color:#63d2ff;
+        font-size:12px; font-family:monospace; padding:5px 14px;
+        border-radius:20px; white-space:nowrap; pointer-events:none;
+        z-index:99999; opacity:0; transition:opacity 0.2s;
+      `;
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.style.opacity = '1';
+    clearTimeout(_motionToastTimer);
+    _motionToastTimer = setTimeout(() => el.style.opacity = '0', 3000);
   }
 
   function setExpression(name) {
