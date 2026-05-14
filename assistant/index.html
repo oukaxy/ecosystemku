@@ -839,6 +839,28 @@
   #debug-panel .dbg-row { display: flex; justify-content: space-between; gap: 12px; }
   #debug-panel .dbg-val { color: var(--accent); }
 
+  /* ── Hand debug slider panel ──────────────────────────────── */
+  #hand-debug {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 9999;
+    overflow-y: auto;
+    padding: 16px;
+    display: none;
+    font-family: monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+  }
+  #hand-debug.show { display: block; }
+  #hand-debug h3 { color: #63d2ff; margin: 0 0 12px; font-size: 13px; }
+  #hand-debug .hd-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  #hand-debug .hd-label { width: 160px; font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+  #hand-debug .hd-slider { flex: 1; }
+  #hand-debug .hd-val { width: 40px; text-align: right; color: #63d2ff; font-size: 11px; }
+  #hand-debug .hd-btn { background: #1e40af; border: none; color: white; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px; }
+  #hand-debug .hd-section { color: #f59e0b; font-size: 11px; margin: 12px 0 6px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
+
   /* ── Mobile layout ────────────────────────────────────────── */
   @media (max-width: 700px) {
     html, body { overflow: hidden; height: 100%; }
@@ -1104,6 +1126,7 @@
         <textarea id="msg-input" rows="1" placeholder="Ngobrol…"></textarea>
         <button id="apps-btn" title="Buka app">⚡</button>
         <button id="mute-btn" title="Mute/unmute suara">🔊</button>
+        <button id="hand-debug-btn" title="Hand Debug" style="font-size:16px">🖐</button>
         <button id="send-btn" title="Kirim">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 14L7.5 1L14 14M7.5 1L3 10.5H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1138,6 +1161,52 @@
   <div class="dbg-row"><span>expr</span><span class="dbg-val" id="dbg-expr">none</span></div>
   <div class="dbg-row"><span>cursor</span><span class="dbg-val" id="dbg-cursor">—</span></div>
   <div class="dbg-row"><span>blink</span><span class="dbg-val" id="dbg-blink">—</span></div>
+</div>
+
+<!-- Hand param debug panel -->
+<div id="hand-debug">
+  <h3>🔧 Hand Param Debug</h3>
+  <div style="margin-bottom:12px">
+    <button class="hd-btn" id="hd-close">✕ Tutup</button>
+    <button class="hd-btn" id="hd-reset">↺ Reset Semua</button>
+    <button class="hd-btn" id="hd-copy">📋 Copy Values</button>
+  </div>
+
+  <div class="hd-section">── HAND R (Tangan Kanan) ──</div>
+  <div class="hd-row"><span class="hd-label">HAND_R_01</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_01"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_02</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_02"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_03</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_03"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_04</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_04"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_05</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_05"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_06</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_06"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_07</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_07"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_08</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_08"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_09</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_09"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_10</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_10"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_11</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_11"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_R_ROTATE</span><input class="hd-slider" type="range" min="-20" max="20" step="0.1" value="0" data-param="PARAM_HAND_R_ROTATE"><span class="hd-val">0</span></div>
+
+  <div class="hd-section">── HAND L (Tangan Kiri) ──</div>
+  <div class="hd-row"><span class="hd-label">HAND_L_01</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_01"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_02</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_02"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_03</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_03"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_04</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_04"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_05</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_05"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_06</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_06"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_07</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_07"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_08</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_08"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_09</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_09"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_10</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_10"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_11</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_11"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">HAND_L_ROTATE</span><input class="hd-slider" type="range" min="-20" max="20" step="0.1" value="0" data-param="PARAM_HAND_L_ROTATE"><span class="hd-val">0</span></div>
+
+  <div class="hd-section">── ARM ──</div>
+  <div class="hd-row"><span class="hd-label">ARM_R_ORDER</span><input class="hd-slider" type="range" min="0" max="1" step="1" value="1" data-param="PARAM_ARM_R_ORDER"><span class="hd-val">1</span></div>
+  <div class="hd-row"><span class="hd-label">ARM_L_ORDER</span><input class="hd-slider" type="range" min="0" max="1" step="1" value="1" data-param="PARAM_ARM_L_ORDER"><span class="hd-val">1</span></div>
+  <div class="hd-row"><span class="hd-label">ARM_R_ROTATE</span><input class="hd-slider" type="range" min="-50" max="50" step="0.1" value="0" data-param="PARAM_ARM_R_ROTATE"><span class="hd-val">0</span></div>
+  <div class="hd-row"><span class="hd-label">ARM_L_ROTATE</span><input class="hd-slider" type="range" min="-50" max="50" step="0.1" value="0" data-param="PARAM_ARM_L_ROTATE"><span class="hd-val">0</span></div>
+
+  <div id="hd-copy-output" style="margin-top:12px;font-size:10px;color:#94a3b8;word-break:break-all;"></div>
 </div>
 
 <!-- ── Scripts ────────────────────────────────────────────────── -->
@@ -2376,6 +2445,60 @@
     });
   }
   initExprToggle();
+
+  /* ── Hand Debug Panel ────────────────────────────────────────── */
+  const handDebugPanel = document.getElementById('hand-debug');
+  const handDebugBtn   = document.getElementById('hand-debug-btn');
+
+  handDebugBtn.addEventListener('click', () => {
+    handDebugPanel.classList.toggle('show');
+    // Sync slider values dengan model saat panel dibuka
+    if (handDebugPanel.classList.contains('show') && model) {
+      handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+        const param = slider.dataset.param;
+        try {
+          const core = model.internalModel.coreModel;
+          const idx  = core.getParameterIndex(param);
+          if (idx >= 0) {
+            const val = core.getParameterValueByIndex(idx);
+            slider.value = val;
+            slider.nextElementSibling.textContent = Math.round(val * 100) / 100;
+          }
+        } catch(_) {}
+      });
+    }
+  });
+
+  document.getElementById('hd-close').addEventListener('click', () => {
+    handDebugPanel.classList.remove('show');
+  });
+
+  document.getElementById('hd-reset').addEventListener('click', () => {
+    handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+      slider.value = slider.defaultValue;
+      slider.nextElementSibling.textContent = slider.defaultValue;
+      setCoreParam(slider.dataset.param, parseFloat(slider.defaultValue));
+    });
+  });
+
+  document.getElementById('hd-copy').addEventListener('click', () => {
+    const vals = {};
+    handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+      const v = parseFloat(slider.value);
+      if (v !== 0) vals[slider.dataset.param] = v;
+    });
+    const out = JSON.stringify(vals, null, 2);
+    document.getElementById('hd-copy-output').textContent = out;
+    navigator.clipboard?.writeText(out).catch(() => {});
+  });
+
+  handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+    slider.addEventListener('input', () => {
+      const val = parseFloat(slider.value);
+      slider.nextElementSibling.textContent = Math.round(val * 100) / 100;
+      if (model) setCoreParam(slider.dataset.param, val);
+    });
+  });
 
   /* ── Tap model → random blink ────────────────────────────────── */
   canvas.addEventListener('click', () => {
