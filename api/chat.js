@@ -6,8 +6,8 @@
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL   = 'llama-3.3-70b-versatile';
-const MAX_TOKENS   = 1024;
-const MAX_MESSAGES = 20;   // jumlah messages terakhir yang dikirim ke Groq
+const MAX_TOKENS   = 300;
+const MAX_MESSAGES = 10;   // sesuai trim di index.html
 
 export default async function handler(req, res) {
   // ── OPTIONS preflight ─────────────────────────────────────────────
