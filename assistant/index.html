@@ -1624,6 +1624,7 @@
         const mgr = internal?.motionManager;
         if (mgr && typeof mgr.update === 'function') {
           const _origUpdate = mgr.update;
+          let _patchCount = 0;
           mgr.update = function(...args) {
             const result = _origUpdate.call(mgr, ...args);
             try {
@@ -1633,7 +1634,12 @@
                 const val = activeMap[paramId] !== undefined ? activeMap[paramId] : (defaultMap[paramId] ?? 0);
                 setCoreParam(paramId, val);
               }
-            } catch(_) {}
+              // Debug — setiap 60 frame tampilkan konfirmasi
+              _patchCount++;
+              if (_patchCount % 60 === 0) showMotionToast(`patch running: ${_patchCount}`);
+            } catch(e) {
+              showMotionToast(`patch ERROR: ${e.message?.slice(0,20)}`);
+            }
             return result;
           };
           setTimeout(() => showMotionToast('patch OK ✅'), 1000);
