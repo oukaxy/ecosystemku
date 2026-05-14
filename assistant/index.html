@@ -1000,6 +1000,20 @@
   .app-linkku    { background: rgba(251,113,133,0.10); border-color: rgba(251,113,133,0.22); }
   .app-vault     { background: rgba(251,146,60,0.10);  border-color: rgba(251,146,60,0.22); }
   .app-dashboard { background: rgba(34,211,238,0.10);  border-color: rgba(34,211,238,0.22); }
+  /* ── Hand debug panel ─────────────────────────────────────── */
+  #hand-debug {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.93); z-index: 9999; overflow-y: auto;
+    padding: 16px; display: none; font-family: monospace; font-size: 12px; color: #e2e8f0;
+  }
+  #hand-debug.show { display: block; }
+  #hand-debug h3 { color: #63d2ff; margin: 0 0 12px; font-size: 13px; }
+  #hand-debug .hd-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  #hand-debug .hd-label { width: 160px; font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+  #hand-debug .hd-slider { flex: 1; }
+  #hand-debug .hd-val { width: 44px; text-align: right; color: #63d2ff; font-size: 11px; }
+  #hand-debug .hd-btn { background: #1e40af; border: none; color: white; padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; margin-right: 8px; }
+  #hand-debug .hd-section { color: #f59e0b; font-size: 11px; margin: 12px 0 6px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
 </style>
 </head>
 
@@ -1104,6 +1118,7 @@
         <textarea id="msg-input" rows="1" placeholder="Ngobrol…"></textarea>
         <button id="apps-btn" title="Buka app">⚡</button>
         <button id="mute-btn" title="Mute/unmute suara">🔊</button>
+        <button id="hand-debug-btn" title="Hand Debug">🖐</button>
         <button id="send-btn" title="Kirim">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1 14L7.5 1L14 14M7.5 1L3 10.5H12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -1114,6 +1129,79 @@
     </div>
 
     <div id="chat-toast"></div>
+
+    <div id="hand-debug">
+      <h3>🔧 Hand Param Debug</h3>
+      <div style="margin-bottom:12px">
+        <button class="hd-btn" id="hd-close">✕ Tutup</button>
+        <button class="hd-btn" id="hd-reset">↺ Reset</button>
+        <button class="hd-btn" id="hd-copy">📋 Copy</button>
+      </div>
+      <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center">
+        <select id="hd-motion-select" style="background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:5px 8px;font-size:11px;flex:1">
+          <option value="happy,0">happy [0] - Happy_01</option>
+          <option value="happy,1">happy [1] - Happy_02</option>
+          <option value="smile,0">smile [0]</option>
+          <option value="appeal,0">appeal [0] - Appeal_01</option>
+          <option value="appeal,1">appeal [1] - Appeal_02_L</option>
+          <option value="appeal,2">appeal [2] - Appeal_02_R</option>
+          <option value="proud,0">proud [0]</option>
+          <option value="shame,0">shame [0] - Shame_01</option>
+          <option value="shame,1">shame [1] - Expression_Shame</option>
+          <option value="sad,0">sad [0] - Sad_01</option>
+          <option value="sad,1">sad [1] - Expression_Sad</option>
+          <option value="cry,0">cry [0]</option>
+          <option value="angry,0">angry [0] - Anger_01</option>
+          <option value="angry,1">angry [1] - Expression_Anger</option>
+          <option value="upset,0">upset [0]</option>
+          <option value="serious,0">serious [0] - Serious_01</option>
+          <option value="serious,1">serious [1] - Expression_Serious</option>
+          <option value="surprise,0">surprise [0]</option>
+          <option value="doubt,0">doubt [0]</option>
+          <option value="puzzle,0">puzzle [0] - Puzzle_01</option>
+          <option value="puzzle,1">puzzle [1] - Expression_Puzzle_01</option>
+          <option value="puzzle,2">puzzle [2] - Expression_Puzzle_02</option>
+          <option value="idle,0">idle [0] - Wait</option>
+          <option value="idle,1">idle [1] - Navi</option>
+          <option value="idle,2">idle [2] - bound</option>
+          <option value="idle,3">idle [3] - bound_double</option>
+          <option value="idle,4">idle [4] - bound_down</option>
+        </select>
+        <button class="hd-btn" id="hd-trigger">▶ Trigger</button>
+      </div>
+      <div class="hd-section">── HAND R ──</div>
+      <div class="hd-row"><span class="hd-label">HAND_R_01</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_01"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_02</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_02"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_03</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_03"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_04</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_04"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_05</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_05"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_06</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_06"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_07</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_07"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_08</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_08"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_09</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_09"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_10</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_10"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_11</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_R_11"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_R_ROTATE</span><input class="hd-slider" type="range" min="-20" max="20" step="0.1" value="0" data-param="PARAM_HAND_R_ROTATE"><span class="hd-val">0</span></div>
+      <div class="hd-section">── HAND L ──</div>
+      <div class="hd-row"><span class="hd-label">HAND_L_01</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_01"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_02</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_02"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_03</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_03"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_04</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_04"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_05</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_05"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_06</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_06"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_07</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_07"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_08</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_08"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_09</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_09"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_10</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_10"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_11</span><input class="hd-slider" type="range" min="0" max="1" step="0.01" value="0" data-param="PARAM_HAND_L_11"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">HAND_L_ROTATE</span><input class="hd-slider" type="range" min="-20" max="20" step="0.1" value="0" data-param="PARAM_HAND_L_ROTATE"><span class="hd-val">0</span></div>
+      <div class="hd-section">── ARM ──</div>
+      <div class="hd-row"><span class="hd-label">ARM_R_ORDER</span><input class="hd-slider" type="range" min="0" max="1" step="1" value="1" data-param="PARAM_ARM_R_ORDER"><span class="hd-val">1</span></div>
+      <div class="hd-row"><span class="hd-label">ARM_L_ORDER</span><input class="hd-slider" type="range" min="0" max="1" step="1" value="1" data-param="PARAM_ARM_L_ORDER"><span class="hd-val">1</span></div>
+      <div class="hd-row"><span class="hd-label">ARM_R_ROTATE</span><input class="hd-slider" type="range" min="-50" max="50" step="0.1" value="0" data-param="PARAM_ARM_R_ROTATE"><span class="hd-val">0</span></div>
+      <div class="hd-row"><span class="hd-label">ARM_L_ROTATE</span><input class="hd-slider" type="range" min="-50" max="50" step="0.1" value="0" data-param="PARAM_ARM_L_ROTATE"><span class="hd-val">0</span></div>
+      <div id="hd-output" style="margin-top:12px;font-size:10px;color:#94a3b8;word-break:break-all;white-space:pre"></div>
+    </div>
 
   </div>
 </div>
@@ -2324,6 +2412,68 @@
     });
   }
   initExprToggle();
+
+  /* ── Hand Debug Panel ─────────────────────────────────────── */
+  const handDebugPanel = document.getElementById('hand-debug');
+  document.getElementById('hand-debug-btn').addEventListener('click', () => {
+    handDebugPanel.classList.toggle('show');
+    if (handDebugPanel.classList.contains('show') && model) {
+      handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+        try {
+          const core = model.internalModel.coreModel;
+          const idx  = core.getParameterIndex(slider.dataset.param);
+          if (idx >= 0) {
+            const val = core.getParameterValueByIndex(idx);
+            slider.value = val;
+            slider.nextElementSibling.textContent = Math.round(val * 100) / 100;
+          }
+        } catch(_) {}
+      });
+    }
+  });
+  document.getElementById('hd-close').addEventListener('click', () => handDebugPanel.classList.remove('show'));
+  document.getElementById('hd-reset').addEventListener('click', () => {
+    handDebugPanel.querySelectorAll('.hd-slider').forEach(s => {
+      s.value = s.defaultValue;
+      s.nextElementSibling.textContent = s.defaultValue;
+      setCoreParam(s.dataset.param, parseFloat(s.defaultValue));
+    });
+  });
+  document.getElementById('hd-copy').addEventListener('click', () => {
+    const motionEl = document.getElementById('hd-motion-select');
+    let out = `Motion: ${motionEl.options[motionEl.selectedIndex].text}\n\n`;
+    const sections = {'HAND R':[], 'HAND L':[], 'ARM':[]};
+    handDebugPanel.querySelectorAll('.hd-slider').forEach(s => {
+      const val = Math.round(parseFloat(s.value) * 100) / 100;
+      const label = s.previousElementSibling.textContent.trim();
+      if (s.dataset.param.includes('HAND_R')) sections['HAND R'].push({label, val});
+      else if (s.dataset.param.includes('HAND_L')) sections['HAND L'].push({label, val});
+      else sections['ARM'].push({label, val});
+    });
+    for (const [sec, items] of Object.entries(sections)) {
+      out += `── ${sec} ──\n`;
+      items.forEach(({label, val}) => out += `${label.padEnd(20)} ${val}\n`);
+      out += '\n';
+    }
+    document.getElementById('hd-output').textContent = out;
+    navigator.clipboard?.writeText(out).catch(() => {});
+  });
+  document.getElementById('hd-trigger').addEventListener('click', () => {
+    const [name, idx] = document.getElementById('hd-motion-select').value.split(',');
+    if (model && currentCharId === 'rem') {
+      const i = parseInt(idx);
+      try { model.motion(name, i, 2); } catch(_) {
+        try { model.internalModel.motionManager.startMotion(name, i, 2); } catch(_2) {}
+      }
+    }
+  });
+  handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
+    slider.addEventListener('input', () => {
+      const val = parseFloat(slider.value);
+      slider.nextElementSibling.textContent = Math.round(val * 100) / 100;
+      if (model) setCoreParam(slider.dataset.param, val);
+    });
+  });
 
   /* ── Tap model → random blink ────────────────────────────────── */
   canvas.addEventListener('click', () => {
