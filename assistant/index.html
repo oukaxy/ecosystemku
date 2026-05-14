@@ -1417,6 +1417,7 @@
   /* ── State ──────────────────────────────────────────────────── */
   let model        = null;
   let currentExpr  = 'none';
+  let currentRemMotionKey = 'none_0'; // track motion Rem yang aktif untuk tickExpression
   let blinkTimer   = 0;
   let blinkState   = 'open';
   let blinkT       = 0;
@@ -2260,14 +2261,14 @@
 
   function setRemFace(exprName, index = 0) {
     const key = `${exprName}_${index}`;
-    const map = REM_FACE_MAP[key] || REM_FACE_MAP[`${exprName}_0`] || REM_FACE_MAP['none_0'] || {};
+    currentRemMotionKey = REM_FACE_MAP[key] ? key : (`${exprName}_0` in REM_FACE_MAP ? `${exprName}_0` : 'none_0');
+    const map = REM_FACE_MAP[currentRemMotionKey] || {};
     const defaultMap = REM_FACE_MAP['none_0'] || {};
     for (const [param, s] of Object.entries(remFaceParams)) {
       const newTarget = map[param] !== undefined ? map[param] : (defaultMap[param] ?? 0);
       if (REM_MOTION_OWNED.has(param)) {
         s.current = newTarget;
         s.target  = newTarget;
-        setCoreParam(param, newTarget);
       } else {
         s.current = s.target;
         s.target  = newTarget;
@@ -2290,7 +2291,7 @@
       return;
     }
 
-    // Rem — smooth fade via remFaceParams (skip param yang di-handle motion engine)
+    // Rem — smooth fade untuk face params
     for (const [paramId, s] of Object.entries(remFaceParams)) {
       if (REM_MOTION_OWNED.has(paramId)) continue;
       if (s.current === s.target) continue;
@@ -2298,6 +2299,14 @@
       s.current += (s.target - s.current) * speed;
       if (Math.abs(s.current - s.target) < 0.001) s.current = s.target;
       setCoreParam(paramId, s.current);
+    }
+
+    // Rem — apply HAND+ARM params tiap frame, override motion engine
+    const activeMap = REM_FACE_MAP[currentRemMotionKey] || REM_FACE_MAP['none_0'] || {};
+    const defaultMap = REM_FACE_MAP['none_0'] || {};
+    for (const paramId of REM_MOTION_OWNED) {
+      const val = activeMap[paramId] !== undefined ? activeMap[paramId] : (defaultMap[paramId] ?? 0);
+      setCoreParam(paramId, val);
     }
   }
 
