@@ -1621,11 +1621,12 @@
       // Monkey-patch motionManager.update untuk Rem
       if (charCfg.id === 'rem') {
         const mgr = model.internalModel.motionManager;
-        // Cek nama fungsi update yang tersedia
         const updateFnName = typeof mgr.update === 'function' ? 'update' :
                              typeof mgr.doUpdate === 'function' ? 'doUpdate' :
                              typeof mgr.updateMotion === 'function' ? 'updateMotion' : null;
-        showMotionToast(`patch: ${updateFnName || 'NOT FOUND'}`);
+
+        // Debug — tampilkan nama fungsi
+        setTimeout(() => showMotionToast(`patch: ${updateFnName || 'NOT FOUND'}`), 1000);
 
         if (updateFnName) {
           const _origUpdate = mgr[updateFnName].bind(mgr);
