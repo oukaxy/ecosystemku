@@ -1517,8 +1517,9 @@
       exprParams[key].target  = 0;
     }
     for (const key of Object.keys(remFaceParams)) {
-      remFaceParams[key].current = 0;
-      remFaceParams[key].target  = 0;
+      const defaultVal = (key === 'PARAM_CHEEK_01' || key === 'PARAM_ARM_R_ORDER' || key === 'PARAM_ARM_L_ORDER') ? 1 : 0;
+      remFaceParams[key].current = defaultVal;
+      remFaceParams[key].target  = defaultVal;
     }
     currentExpr = 'none';
 
@@ -2096,38 +2097,64 @@
 
   /* ── Tick expression ─────────────────────────────────────────── */
 
-  // Rem face params — smooth fade seperti Liro tapi pakai param Rem
+  // Rem face+hand params — smooth fade per ekspresi
   let remFaceParams = {
-    PARAM_MOUTH_FORM_01: { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
-    PARAM_BROW_R_FORM:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
-    PARAM_BROW_L_FORM:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.03 },
-    PARAM_EYE_R_SMILE:   { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
-    PARAM_EYE_L_SMILE:   { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
-    PARAM_EYE_FORM:      { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.03 },
-    PARAM_CHEEK_01:      { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.02 },
-    PARAM_TEAR_01:       { current: 0, target: 0, fadeIn: 0.03, fadeOut: 0.02 },
-    PARAM_ARM_R_ORDER:   { current: 1, target: 1, fadeIn: 1.0,  fadeOut: 1.0  },
-    PARAM_ARM_L_ORDER:   { current: 1, target: 1, fadeIn: 1.0,  fadeOut: 1.0  },
+    // Face
+    PARAM_MOUTH_FORM_01:  { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_R_FORM:    { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_L_FORM:    { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_EYE_R_SMILE:    { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
+    PARAM_EYE_L_SMILE:    { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
+    PARAM_EYE_FORM:       { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
+    PARAM_CHEEK_01:       { current: 1, target: 1, fadeIn: 0.04, fadeOut: 0.03 },
+    PARAM_TEAR_01:        { current: 0, target: 0, fadeIn: 0.03, fadeOut: 0.02 },
+    // Brow position
+    PARAM_BROW_R_X:       { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_L_X:       { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_R_Y:       { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_L_Y:       { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_R_ANGLE:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_BROW_L_ANGLE:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    // Mouth shape
+    PARAM_MOUTH_SCALE:    { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_MOUTH_SCALE_Y:  { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    PARAM_MOUTH_POS_Y:    { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.04 },
+    // Hand pose
+    PARAM_HAND_R_04:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_R_05:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_R_07:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_R_08:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_L_01:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_L_04:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_L_05:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_L_07:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_L_08:      { current: 0, target: 0, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_HAND_R_ROTATE:  { current: 0, target: 0, fadeIn: 0.08, fadeOut: 0.06 },
+    PARAM_HAND_L_ROTATE:  { current: 0, target: 0, fadeIn: 0.08, fadeOut: 0.06 },
+    // ARM order — snap langsung
+    PARAM_ARM_R_ORDER:    { current: 1, target: 1, fadeIn: 1.0,  fadeOut: 1.0  },
+    PARAM_ARM_L_ORDER:    { current: 1, target: 1, fadeIn: 1.0,  fadeOut: 1.0  },
   };
 
-  // Mapping ekspresi → nilai target — dari data motion3.json asli
+  // Mapping ekspresi → nilai target semua param — dari data motion3.json asli
+  // Param yang tidak disebutkan = 0 (di-reset otomatis oleh setRemFace)
   const REM_FACE_MAP = {
-    none:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    happy:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    smile:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  1,    PARAM_BROW_L_FORM:  1,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    appeal:  { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  1,    PARAM_EYE_L_SMILE:  1,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    proud:   { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    shame:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    sad:     { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE: -1,    PARAM_EYE_L_SMILE: -1,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    cry:     { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE: -1,    PARAM_EYE_L_SMILE: -1,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    angry:   { PARAM_MOUTH_FORM_01: -1,    PARAM_BROW_R_FORM: -1,    PARAM_BROW_L_FORM: -1,    PARAM_EYE_R_SMILE: -0.7,  PARAM_EYE_L_SMILE: -0.7,  PARAM_EYE_FORM: -0.6, PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    upset:   { PARAM_MOUTH_FORM_01: -2,    PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE: -0.5,  PARAM_EYE_L_SMILE: -0.5,  PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    serious: { PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM: -1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    surprise:{ PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.7,  PARAM_BROW_L_FORM: -0.7,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    doubt:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    puzzle:  { PARAM_MOUTH_FORM_01: -0.5,  PARAM_BROW_R_FORM: -0.6,  PARAM_BROW_L_FORM: -0.6,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
-    navi:    { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0.8,  PARAM_BROW_L_FORM:  0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 0 },
-    idle:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1 },
+    none:    { PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_HAND_R_05: 1, PARAM_HAND_L_08: 1, PARAM_HAND_R_ROTATE: 2.2, PARAM_HAND_L_ROTATE: 19.98 },
+    idle:    { PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_HAND_R_05: 1, PARAM_HAND_L_08: 1, PARAM_HAND_R_ROTATE: 2.2, PARAM_HAND_L_ROTATE: 19.98 },
+    happy:   { PARAM_MOUTH_FORM_01: 1, PARAM_BROW_R_FORM: 0.5, PARAM_BROW_L_FORM: 0.5, PARAM_EYE_R_SMILE: 0.5, PARAM_EYE_L_SMILE: 0.5, PARAM_EYE_FORM: 0.5, PARAM_CHEEK_01: 1.25, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: 0.05, PARAM_BROW_L_X: 0.05, PARAM_BROW_R_Y: -0.05, PARAM_BROW_L_Y: -0.05, PARAM_BROW_R_ANGLE: 0.15, PARAM_BROW_L_ANGLE: 0.15, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 2.97, PARAM_HAND_L_ROTATE: -2.387 },
+    smile:   { PARAM_MOUTH_FORM_01: 1, PARAM_BROW_R_FORM: 1, PARAM_BROW_L_FORM: 1, PARAM_EYE_FORM: 1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: 0.3, PARAM_BROW_L_X: 0.3, PARAM_BROW_R_ANGLE: 0.1, PARAM_BROW_L_ANGLE: 0.1 },
+    appeal:  { PARAM_MOUTH_FORM_01: 1, PARAM_EYE_R_SMILE: 1, PARAM_EYE_L_SMILE: 1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_MOUTH_SCALE: -0.3, PARAM_MOUTH_SCALE_Y: -1, PARAM_MOUTH_POS_Y: 0.5, PARAM_HAND_R_05: 1, PARAM_HAND_L_08: 1, PARAM_HAND_R_ROTATE: 0.68, PARAM_HAND_L_ROTATE: -1.3 },
+    proud:   { PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_Y: -0.2, PARAM_BROW_L_Y: -0.2, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 0.76, PARAM_HAND_L_ROTATE: 5.18 },
+    shame:   { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.6, PARAM_BROW_L_FORM: -0.6, PARAM_EYE_FORM: 1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.5, PARAM_BROW_L_X: -0.5, PARAM_BROW_R_Y: -0.4, PARAM_BROW_L_Y: -0.4, PARAM_BROW_R_ANGLE: -0.2, PARAM_BROW_L_ANGLE: -0.2, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 1.076, PARAM_HAND_L_ROTATE: 4.269 },
+    sad:     { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_R_SMILE: -1, PARAM_EYE_L_SMILE: -1, PARAM_EYE_FORM: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.6, PARAM_BROW_L_X: -0.6, PARAM_BROW_R_Y: -0.673, PARAM_BROW_L_Y: -0.673, PARAM_MOUTH_SCALE: -1, PARAM_MOUTH_SCALE_Y: -1, PARAM_HAND_R_07: 1, PARAM_HAND_L_07: 1, PARAM_HAND_R_ROTATE: 4.15, PARAM_HAND_L_ROTATE: 0.473 },
+    cry:     { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_FORM: 1, PARAM_CHEEK_01: 1, PARAM_TEAR_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.3, PARAM_BROW_L_X: -0.3, PARAM_BROW_R_Y: -0.119, PARAM_BROW_L_Y: -0.119, PARAM_BROW_R_ANGLE: -0.107, PARAM_BROW_L_ANGLE: -0.107, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 0.28, PARAM_HAND_L_ROTATE: 3.423 },
+    angry:   { PARAM_MOUTH_FORM_01: -1, PARAM_BROW_R_FORM: -1, PARAM_BROW_L_FORM: -1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.4, PARAM_BROW_L_X: -0.4, PARAM_BROW_R_Y: -0.5, PARAM_BROW_L_Y: -0.5, PARAM_MOUTH_SCALE: -0.8, PARAM_MOUTH_SCALE_Y: 0.7, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 0.76, PARAM_HAND_L_ROTATE: 5.18 },
+    upset:   { PARAM_MOUTH_FORM_01: -2, PARAM_BROW_R_FORM: -0.8, PARAM_BROW_L_FORM: -0.8, PARAM_EYE_R_SMILE: -0.5, PARAM_EYE_L_SMILE: -0.5, PARAM_EYE_FORM: 1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.2, PARAM_BROW_L_X: -0.2, PARAM_BROW_R_Y: -0.502, PARAM_BROW_L_Y: -0.502, PARAM_BROW_R_ANGLE: 0.239, PARAM_BROW_L_ANGLE: 0.239, PARAM_MOUTH_SCALE: -1, PARAM_MOUTH_SCALE_Y: -1, PARAM_HAND_R_08: 1, PARAM_HAND_L_05: 1, PARAM_HAND_R_ROTATE: -3.846, PARAM_HAND_L_ROTATE: 5.195 },
+    serious: { PARAM_MOUTH_FORM_01: -0.6, PARAM_BROW_R_FORM: -0.3, PARAM_BROW_L_FORM: -0.3, PARAM_EYE_FORM: -1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.6, PARAM_BROW_L_X: -0.6, PARAM_BROW_R_Y: -0.5, PARAM_BROW_L_Y: -0.5, PARAM_BROW_R_ANGLE: -0.7, PARAM_BROW_L_ANGLE: -0.7, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 0.76, PARAM_HAND_L_ROTATE: 5.18 },
+    surprise:{ PARAM_MOUTH_FORM_01: -0.6, PARAM_BROW_R_FORM: -0.7, PARAM_BROW_L_FORM: -0.7, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: -0.3, PARAM_BROW_L_X: -0.3, PARAM_BROW_R_Y: -0.2, PARAM_BROW_L_Y: -0.2, PARAM_BROW_R_ANGLE: 0.182, PARAM_BROW_L_ANGLE: 0.182, PARAM_HAND_R_05: 1, PARAM_HAND_L_05: 1, PARAM_HAND_R_ROTATE: 0.76, PARAM_HAND_L_ROTATE: 5.18 },
+    doubt:   { PARAM_MOUTH_FORM_01: -0.8, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: 0.3, PARAM_BROW_L_X: 0.3, PARAM_BROW_R_ANGLE: -0.3, PARAM_BROW_L_ANGLE: -0.3, PARAM_MOUTH_SCALE: -1, PARAM_MOUTH_SCALE_Y: -1, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 0.76, PARAM_HAND_L_ROTATE: 5.18 },
+    puzzle:  { PARAM_MOUTH_FORM_01: -0.5, PARAM_BROW_R_FORM: -0.5, PARAM_BROW_L_FORM: -0.5, PARAM_EYE_FORM: 1, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 1, PARAM_BROW_R_X: 0.2, PARAM_BROW_L_X: 0.2, PARAM_BROW_R_Y: -0.2, PARAM_BROW_L_Y: -0.2, PARAM_BROW_R_ANGLE: -0.259, PARAM_BROW_L_ANGLE: -0.259, PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1, PARAM_HAND_R_ROTATE: 1.255, PARAM_HAND_L_ROTATE: 6.41 },
+    navi:    { PARAM_MOUTH_FORM_01: 1, PARAM_BROW_R_FORM: 0.8, PARAM_BROW_L_FORM: 0.8, PARAM_CHEEK_01: 1, PARAM_ARM_R_ORDER: 1, PARAM_ARM_L_ORDER: 0 },
   };
 
   function setRemFace(exprName) {
