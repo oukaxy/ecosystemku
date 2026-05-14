@@ -2207,8 +2207,8 @@
     PARAM_HAND_L_ROTATE:  { current: 0, target: 0, fadeIn: 1.0, fadeOut: 1.0 },
     PARAM_ARM_R_ORDER:    { current: 1, target: 1, fadeIn: 1.0, fadeOut: 1.0 },
     PARAM_ARM_L_ORDER:    { current: 1, target: 1, fadeIn: 1.0, fadeOut: 1.0 },
-    PARAM_ARM_R_ROTATE:   { current: 0, target: 0, fadeIn: 1.0, fadeOut: 1.0 },
-    PARAM_ARM_L_ROTATE:   { current: 0, target: 0, fadeIn: 1.0, fadeOut: 1.0 },
+    PARAM_ARM_R_ROTATE:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.06 },
+    PARAM_ARM_L_ROTATE:   { current: 0, target: 0, fadeIn: 0.06, fadeOut: 0.06 },
   };
 
   // REM_FACE_MAP — nilai dari hasil trial error langsung di HP
@@ -2241,7 +2241,7 @@
     'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
     'PARAM_HAND_R_ROTATE','PARAM_HAND_L_ROTATE',
     'PARAM_ARM_R_ORDER','PARAM_ARM_L_ORDER',
-    'PARAM_ARM_R_ROTATE','PARAM_ARM_L_ROTATE',
+    // ARM_ROTATE tidak masuk sini — biar smooth fade
     'PARAM_BROW_R_X','PARAM_BROW_L_X','PARAM_BROW_R_Y','PARAM_BROW_L_Y',
     'PARAM_BROW_R_ANGLE','PARAM_BROW_L_ANGLE',
   ]);
