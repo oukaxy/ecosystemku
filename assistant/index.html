@@ -2525,12 +2525,31 @@
   });
 
   document.getElementById('hd-copy').addEventListener('click', () => {
-    const vals = {};
-    handDebugPanel.querySelectorAll('.hd-slider').forEach(slider => {
-      const v = parseFloat(slider.value);
-      if (v !== 0) vals[slider.dataset.param] = v;
+    const sections = { 'HAND R': [], 'HAND L': [], 'ARM': [] };
+    handDebugPanel.querySelectorAll('.hd-row').forEach(row => {
+      const slider = row.querySelector('.hd-slider');
+      if (!slider) return;
+      const param = slider.dataset.param;
+      const val   = Math.round(parseFloat(slider.value) * 100) / 100;
+      const label = row.querySelector('.hd-label').textContent.trim();
+      if (param.includes('HAND_R')) sections['HAND R'].push({ label, val });
+      else if (param.includes('HAND_L')) sections['HAND L'].push({ label, val });
+      else sections['ARM'].push({ label, val });
     });
-    const out = JSON.stringify(vals, null, 2);
+
+    // Ambil motion yang sedang aktif dari toast terakhir
+    const motionToast = document.getElementById('motion-toast');
+    const motionInfo  = motionToast ? motionToast.textContent.trim() : '—';
+
+    let out = `Motion: ${motionInfo}\n\n`;
+    for (const [section, items] of Object.entries(sections)) {
+      out += `── ${section} ──\n`;
+      items.forEach(({ label, val }) => {
+        out += `${label.padEnd(20)} ${val}\n`;
+      });
+      out += '\n';
+    }
+
     document.getElementById('hd-copy-output').textContent = out;
     navigator.clipboard?.writeText(out).catch(() => {});
   });
