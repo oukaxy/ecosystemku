@@ -1620,6 +1620,10 @@
 
       requestAnimationFrame(() => resizeApp());
 
+      // Remove dulu sebelum add — cegah numpuk
+      app.ticker.remove(onTick);
+      if (window._remHandTicker) app.ticker.remove(window._remHandTicker);
+
       app.ticker.add(onTick);
 
       // Ticker terpisah — apply HAND+ARM params setelah motion engine
