@@ -445,7 +445,29 @@
       margin-top: 8px;
       padding-top: 6px;
       border-top: 1px solid var(--border);
+      overflow: hidden;
     }
+    .todo-subtasks.collapsed {
+      display: none;
+    }
+    .todo-sub-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+      padding: 2px 0;
+      font-size: 11px;
+      color: var(--text-3);
+      user-select: none;
+      width: fit-content;
+    }
+    .todo-sub-toggle:hover { color: var(--text-2); }
+    .todo-sub-chevron {
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .todo-sub-chevron.open { transform: rotate(180deg); }
     .todo-sub-row {
       display: flex;
       align-items: center;
@@ -1954,9 +1976,10 @@ function save() {
   // Habits & todos → IndexedDB
   const p1 = idbSet('habits', 'dailyos_habits', habits).catch(e => console.error('[DailyOS] save habits failed:', e));
   const p2 = idbSet('todos',  'dailyos_todos',  todos).catch(e => console.error('[DailyOS] save todos failed:', e));
-  // XP tetap di localStorage (state ringan)
+  // XP → IndexedDB (supaya Kronik baca nilai yang sama) + localStorage sebagai cache ringan
+  const p3 = EcosystemDB.kv.dailyos.set('totalPoints', totalPoints).catch(e => console.error('[DailyOS] save totalPoints failed:', e));
   localStorage.setItem('dailyos_xp', totalPoints.toString());
-  return Promise.all([p1, p2]);
+  return Promise.all([p1, p2, p3]);
 }
 
 async function load() {
@@ -2472,16 +2495,27 @@ function makeTodoCard(t) {
     ? `<span class="todo-deadline ${overdue ? 'overdue' : ''}">${overdue ? '! ' : ''}${formatDate(t.deadline)}</span>`
     : '';
 
-  // Render subtasks kalau ada
+  // Render subtasks kalau ada — collapsible, state disimpan di localStorage
   const hasSubs = Array.isArray(t.subtasks) && t.subtasks.length > 0;
-  const subsHtml = hasSubs
-    ? `<div class="todo-subtasks">${t.subtasks.map(s =>
-        `<div class="todo-sub-row">
-          <div class="todo-sub-check ${s.done?'checked':''}" onclick="toggleTodoSub('${t.id}','${s.id}',this)"></div>
-          <span class="todo-sub-text ${s.done?'done':''}">${s.text}</span>
-        </div>`
-      ).join('')}</div>`
-    : '';
+  let subsHtml = '';
+  if (hasSubs) {
+    const subKey = `dailyos_sub_open_${t.id}`;
+    const isSubOpen = localStorage.getItem(subKey) !== 'false'; // default open
+    const doneSubs  = t.subtasks.filter(s => s.done).length;
+    const totalSubs = t.subtasks.length;
+    const subRows   = t.subtasks.map(s =>
+      `<div class="todo-sub-row">
+        <div class="todo-sub-check ${s.done?'checked':''}" onclick="toggleTodoSub('${t.id}','${s.id}',this)"></div>
+        <span class="todo-sub-text ${s.done?'done':''}">${s.text}</span>
+      </div>`
+    ).join('');
+    subsHtml = `
+      <div class="todo-sub-toggle" onclick="toggleTodoSubPanel('${t.id}', this)">
+        <svg class="todo-sub-chevron ${isSubOpen ? 'open' : ''}" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        <span>${doneSubs}/${totalSubs} subtask</span>
+      </div>
+      <div class="todo-subtasks ${isSubOpen ? '' : 'collapsed'}" id="todo-subs-${t.id}">${subRows}</div>`;
+  }
 
   card.setAttribute('data-id', t.id);
   card.innerHTML = `
@@ -2516,7 +2550,27 @@ window.toggleTodoSub = function(todoId, subId, el) {
   el.classList.toggle('checked', sub.done);
   const txt = el.nextElementSibling;
   if (txt) txt.classList.toggle('done', sub.done);
+  // Update toggle label count
+  const card = el.closest('.todo-card');
+  if (card) {
+    const toggleLabel = card.querySelector('.todo-sub-toggle span');
+    if (toggleLabel) {
+      const doneSubs  = t.subtasks.filter(s => s.done).length;
+      const totalSubs = t.subtasks.length;
+      toggleLabel.textContent = `${doneSubs}/${totalSubs} subtask`;
+    }
+  }
   save();
+};
+
+window.toggleTodoSubPanel = function(todoId, toggleEl) {
+  const panel = document.getElementById(`todo-subs-${todoId}`);
+  if (!panel) return;
+  const chevron = toggleEl.querySelector('.todo-sub-chevron');
+  const isOpen  = panel.classList.toggle('collapsed');
+  // isOpen sekarang = true kalau baru di-collapse
+  if (chevron) chevron.classList.toggle('open', !isOpen);
+  localStorage.setItem(`dailyos_sub_open_${todoId}`, isOpen ? 'false' : 'true');
 };
 
 window.toggleTodo = function(id, el) {
@@ -3707,9 +3761,24 @@ async function getAICoach() {
     return `- ${h.name} | Streak: ${streak} hari | Progress: ${progressState} (${progressPercent}%)`;
   }).join('\n');
 
-  const todoSummary = activeTodos.length > 0
-    ? activeTodos.map(t => `- [${t.priority.toUpperCase()}] ${t.title}${t.deadline?' (deadline: '+formatDate(t.deadline)+')':''}`).join('\n')
-    : '(tidak ada task aktif)';
+  // Kelompokkan todo berdasarkan kapan harus dikerjakan — beri konteks waktu ke AI
+  const tomorrow = (() => {
+    const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+
+  const todayTodos    = activeTodos.filter(t => t.priority === 'urgent' || (t.deadline && t.deadline <= today));
+  const tomorrowTodos = activeTodos.filter(t => !todayTodos.includes(t) && t.deadline === tomorrow);
+  const weekTodos     = activeTodos.filter(t => !todayTodos.includes(t) && !tomorrowTodos.includes(t) && t.priority === 'soon');
+  const laterTodos    = activeTodos.filter(t => !todayTodos.includes(t) && !tomorrowTodos.includes(t) && !weekTodos.includes(t));
+
+  const fmtTodo = t => `- ${t.title}${t.deadline ? ' (deadline: '+formatDate(t.deadline)+')' : ''}`;
+  const todoSummary = activeTodos.length > 0 ? [
+    todayTodos.length    ? `[HARI INI - harus selesai hari ini]\n${todayTodos.map(fmtTodo).join('\n')}` : '',
+    tomorrowTodos.length ? `[BESOK - deadline besok, belum waktunya hari ini]\n${tomorrowTodos.map(fmtTodo).join('\n')}` : '',
+    weekTodos.length     ? `[MINGGU INI - tidak mendesak hari ini]\n${weekTodos.map(fmtTodo).join('\n')}` : '',
+    laterTodos.length    ? `[NANTI - simpan untuk lain waktu]\n${laterTodos.map(fmtTodo).join('\n')}` : '',
+  ].filter(Boolean).join('\n\n') : '(tidak ada task aktif)';
 
   // Susun memory section kalau ada
   const memorySection = memory ? `
@@ -3732,11 +3801,11 @@ ${idekuIdeas.map(i => `- ${i.title}${i.category ? ' ['+i.category+']' : ''}${i.n
 HABIT TERJADWAL HARI INI:
 ${habitSummary || '(tidak ada habit dijadwalkan hari ini)'}
 
-TO-DO AKTIF:
+TO-DO (dikelompokkan berdasarkan urgensi waktu):
 ${todoSummary}
 ${memorySection}${idekuSection}
 
-Tulis briefing harian — maksimal 2-3 paragraf pendek, padat, dan langsung ke intinya. Gaya: pesan WhatsApp dari mentor yang kenal kamu baik, bukan pidato motivasi. Kalau ada yang sudah selesai, sebut spesifik dan lanjut. Kalau ada yang belum dan kamu punya data polanya, tantang langsung — jangan basa-basi atau filosofis. Pilih 1-2 hal paling penting untuk disorot, jangan bahas semuanya. Jangan pakai bullet point. Jangan mulai dengan sapaan klise seperti "Hei!", "Wah!", "Oke,", atau "Jadi,".`;
+Tulis briefing harian — maksimal 2-3 paragraf pendek, padat, dan langsung ke intinya. Gaya: pesan WhatsApp dari mentor yang kenal kamu baik, bukan pidato motivasi. Kalau ada yang sudah selesai, sebut spesifik dan lanjut. Kalau ada yang belum dan kamu punya data polanya, tantang langsung — jangan basa-basi atau filosofis. Pilih 1-2 hal paling penting untuk disorot, jangan bahas semuanya. Jangan pakai bullet point. Jangan mulai dengan sapaan klise seperti "Hei!", "Wah!", "Oke,", atau "Jadi,". PENTING: todo yang berlabel [BESOK], [MINGGU INI], atau [NANTI] jangan disuruh dikerjakan hari ini — cukup sebut sebagai pengingat kalau perlu, bukan tuntutan.`;
 
   const system = `Kamu adalah mentor produktivitas yang sudah kenal user ini. Bicara seperti teman yang jujur — singkat, langsung, kadang nyelekit kalau perlu. Bahasa Indonesia kasual, boleh campur English kalau natural. Hindari kalimat motivasi klise seperti "aku percaya kamu bisa", "mari kita", "komitmen yang kuat". Jangan terdengar seperti bot.`;
 
