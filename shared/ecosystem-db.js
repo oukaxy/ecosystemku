@@ -219,6 +219,16 @@ const EcosystemDB = (() => {
     delete: (key)         => remove('kv', key),
 
     /**
+     * Namespace Daily OS → prefix 'dailyos:'
+     * Contoh: kv.dailyos.get('totalPoints') membaca key 'dailyos:totalPoints'
+     */
+    dailyos: {
+      get:    (key)        => get('kv', `dailyos:${key}`).then(r => r ?? null),
+      set:    (key, value) => put('kv', value, `dailyos:${key}`),
+      delete: (key)        => remove('kv', `dailyos:${key}`),
+    },
+
+    /**
      * Namespace Kronik → prefix 'kronik:'
      * Contoh: kv.kronik.get('rpg_profile') membaca key 'kronik:rpg_profile'
      */
@@ -273,11 +283,16 @@ const EcosystemDB = (() => {
     const activeHabits = getActiveHabits ? getActiveHabits({ habits: habitsArr }) : habitsArr;
     const activeTodos  = getActiveTodos  ? getActiveTodos({ todos: todosArr })   : todosArr;
 
-    const totalPoints = activeHabits.reduce((sum, h) => {
-      const history = h.history || {};
-      return sum + Object.values(history).reduce((s, v) =>
-        s + (Array.isArray(v) ? v.length : (v ? 1 : 0)), 0);
-    }, 0) * 10;
+    // Baca totalPoints dari kv.dailyos (disimpan oleh Daily OS saat save())
+    // Fallback: hitung ulang dari history kalau belum pernah disimpan (user lama)
+    let totalPoints = await get('kv', 'dailyos:totalPoints').then(r => r ?? null);
+    if (totalPoints === null) {
+      totalPoints = activeHabits.reduce((sum, h) => {
+        const history = h.history || {};
+        return sum + Object.values(history).reduce((s, v) =>
+          s + (Array.isArray(v) ? v.length : (v ? 1 : 0)), 0);
+      }, 0) * 10;
+    }
 
     return {
       habits:     activeHabits,
