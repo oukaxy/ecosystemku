@@ -7,6 +7,7 @@
  * ║    • Daily OS     → domain: habits, todos                    ║
  * ║    • Kronik       → domain: journal_entries, kv              ║
  * ║    • CuciMoney+   → domain: finances (kv-based)              ║
+ * ║    • Gacha        → kv.gacha namespace (crystals, pity, …)  ║
  * ╚══════════════════════════════════════════════════════════════╝
  *
  * CARA PAKAI:
@@ -247,6 +248,21 @@ const EcosystemDB = (() => {
       set:    (key, value) => put('kv', value, `finances:${key}`),
       delete: (key)        => remove('kv', `finances:${key}`),
     },
+
+    /**
+     * Namespace Gacha (Kronik) → prefix 'gacha:'
+     * Keys yang dipakai:
+     *   gacha:crystals   → jumlah crystal (number)
+     *   gacha:pity       → pity counter saat ini (number)
+     *   gacha:pulls      → total pull sepanjang masa (number)
+     *   gacha:collection → array { id, count } hero yang sudah dimiliki
+     *   gacha:freePacks  → jumlah free pack belum diklaim (number)
+     */
+    gacha: {
+      get:    (key)        => get('kv', `gacha:${key}`).then(r => r ?? null),
+      set:    (key, value) => put('kv', value, `gacha:${key}`),
+      delete: (key)        => remove('kv', `gacha:${key}`),
+    },
   };
 
   /* ═══════════════════════════════════════════════════════════════
@@ -302,6 +318,45 @@ const EcosystemDB = (() => {
     };
   }
 
+  /**
+   * Tambah crystal ke gacha wallet.
+   * Dipanggil oleh Daily OS setiap 100 XP.
+   * @param {number} amount  - Jumlah crystal yang ditambahkan
+   * @param {string} [reason] - Alasan (untuk log, opsional)
+   * @returns {Promise<number>} - Total crystal sekarang
+   */
+  async function grantCrystals(amount, reason = '') {
+    const current = (await get('kv', 'gacha:crystals')) ?? 0;
+    const next    = current + amount;
+    await put('kv', next, 'gacha:crystals');
+    // Catat log sederhana (last 20 grants)
+    if (reason) {
+      const log = (await get('kv', 'gacha:crystal_log')) ?? [];
+      log.unshift({ amount, reason, at: new Date().toISOString() });
+      if (log.length > 20) log.length = 20;
+      await put('kv', log, 'gacha:crystal_log');
+    }
+    return next;
+  }
+
+  /**
+   * Tambah free pack ke gacha wallet.
+   * Dipanggil oleh Kronik setiap level up.
+   * @returns {Promise<number>} - Jumlah free pack sekarang
+   */
+  async function grantFreePack(reason = '') {
+    const current = (await get('kv', 'gacha:freePacks')) ?? 0;
+    const next    = current + 1;
+    await put('kv', next, 'gacha:freePacks');
+    if (reason) {
+      const log = (await get('kv', 'gacha:crystal_log')) ?? [];
+      log.unshift({ amount: 0, freePack: true, reason, at: new Date().toISOString() });
+      if (log.length > 20) log.length = 20;
+      await put('kv', log, 'gacha:crystal_log');
+    }
+    return next;
+  }
+
   /* ── Public API ─────────────────────────────────────────────── */
   return {
     open,
@@ -316,6 +371,8 @@ const EcosystemDB = (() => {
     /* Cross-app helpers */
     getIdeasInProgress,
     getDailyOsData,
+    grantCrystals,
+    grantFreePack,
 
     /* Generic (kalau perlu langsung) */
     getAll,
