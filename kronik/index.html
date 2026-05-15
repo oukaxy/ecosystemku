@@ -307,6 +307,40 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 .gacha-coll-name { font-family: 'Cinzel', serif; font-size: 7px; text-align: center; padding: 0 4px; color: rgba(230,220,255,0.8); }
 .gacha-coll-count { position: absolute; top: 3px; right: 5px; font-size: 8px; color: rgba(200,160,255,0.5); }
 .gacha-empty { grid-column: 1/-1; text-align: center; color: rgba(200,160,255,0.3); font-size: 13px; padding: 24px; }
+
+/* ── Pull history ── */
+.gacha-history-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.gacha-history-item {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(192,132,252,0.1);
+  border-radius: 8px; padding: 8px 10px;
+}
+.gacha-history-item.legendary { border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.05); }
+.gacha-history-item.epic      { border-color: rgba(168,85,247,0.25); background: rgba(168,85,247,0.04); }
+.gacha-history-item.rare      { border-color: rgba(59,130,246,0.25); background: rgba(59,130,246,0.04); }
+.g-hist-emoji { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.g-hist-info  { flex: 1; }
+.g-hist-name  { font-family: 'Cinzel', serif; font-size: 11px; color: #e9d5ff; }
+.g-hist-meta  { font-size: 9px; color: rgba(200,160,255,0.45); margin-top: 2px; letter-spacing: 1px; }
+.g-hist-rarity { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 1px; flex-shrink: 0; }
+.g-hist-rarity.common    { color: #94a3b8; }
+.g-hist-rarity.rare      { color: #60a5fa; }
+.g-hist-rarity.epic      { color: #c084fc; }
+.g-hist-rarity.legendary { color: #fbbf24; }
+
+/* ── Hero bonus badge di profil ── */
+.hero-bonus-bar {
+  margin: 10px 0 0; padding: 10px 12px;
+  background: rgba(192,132,252,0.07); border: 1px solid rgba(192,132,252,0.18);
+  border-radius: 10px;
+}
+.hero-bonus-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; color: rgba(200,160,255,0.5); margin-bottom: 6px; }
+.hero-bonus-list  { display: flex; flex-wrap: wrap; gap: 6px; }
+.hero-bonus-tag {
+  font-size: 10px; padding: 3px 8px; border-radius: 6px;
+  background: rgba(192,132,252,0.12); border: 1px solid rgba(192,132,252,0.25);
+  color: #e9d5ff;
+}
 .gacha-coll-card.gacha-coll-silhouette {
   border-color: rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.015);
@@ -1183,6 +1217,11 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
             <div class="vital-num" id="stNum">0</div>
           </div>
         </div>
+        <!-- Hero Bonus Bar (muncul kalau ada hero di koleksi) -->
+        <div class="hero-bonus-bar" id="heroBonusBar" style="display:none">
+          <div class="hero-bonus-title">✦ HERO BONUS AKTIF</div>
+          <div class="hero-bonus-list" id="heroBonusList"></div>
+        </div>
         <div class="section-title">Statistik <span class="info-badge">dari habit data</span></div>
         <div class="stats-grid" id="statsGrid"></div>
         <div class="section-title">Habit Tracker</div>
@@ -1361,6 +1400,11 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
     </div>
 
     <!-- Collection -->
+    <div class="gacha-section-title">RIWAYAT PULL</div>
+    <div class="gacha-history-list" id="g-history-list">
+      <div class="gacha-empty" style="padding:12px">Belum ada pull.</div>
+    </div>
+
     <div class="gacha-section-title">KOLEKSI HERO</div>
     <div class="gacha-stats-row">
       <div class="gacha-stat-card">
@@ -3504,9 +3548,9 @@ const gSet = (k, v) => EcosystemDB.kv.gacha.set(k, v);
 
 /* ── Read full state from DB ── */
 async function gachaLoadState() {
-  const [crystals, pity, pulls, freePacks, collection, shards] = await Promise.all([
+  const [crystals, pity, pulls, freePacks, collection, shards, history] = await Promise.all([
     gGet('crystals'), gGet('pity'), gGet('pulls'),
-    gGet('freePacks'), gGet('collection'), gGet('shards'),
+    gGet('freePacks'), gGet('collection'), gGet('shards'), gGet('pullHistory'),
   ]);
   return {
     crystals:   crystals   ?? 0,
@@ -3515,6 +3559,7 @@ async function gachaLoadState() {
     freePacks:  freePacks  ?? 0,
     collection: collection ?? [],
     shards:     shards     ?? 0,
+    history:    history    ?? [],
   };
 }
 
@@ -3541,6 +3586,7 @@ async function gachaRefreshUI() {
   redeemBtn.disabled = s.shards <= 0;
   document.getElementById('gRedeemLabel').textContent = `${s.shards} Shard → ${crystalFromShards} Crystal`;
   gachaRenderCollection(s.collection);
+  gachaRenderHistory(s.history);
 }
 
 /* ── Gacha logic ── */
@@ -3590,12 +3636,23 @@ async function gachaDoPull(s, count) {
   }
   s.pulls += count;
 
+  // Tambah ke pull history (max 20 entry)
+  const histEntry = {
+    heroes:  results.map(h => ({ id: h.id, rarity: h.rarity })),
+    at:      new Date().toISOString(),
+    pullNum: s.pulls,
+  };
+  const history = (await gGet('pullHistory')) ?? [];
+  history.unshift(histEntry);
+  if (history.length > 20) history.length = 20;
+
   // Save state
   await Promise.all([
-    gSet('crystals',  s.crystals),
-    gSet('pity',      s.pity),
-    gSet('pulls',     s.pulls),
-    gSet('freePacks', s.freePacks),
+    gSet('crystals',    s.crystals),
+    gSet('pity',        s.pity),
+    gSet('pulls',       s.pulls),
+    gSet('freePacks',   s.freePacks),
+    gSet('pullHistory', history),
   ]);
 
   gachaOpenAnimation(results, s);
@@ -3826,6 +3883,129 @@ async function gachaOnStreak7(habitName) {
 window.gachaOnLevelUp  = gachaOnLevelUp;
 window.gachaOnStreak7  = gachaOnStreak7;
 
+/* ════════════════════════════════════════════════════════════════════
+   PULL HISTORY LOG
+════════════════════════════════════════════════════════════════════ */
+function gachaRenderHistory(history) {
+  const list = document.getElementById('g-history-list');
+  if (!history || history.length === 0) {
+    list.innerHTML = '<div class="gacha-empty" style="padding:12px">Belum ada pull.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  // Flatten semua hero dari tiap pull entry, max 15 item
+  const items = [];
+  for (const entry of history) {
+    for (const h of entry.heroes) {
+      items.push({ ...h, at: entry.at, pullNum: entry.pullNum });
+      if (items.length >= 15) break;
+    }
+    if (items.length >= 15) break;
+  }
+  items.forEach(item => {
+    const hero = GACHA_HEROES.find(h => h.id === item.id);
+    if (!hero) return;
+    const date = new Date(item.at);
+    const dateStr = `${date.toLocaleDateString('id-ID', { day:'numeric', month:'short' })} · Pull #${item.pullNum}`;
+    const div = document.createElement('div');
+    div.className = `gacha-history-item ${hero.rarity}`;
+    div.innerHTML = `
+      <span class="g-hist-emoji">${hero.emoji}</span>
+      <div class="g-hist-info">
+        <div class="g-hist-name">${hero.name}</div>
+        <div class="g-hist-meta">${hero.class} · ${dateStr}</div>
+      </div>
+      <span class="g-hist-rarity ${hero.rarity}">${hero.rarity.toUpperCase()}</span>`;
+    list.appendChild(div);
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   HERO BONUS PASIF → RPG STAT
+   Setiap hero yang dimiliki kasih bonus kecil ke HP/MP/ST/stats
+   Bonus bersifat additive, capped per kategori
+════════════════════════════════════════════════════════════════════ */
+const HERO_BONUSES = {
+  // Common — bonus kecil
+  c1: { label: 'Iron Guard: +3 HP',     hp: 3 },
+  c2: { label: 'Forest Scout: +3 ST',   st: 3 },
+  c3: { label: 'Apprentice: +3 MP',     mp: 3 },
+  c4: { label: 'Thief: +2 ST',          st: 2 },
+  c5: { label: 'Healer: +4 HP',         hp: 4 },
+  c6: { label: 'Brawler: +2 HP +2 ST',  hp: 2, st: 2 },
+  // Rare — bonus medium
+  r1: { label: 'Silver Blade: +5 HP',   hp: 5 },
+  r2: { label: 'Storm Archer: +5 ST',   st: 5 },
+  r3: { label: 'Frost Witch: +5 MP',    mp: 5 },
+  r4: { label: 'Shadow Step: +4 ST',    st: 4 },
+  r5: { label: 'Battle Priest: +6 HP',  hp: 6 },
+  r6: { label: 'Venom Blade: +3 HP +3 ST', hp: 3, st: 3 },
+  // Epic — bonus besar
+  e1: { label: 'Crimson Knight: +8 HP', hp: 8 },
+  e2: { label: 'Arcane Lord: +8 MP',    mp: 8 },
+  e3: { label: 'Night Stalker: +7 ST',  st: 7 },
+  e4: { label: 'Warlord: +5 HP +5 ST',  hp: 5, st: 5 },
+  // Legendary — bonus besar + bonus ganda
+  l1: { label: 'Dragon Emperor: +12 HP +5 ST', hp: 12, st: 5 },
+  l2: { label: 'Void Witch: +12 MP',    mp: 12 },
+  l3: { label: 'Ashen Phoenix: +10 HP +5 MP', hp: 10, mp: 5 },
+  l4: { label: 'Shadowlord: +8 HP +8 ST', hp: 8, st: 8 },
+};
+
+// Cap per vital agar tidak terlalu OP
+const HERO_BONUS_CAP = { hp: 20, mp: 20, st: 20 };
+
+async function applyHeroBonusToProfile() {
+  try {
+    const collection = (await gGet('collection')) ?? [];
+    if (collection.length === 0) {
+      document.getElementById('heroBonusBar').style.display = 'none';
+      return { hp: 0, mp: 0, st: 0, labels: [] };
+    }
+
+    let totalHp = 0, totalMp = 0, totalSt = 0;
+    const labels = [];
+
+    collection.forEach(({ id }) => {
+      const bonus = HERO_BONUSES[id];
+      if (!bonus) return;
+      totalHp += bonus.hp ?? 0;
+      totalMp += bonus.mp ?? 0;
+      totalSt += bonus.st ?? 0;
+      labels.push(bonus.label);
+    });
+
+    // Apply cap
+    totalHp = Math.min(totalHp, HERO_BONUS_CAP.hp);
+    totalMp = Math.min(totalMp, HERO_BONUS_CAP.mp);
+    totalSt = Math.min(totalSt, HERO_BONUS_CAP.st);
+
+    // Update hero bonus bar di profil
+    const bar = document.getElementById('heroBonusBar');
+    const lst = document.getElementById('heroBonusList');
+    if (labels.length > 0) {
+      bar.style.display = 'block';
+      lst.innerHTML = '';
+      if (totalHp > 0) { const t = document.createElement('span'); t.className = 'hero-bonus-tag'; t.textContent = `❤️ +${totalHp} HP`; lst.appendChild(t); }
+      if (totalMp > 0) { const t = document.createElement('span'); t.className = 'hero-bonus-tag'; t.textContent = `💙 +${totalMp} MP`; lst.appendChild(t); }
+      if (totalSt > 0) { const t = document.createElement('span'); t.className = 'hero-bonus-tag'; t.textContent = `💚 +${totalSt} ST`; lst.appendChild(t); }
+      labels.slice(0, 4).forEach(l => {
+        const t = document.createElement('span');
+        t.className = 'hero-bonus-tag';
+        t.style.opacity = '0.55';
+        t.textContent = l;
+        lst.appendChild(t);
+      });
+    } else {
+      bar.style.display = 'none';
+    }
+
+    return { hp: totalHp, mp: totalMp, st: totalSt, labels };
+  } catch(e) {
+    return { hp: 0, mp: 0, st: 0, labels: [] };
+  }
+}
+
 /* ── Patch renderProfile to detect level up and fire gachaOnLevelUp ── */
 let _gachaPrevLevel = 0;
 const _origRenderProfile = renderProfile;
@@ -3835,6 +4015,38 @@ renderProfile = function(result, skipCache) {
     gachaOnLevelUp(_gachaPrevLevel, newLevel).catch(() => {});
   }
   _gachaPrevLevel = newLevel;
+
+  // Apply hero bonus to vitals (async, update DOM after render)
+  applyHeroBonusToProfile().then(bonus => {
+    if (bonus.hp > 0 || bonus.mp > 0 || bonus.st > 0) {
+      // Tambah bonus ke nilai yang sudah dirender
+      const hpEl = document.getElementById('hpNum');
+      const mpEl = document.getElementById('mpNum');
+      const stEl = document.getElementById('stNum');
+      const hpFill = document.getElementById('hpFill');
+      const mpFill = document.getElementById('mpFill');
+      const stFill = document.getElementById('stFill');
+      if (hpEl) {
+        const base = parseInt(hpEl.textContent) || 0;
+        const val  = Math.min(99, base + bonus.hp);
+        hpEl.textContent = val;
+        if (hpFill) hpFill.style.width = val + '%';
+      }
+      if (mpEl) {
+        const base = parseInt(mpEl.textContent) || 0;
+        const val  = Math.min(99, base + bonus.mp);
+        mpEl.textContent = val;
+        if (mpFill) mpFill.style.width = val + '%';
+      }
+      if (stEl) {
+        const base = parseInt(stEl.textContent) || 0;
+        const val  = Math.min(99, base + bonus.st);
+        stEl.textContent = val;
+        if (stFill) stFill.style.width = val + '%';
+      }
+    }
+  }).catch(() => {});
+
   return _origRenderProfile(result, skipCache);
 };
 
