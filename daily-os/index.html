@@ -4621,19 +4621,20 @@ async function checkinInit() {
   const totalDays    = (await gDOSGet('checkinTotal'))    ?? 0;
   const claimedToday = lastCheckin === today;
 
-  // Kalau sudah claim hari ini, tidak perlu tampil modal lagi
+  // Kalau sudah claim hari ini, tidak perlu tampil modal
   if (claimedToday) {
     updateCrystalBadge();
     return;
   }
 
-  // Hitung hari ke berapa dalam siklus 30 hari
-  const cycleDay = (totalDays % 30) + 1; // 1–30
+  // Kalau sudah pernah ditutup di sesi ini (sessionStorage), skip
+  // Modal akan muncul lagi saat reload/buka app baru
+  if (sessionStorage.getItem('checkin_dismissed') === today) {
+    return;
+  }
 
-  // Render modal
+  const cycleDay = (totalDays % 30) + 1;
   renderCheckinModal(cycleDay, streak, totalDays, claimedToday);
-
-  // Tampilkan setelah sedikit delay biar tidak langsung pop saat load
   setTimeout(() => {
     document.getElementById('checkinOverlay').classList.add('open');
   }, 800);
@@ -4678,7 +4679,8 @@ function renderCheckinModal(cycleDay, streak, totalDays, claimedToday) {
 
   const btnClaim = document.getElementById('btnCheckinClaim');
   btnClaim.disabled = claimedToday;
-  // Re-bind setiap render untuk pastikan handler selalu fresh
+  btnClaim.textContent = claimedToday ? '✅ Sudah Diklaim' : 'CLAIM REWARD';
+  btnClaim.style.background = claimedToday ? '#4b5563' : '#6366f1';
   btnClaim.onclick = checkinClaim;
 }
 
@@ -4687,7 +4689,13 @@ async function checkinClaim() {
   const lastCheckin = (await gDOSGet('checkinLastDate')) ?? null;
   if (lastCheckin === today) return;
 
-  // Hitung streak (putus kalau skip lebih dari 1 hari)
+  // Disable tombol langsung biar tidak double-click
+  const btnClaim = document.getElementById('btnCheckinClaim');
+  btnClaim.disabled = true;
+  btnClaim.textContent = '⏳ Mengklaim...';
+  btnClaim.style.background = '#4b5563';
+
+  // Hitung streak
   let streak    = (await gDOSGet('checkinStreak'))  ?? 0;
   let totalDays = (await gDOSGet('checkinTotal'))   ?? 0;
 
@@ -4695,15 +4703,15 @@ async function checkinClaim() {
     const last    = new Date(lastCheckin);
     const now     = new Date(today);
     const diffDay = Math.round((now - last) / 86400000);
-    if (diffDay === 1) streak++;       // berturut-turut
-    else if (diffDay > 1) streak = 1;  // skip → reset
+    if (diffDay === 1) streak++;
+    else if (diffDay > 1) streak = 1;
   } else {
-    streak = 1; // pertama kali
+    streak = 1;
   }
   totalDays++;
 
-  const cycleDay   = totalDays % 30 === 0 ? 30 : totalDays % 30;
-  const reward     = CHECKIN_REWARDS[cycleDay - 1];
+  const cycleDay = totalDays % 30 === 0 ? 30 : totalDays % 30;
+  const reward   = CHECKIN_REWARDS[cycleDay - 1];
 
   // Simpan state
   await Promise.all([
@@ -4718,17 +4726,23 @@ async function checkinClaim() {
     await grantFreePackDOS(reward.freePack, `Check-in hari ke-${cycleDay}`);
   }
 
+  // Update UI — re-render modal dengan state claimed
+  renderCheckinModal(cycleDay, streak, totalDays, true);
+
   // Toast
   const msg = reward.freePack
     ? `🎁 Check-in Hari ${cycleDay}! +${reward.crystal} Crystal + ${reward.freePack} Free Pack`
     : `💎 Check-in Hari ${cycleDay}! +${reward.crystal} Crystal`;
   showToast(msg, 'success');
 
-  document.getElementById('btnCheckinClaim').disabled = true;
-  setTimeout(() => checkinClose(), 1200);
+  // Auto tutup setelah 2 detik
+  setTimeout(() => checkinClose(), 2000);
 }
 
 function checkinClose() {
+  // Simpan flag di sessionStorage — modal tidak muncul lagi di sesi ini
+  // tapi akan muncul lagi kalau reload/buka app baru (sampai diklaim)
+  sessionStorage.setItem('checkin_dismissed', todayStrDOS());
   document.getElementById('checkinOverlay').classList.remove('open');
 }
 
