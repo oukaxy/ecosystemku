@@ -1513,6 +1513,9 @@ async function doDeleteAll() {
     await EcosystemDB.open();
     await EcosystemDB.clear('habits');
     await EcosystemDB.clear('todos');
+    // Hapus kv.dailyos keys
+    const dailyosKeys = ['totalPoints', 'gachaLastXP'];
+    await Promise.all(dailyosKeys.map(k => EcosystemDB.kv.dailyos.delete(k).catch(() => {})));
     [
       'dailyos_xp', 'dailyos_coach_memory', 'dailyos_done_open',
       'dailyos_theme', 'dailyos_memory_date',
@@ -1530,14 +1533,39 @@ async function doDeleteAll() {
   try {
     _setClearStatus('kronik', 'Kronik', 'loading');
     await EcosystemDB.clear('journal_entries');
+    // Hapus kv.kronik keys
+    await Promise.all([
+      EcosystemDB.kv.kronik.delete('profile_name').catch(() => {}),
+      EcosystemDB.kv.kronik.delete('profile_avatar').catch(() => {}),
+      EcosystemDB.kv.kronik.delete('rpg_profile_cache').catch(() => {}),
+    ]);
     _setClearStatus('kronik', 'Kronik', 'ok');
   } catch(e) { _setClearStatus('kronik', 'Kronik', 'error'); }
 
   try {
     _setClearStatus('cucimoney', 'CuciMoney+', 'loading');
-    await EcosystemDB.clear('kv');
+    // Hapus hanya kv.finances keys, bukan seluruh kv store
+    await Promise.all([
+      EcosystemDB.kv.finances.delete('db').catch(() => {}),
+      EcosystemDB.kv.finances.delete('budgets').catch(() => {}),
+      EcosystemDB.kv.finances.delete('masterBudgets').catch(() => {}),
+    ]);
     _setClearStatus('cucimoney', 'CuciMoney+', 'ok');
   } catch(e) { _setClearStatus('cucimoney', 'CuciMoney+', 'error'); }
+
+  try {
+    _setClearStatus('gacha', 'Gacha & Check-in', 'loading');
+    const gachaKeys = [
+      'crystals', 'pity', 'pulls', 'freePacks', 'shards',
+      'collection', 'pullHistory', 'journalMilestonesReached',
+      'lastLoginBonus', 'xpLastGranted', 'crystal_log',
+      'checkinLastDate', 'checkinStreak', 'checkinTotal',
+    ];
+    await Promise.all(gachaKeys.map(k => EcosystemDB.kv.gacha.delete(k).catch(() => {})));
+    // Hapus juga streak keys per habit
+    const allKeys = await EcosystemDB.kv.gacha.get('collection').catch(() => null);
+    _setClearStatus('gacha', 'Gacha & Check-in', 'ok');
+  } catch(e) { _setClearStatus('gacha', 'Gacha & Check-in', 'error'); }
 
   // ── LinkKu via iframe ─────────────────────────────────────
   _setClearStatus('linkku', 'LinkKu', 'loading');
