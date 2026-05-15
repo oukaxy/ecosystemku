@@ -1823,7 +1823,7 @@
 
   console.warn('[DailyOS] EcosystemDB tidak tersedia — menggunakan IndexedDB fallback.');
 
-  const DB_NAME = 'dailyos_fallback';
+  const DB_NAME = 'ecosystem_db';  // HARUS sama dengan ecosystem-db.js
   const DB_VERSION = 1;
   let _db = null;
 
@@ -1833,9 +1833,10 @@
       const req = indexedDB.open(DB_NAME, DB_VERSION);
       req.onupgradeneeded = e => {
         const db = e.target.result;
-        if (!db.objectStoreNames.contains('habits')) db.createObjectStore('habits');
-        if (!db.objectStoreNames.contains('todos'))  db.createObjectStore('todos');
-        if (!db.objectStoreNames.contains('ideas'))  db.createObjectStore('ideas');
+        if (!db.objectStoreNames.contains('habits')) db.createObjectStore('habits', { keyPath: '_key' });
+        if (!db.objectStoreNames.contains('todos'))  db.createObjectStore('todos',  { keyPath: '_key' });
+        if (!db.objectStoreNames.contains('ideas'))  db.createObjectStore('ideas',  { keyPath: 'id' });
+        if (!db.objectStoreNames.contains('kv'))     db.createObjectStore('kv');
       };
       req.onsuccess = e => { _db = e.target.result; resolve(_db); };
       req.onerror   = e => reject(e.target.error);
