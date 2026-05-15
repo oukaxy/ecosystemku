@@ -310,6 +310,10 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 
 /* ── Pull history ── */
 .gacha-history-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.gacha-history-list.collapsed { display: none; }
+.gacha-section-title.collapsible { cursor: pointer; display: flex; align-items: center; justify-content: space-between; user-select: none; }
+.gacha-section-title.collapsible::after { content: '▾'; font-size: 12px; color: rgba(200,160,255,0.5); transition: transform 0.25s; }
+.gacha-section-title.collapsible.closed::after { transform: rotate(-90deg); }
 .gacha-history-item {
   display: flex; align-items: center; gap: 10px;
   background: rgba(255,255,255,0.03); border: 1px solid rgba(192,132,252,0.1);
@@ -346,6 +350,48 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
   background: rgba(255,255,255,0.015);
   filter: none;
 }
+
+/* ── Hero Detail Modal ── */
+.hero-detail-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
+  z-index: 9100; align-items: flex-end; justify-content: center;
+}
+.hero-detail-overlay.active { display: flex; }
+.hero-detail-sheet {
+  width: min(420px, 100vw); background: #0f0720;
+  border: 1px solid rgba(192,132,252,0.2);
+  border-radius: 20px 20px 0 0; padding: 24px 20px 36px;
+  animation: slideUpSheet 0.3s cubic-bezier(0.23,1,0.32,1);
+}
+@keyframes slideUpSheet { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.hero-detail-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 20px; }
+.hero-detail-top { display: flex; gap: 16px; align-items: center; margin-bottom: 18px; }
+.hero-detail-art { font-size: 52px; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+.hero-detail-art.common    { background: linear-gradient(135deg,#1a2030,#2a3040); }
+.hero-detail-art.rare      { background: linear-gradient(135deg,#0d1f3c,#1a3a6e); }
+.hero-detail-art.epic      { background: linear-gradient(135deg,#1e0a3c,#3b1a6e); }
+.hero-detail-art.legendary { background: linear-gradient(135deg,#2a1000,#6b2e00); }
+.hero-detail-meta { flex: 1; }
+.hero-detail-rarity { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; margin-bottom: 4px; }
+.hero-detail-rarity.common    { color: #94a3b8; }
+.hero-detail-rarity.rare      { color: #60a5fa; }
+.hero-detail-rarity.epic      { color: #c084fc; }
+.hero-detail-rarity.legendary { color: #fbbf24; }
+.hero-detail-name  { font-family: 'Cinzel', serif; font-size: 20px; color: #e9d5ff; margin-bottom: 2px; }
+.hero-detail-class { font-size: 11px; color: rgba(200,160,255,0.5); letter-spacing: 1px; }
+.hero-detail-divider { height: 1px; background: rgba(192,132,252,0.12); margin: 14px 0; }
+.hero-detail-stats { display: flex; gap: 10px; margin-bottom: 16px; }
+.hero-detail-stat { flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px; text-align: center; }
+.hero-detail-stat-val { font-family: 'Cinzel', serif; font-size: 18px; color: #e9d5ff; }
+.hero-detail-stat-lbl { font-size: 9px; letter-spacing: 1.5px; color: rgba(200,160,255,0.4); margin-top: 2px; }
+.hero-detail-bonus-title { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; color: rgba(200,160,255,0.5); margin-bottom: 8px; }
+.hero-detail-bonus-list { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.hero-detail-bonus-tag { font-size: 11px; padding: 5px 10px; border-radius: 8px; background: rgba(192,132,252,0.1); border: 1px solid rgba(192,132,252,0.2); color: #e9d5ff; }
+.hero-detail-no-bonus { font-size: 11px; color: rgba(200,160,255,0.35); font-style: italic; }
+.hero-detail-flavor { font-size: 12px; color: rgba(200,160,255,0.45); line-height: 1.6; font-style: italic; margin-bottom: 18px; }
+.btn-hero-detail-close { width: 100%; padding: 12px; border-radius: 10px; background: rgba(192,132,252,0.1); border: 1px solid rgba(192,132,252,0.2); color: #e9d5ff; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; }
+.btn-hero-detail-close:hover { background: rgba(192,132,252,0.2); }
 .gacha-no-crystal { text-align: center; color: #f87171; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1px; padding: 8px; opacity: 0; transition: opacity 0.3s; }
 .gacha-no-crystal.show { opacity: 1; }
 
@@ -1400,8 +1446,8 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
     </div>
 
     <!-- Collection -->
-    <div class="gacha-section-title">RIWAYAT PULL</div>
-    <div class="gacha-history-list" id="g-history-list">
+    <div class="gacha-section-title collapsible closed" id="g-history-toggle" onclick="gachaToggleHistory()">RIWAYAT PULL</div>
+    <div class="gacha-history-list collapsed" id="g-history-list">
       <div class="gacha-empty" style="padding:12px">Belum ada pull.</div>
     </div>
 
@@ -1441,6 +1487,36 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
   </div>
   <div class="g-cards-reveal" id="gCardsReveal"></div>
   <button class="btn-gacha-claim" id="gBtnClaim">CLAIM ✦</button>
+</div>
+
+<!-- Hero Detail Modal -->
+<div class="hero-detail-overlay" id="heroDetailOverlay" onclick="heroDetailClose(event)">
+  <div class="hero-detail-sheet" id="heroDetailSheet">
+    <div class="hero-detail-handle"></div>
+    <div class="hero-detail-top">
+      <div class="hero-detail-art" id="hd-art"></div>
+      <div class="hero-detail-meta">
+        <div class="hero-detail-rarity" id="hd-rarity"></div>
+        <div class="hero-detail-name"   id="hd-name"></div>
+        <div class="hero-detail-class"  id="hd-class"></div>
+      </div>
+    </div>
+    <div class="hero-detail-stats">
+      <div class="hero-detail-stat">
+        <div class="hero-detail-stat-val" id="hd-atk"></div>
+        <div class="hero-detail-stat-lbl">ATK</div>
+      </div>
+      <div class="hero-detail-stat">
+        <div class="hero-detail-stat-val" id="hd-def"></div>
+        <div class="hero-detail-stat-lbl">DEF</div>
+      </div>
+    </div>
+    <div class="hero-detail-divider"></div>
+    <div class="hero-detail-bonus-title">✦ BONUS PASIF</div>
+    <div class="hero-detail-bonus-list" id="hd-bonus"></div>
+    <div class="hero-detail-flavor" id="hd-flavor"></div>
+    <button class="btn-hero-detail-close" onclick="heroDetailClose()">TUTUP</button>
+  </div>
 </div>
 
 <!-- ── BOTTOM NAV ── -->
@@ -3876,6 +3952,66 @@ document.getElementById('gOverlay').addEventListener('click', function(e) {
 });
 
 /* ── Collection render ── */
+/* ════════════════════════════════════════════════════════════════════
+   HERO DETAIL MODAL
+════════════════════════════════════════════════════════════════════ */
+const HERO_FLAVORS = {
+  c1: 'Penjaga garis depan yang setia. Tamengnya tak pernah retak meski ribuan serangan menghantam.',
+  c2: 'Mata tajam di balik dedaunan. Panahnya selalu menemukan celah di antara kegelapan hutan.',
+  c3: 'Masih belajar, tapi percikannya sudah menjanjikan. Suatu hari sihirnya akan mengguncang dunia.',
+  c4: 'Tangan yang cepat, kaki yang lebih cepat. Tidak ada kantong yang aman di dekatnya.',
+  c5: 'Cahayanya menyembuhkan lebih dari sekadar luka. Ia menyentuh jiwa yang patah.',
+  c6: 'Tidak butuh pedang. Tinjunya sudah cukup untuk merobohkan tembok batu.',
+  r1: 'Pedangnya ditempa dari bintang jatuh. Setiap tebasan meninggalkan kilatan perak di udara.',
+  r2: 'Petir bukan hanya cuaca baginya — itu senjata. Panahnya melesat secepat kilat.',
+  r3: 'Dingin bukan kelemahannya. Es yang ia hembuskan membekukan waktu itu sendiri.',
+  r4: 'Tidak terlihat sampai terlambat. Bayangannya bergerak lebih cepat dari pikiranmu.',
+  r5: 'Bertempur sambil berdoa. Setiap pukulannya adalah doa yang terwujud.',
+  r6: 'Racunnya tidak membunuh seketika — itu bagian dari rencananya yang lebih besar.',
+  e1: 'Ksatria merah yang namanya ditakuti di seluruh benua. Zirahnya ternoda darah musuh.',
+  e2: 'Arkana bukan ilmu baginya — itu napas. Setiap kata mantranya mengubah realita.',
+  e3: 'Lahir dari kegelapan malam. Senyumnya adalah pertanda terakhir yang akan kau ingat.',
+  e4: 'Amarahnya adalah senjata. Semakin terluka, semakin kuat serangannya.',
+  l1: 'Sang kaisar naga. Nafasnya membakar gunung, langkahnya mengguncang bumi.',
+  l2: 'Datang dari celah antara dunia. Ia melihat segalanya — masa lalu, kini, dan yang belum terjadi.',
+  l3: 'Mati dan terlahir kembali dari abu. Setiap kematiannya hanya membuatnya lebih kuat.',
+  l4: 'Penguasa kegelapan yang memilih kesunyian. Ketika ia bicara, seluruh realm terdiam.',
+};
+
+function heroDetailOpen(heroId) {
+  const hero   = GACHA_HEROES.find(h => h.id === heroId);
+  const bonus  = HERO_BONUSES[heroId];
+  const flavor = HERO_FLAVORS[heroId] ?? '';
+  if (!hero) return;
+
+  document.getElementById('hd-art').className    = `hero-detail-art ${hero.rarity}`;
+  document.getElementById('hd-art').textContent   = hero.emoji;
+  document.getElementById('hd-rarity').className  = `hero-detail-rarity ${hero.rarity}`;
+  document.getElementById('hd-rarity').textContent = hero.rarity.toUpperCase();
+  document.getElementById('hd-name').textContent  = hero.name;
+  document.getElementById('hd-class').textContent = hero.class;
+  document.getElementById('hd-atk').textContent   = hero.atk;
+  document.getElementById('hd-def').textContent   = hero.def;
+  document.getElementById('hd-flavor').textContent = flavor;
+
+  const bonusList = document.getElementById('hd-bonus');
+  bonusList.innerHTML = '';
+  if (bonus) {
+    if (bonus.hp) { const t = document.createElement('span'); t.className = 'hero-detail-bonus-tag'; t.textContent = `❤️ +${bonus.hp} HP`; bonusList.appendChild(t); }
+    if (bonus.mp) { const t = document.createElement('span'); t.className = 'hero-detail-bonus-tag'; t.textContent = `💙 +${bonus.mp} MP`; bonusList.appendChild(t); }
+    if (bonus.st) { const t = document.createElement('span'); t.className = 'hero-detail-bonus-tag'; t.textContent = `💚 +${bonus.st} ST`; bonusList.appendChild(t); }
+  } else {
+    bonusList.innerHTML = '<span class="hero-detail-no-bonus">Hero ini tidak memberikan bonus vital.</span>';
+  }
+
+  document.getElementById('heroDetailOverlay').classList.add('active');
+}
+
+function heroDetailClose(e) {
+  if (e && e.target !== document.getElementById('heroDetailOverlay')) return;
+  document.getElementById('heroDetailOverlay').classList.remove('active');
+}
+
 function gachaRenderCollection(collection) {
   const grid = document.getElementById('g-coll-grid');
   grid.innerHTML = '';
@@ -3889,14 +4025,16 @@ function gachaRenderCollection(collection) {
     const card  = document.createElement('div');
 
     if (owned) {
-      // Hero sudah punya — tampil normal
+      // Hero sudah punya — tampil normal, bisa di-tap
       card.className = `gacha-coll-card ${hero.rarity}`;
       card.title = `${hero.name} — ${hero.class}`;
+      card.style.cursor = 'pointer';
       card.innerHTML = `
         <span class="gacha-coll-emoji">${hero.emoji}</span>
         <div class="gacha-coll-name">${hero.name}</div>`;
+      card.addEventListener('click', () => heroDetailOpen(hero.id));
     } else {
-      // Hero belum punya — silhouette
+      // Hero belum punya — silhouette, tidak bisa di-tap
       card.className = 'gacha-coll-card gacha-coll-silhouette';
       card.title = '???';
       card.innerHTML = `
@@ -3946,6 +4084,13 @@ window.gachaOnStreak7  = gachaOnStreak7;
 /* ════════════════════════════════════════════════════════════════════
    PULL HISTORY LOG
 ════════════════════════════════════════════════════════════════════ */
+function gachaToggleHistory() {
+  const list   = document.getElementById('g-history-list');
+  const toggle = document.getElementById('g-history-toggle');
+  const isOpen = !list.classList.contains('collapsed');
+  list.classList.toggle('collapsed', isOpen);
+  toggle.classList.toggle('closed', isOpen);
+}
 function gachaRenderHistory(history) {
   const list = document.getElementById('g-history-list');
   if (!history || history.length === 0) {
