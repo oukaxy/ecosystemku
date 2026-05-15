@@ -1871,9 +1871,41 @@
     };
   }
 
+  // kv store sederhana untuk fallback — pakai store 'habits' sebagai generic kv
+  function makeKvStore(prefix) {
+    return {
+      get:    (key)        => openDB().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction('habits', 'readonly');
+        const req = tx.objectStore('habits').get(prefix + key);
+        req.onsuccess = e => resolve(e.target.result ?? null);
+        req.onerror   = e => reject(e.target.error);
+      })),
+      set:    (key, value) => openDB().then(db => new Promise((resolve, reject) => {
+        const tx  = db.transaction('habits', 'readwrite');
+        const req = tx.objectStore('habits').put(value, prefix + key);
+        tx.oncomplete = () => resolve();
+        tx.onerror    = e => reject(e.target.error);
+      })),
+      delete: (key)        => openDB().then(db => new Promise((resolve, reject) => {
+        const tx  = db.transaction('habits', 'readwrite');
+        const req = tx.objectStore('habits').delete(prefix + key);
+        req.onsuccess = () => resolve();
+        req.onerror   = e => reject(e.target.error);
+      })),
+    };
+  }
+
   window.EcosystemDB = {
     habits: makeStore('habits'),
     todos:  makeStore('todos'),
+    kv: {
+      dailyos:  makeKvStore('dailyos:'),
+      kronik:   makeKvStore('kronik:'),
+      finances: makeKvStore('finances:'),
+      get:    (key)        => makeKvStore('').get(key),
+      set:    (key, value) => makeKvStore('').set(key, value),
+      delete: (key)        => makeKvStore('').delete(key),
+    },
     getIdeasInProgress: () => Promise.resolve([])
   };
 })();
