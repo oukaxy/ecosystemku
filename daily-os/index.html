@@ -1318,18 +1318,21 @@
       background: rgba(99,102,241,0.18);
       border-color: #6366f1; color: #6366f1;
     }
-    .checkin-cell.claimed .checkin-cell-reward { font-size: 14px; }
+    .checkin-cell.claimed .checkin-cell-reward svg { stroke: #6366f1; }
     .checkin-cell.claimed .checkin-cell-val { color: #6366f1; opacity: 0.7; }
     .checkin-cell.today {
       border-color: #6366f1; background: #6366f1;
       color: #fff; font-weight: 700;
     }
     .checkin-cell.today.claimed { background: #4f46e5; opacity: 0.85; }
+    .checkin-cell.today .checkin-cell-reward svg { stroke: #fff; }
     .checkin-cell-day { font-size: 7px; opacity: 0.6; }
-    .checkin-cell-reward { font-size: 11px; }
+    .checkin-cell-reward { display:flex; align-items:center; justify-content:center; line-height:1; }
+    .checkin-cell-reward svg { width: 12px; height: 12px; }
     .checkin-cell-val { font-size: 7px; font-weight: 600; }
     .checkin-claim-box { text-align: center; margin-bottom: 12px; }
-    .checkin-reward-preview { font-size: 26px; margin-bottom: 4px; }
+    .checkin-reward-preview { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom: 8px; }
+    .checkin-reward-preview svg { width: 34px; height: 34px; stroke: #67e8f9; }
     .checkin-reward-text {
       font-family: 'DM Mono', monospace; font-size: 11px;
       color: rgba(200,200,255,0.7); letter-spacing: 1px;
@@ -1342,7 +1345,11 @@
       transition: opacity 0.2s;
     }
     .btn-checkin-claim:hover { background: #4f52d4; }
-    .btn-checkin-claim:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-checkin-claim:disabled {
+      opacity: 1; cursor: not-allowed;
+      background: #3a3a4a !important;
+      color: rgba(255,255,255,0.4) !important;
+    }
     .checkin-streak-row {
       display: flex; justify-content: center; gap: 16px;
       font-family: 'DM Mono', monospace; font-size: 10px;
@@ -1604,7 +1611,7 @@
       <span class="btn-goto-kronik-title">BUKA KRONIK</span>
       <span class="btn-goto-kronik-sub">Journal · RPG Profile · Gacha</span>
     </span>
-    <span class="crystal-badge" id="crystalBadge">💎 0</span>
+    <span class="crystal-badge" id="crystalBadge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 0</span>
   </a>
 
   <!-- GUIDE -->
@@ -1650,10 +1657,10 @@
     </div>
     <div class="checkin-grid" id="checkinGrid"></div>
     <div class="checkin-claim-box">
-      <div class="checkin-reward-preview" id="checkinRewardEmoji">💎</div>
+      <div class="checkin-reward-preview" id="checkinRewardEmoji"></div>
       <div class="checkin-reward-text" id="checkinRewardText">+50 Crystal</div>
     </div>
-    <button class="btn-checkin-claim" id="btnCheckinClaim">CLAIM REWARD</button>
+    <button class="btn-checkin-claim" id="btnCheckinClaim" onclick="window.checkinClaim && window.checkinClaim()">CLAIM REWARD</button>
     <button class="btn-checkin-close" onclick="checkinClose()">Tutup</button>
   </div>
 </div>
@@ -3722,6 +3729,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       calDetail.classList.add('hidden');
     }
   });
+
+  // ── Gacha boot (setelah load() selesai, totalPoints sudah ready) ──
+  setTimeout(async () => {
+    try {
+      await checkinInit();
+      await updateCrystalBadge();
+      if (totalPoints > 0) {
+        await gachaMaybeGrantCrystalFromXP(totalPoints);
+      }
+    } catch(e) { console.warn('[DailyOS Gacha]', e); }
+  }, 800);
 });
 
 // ===== PWA: SERVICE WORKER REGISTRATION =====
@@ -4541,6 +4559,13 @@ document.addEventListener('DOMContentLoaded', () => {
 ════════════════════════════════════════════════════════════════════ */
 
 // ── 30-hari check-in reward table ──
+/* ── SVG icons (Lucide-style, stroke currentColor) ── */
+const SVG_CRYSTAL = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+const SVG_GIFT    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`;
+const SVG_CHECK   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+const SVG_CRYSTAL_LG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+const SVG_GIFT_LG    = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`;
+
 const CHECKIN_REWARDS = [
   { crystal:  30 },                        // Hari 1
   { crystal:  40 },                        // Hari 2
@@ -4590,7 +4615,7 @@ async function updateCrystalBadge() {
   try {
     const crystals = (await gDOSGet('crystals')) ?? 0;
     const el = document.getElementById('crystalBadge');
-    if (el) el.textContent = `💎 ${crystals.toLocaleString()}`;
+    if (el) el.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${crystals.toLocaleString()}`;
   } catch(e) {}
 }
 
@@ -4660,27 +4685,26 @@ function renderCheckinModal(cycleDay, streak, totalDays, claimedToday) {
       + (isPast || isTodayClaimed ? ' claimed' : '')
       + (isToday ? ' today' : '');
 
-    const emoji = reward.freePack ? '🎁' : '💎';
-    const rewardIcon = isPast || isTodayClaimed ? '✅' : emoji;
+    const emoji = reward.freePack ? SVG_GIFT : SVG_CRYSTAL;
+    const rewardIcon = isPast || isTodayClaimed ? SVG_CHECK : emoji;
     const valText = reward.freePack ? `+${reward.freePack}pk` : `+${reward.crystal}`;
     cell.innerHTML = `
       <span class="checkin-cell-day">${dayNum}</span>
       <span class="checkin-cell-reward">${rewardIcon}</span>
-      <span class="checkin-cell-val">${isPast || isTodayClaimed ? '✓' : valText}</span>`;
+      <span class="checkin-cell-val">${isPast || isTodayClaimed ? '' : valText}</span>`;
     grid.appendChild(cell);
   }
 
   // Reward preview hari ini
   const todayReward = CHECKIN_REWARDS[cycleDay - 1];
-  document.getElementById('checkinRewardEmoji').textContent =
-    todayReward.freePack ? '🎁💎' : '💎';
+  document.getElementById('checkinRewardEmoji').innerHTML =
+    todayReward.freePack ? SVG_GIFT_LG + SVG_CRYSTAL_LG : SVG_CRYSTAL_LG;
   document.getElementById('checkinRewardText').textContent =
     `+${todayReward.crystal} Crystal` + (todayReward.freePack ? ` + ${todayReward.freePack} Free Pack` : '');
 
   const btnClaim = document.getElementById('btnCheckinClaim');
   btnClaim.disabled = claimedToday;
   btnClaim.textContent = claimedToday ? '✅ Sudah Diklaim' : 'CLAIM REWARD';
-  btnClaim.style.background = claimedToday ? '#4b5563' : '#6366f1';
   btnClaim.onclick = checkinClaim;
 }
 
@@ -4693,7 +4717,6 @@ async function checkinClaim() {
   const btnClaim = document.getElementById('btnCheckinClaim');
   btnClaim.disabled = true;
   btnClaim.textContent = '⏳ Mengklaim...';
-  btnClaim.style.background = '#4b5563';
 
   // Hitung streak
   let streak    = (await gDOSGet('checkinStreak'))  ?? 0;
@@ -4852,22 +4875,8 @@ window.toggleTodo = function(id, el) {
 };
 
 /* ────────────────────────────────────────────────────────────────
-   BOOT — jalankan check-in saat app dibuka
+   BOOT — dipindah ke main DOMContentLoaded
 ──────────────────────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(async () => {
-    try {
-      await EcosystemDB.open();
-      await checkinInit();
-      await updateCrystalBadge();
-      // Catch-up XP → crystal dari XP yang sudah ada
-      if (totalPoints > 0) {
-        await gachaMaybeGrantCrystalFromXP(totalPoints);
-      }
-    } catch(e) { console.warn('[DailyOS Gacha]', e); }
-  }, 1500); // delay setelah app selesai load
-});
-
 window.checkinClaim = checkinClaim;
 window.checkinClose = checkinClose;
 
