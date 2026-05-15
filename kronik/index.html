@@ -2153,12 +2153,52 @@ function deleteSelected() {
   selectedIds.clear(); toggleSelectMode(); toggleSettings(); jRenderSpread();
 }
 
-function exportData() {
-  const data = JSON.stringify(normalizeJournalEntries(entries), null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
+async function exportData() {
+  // Ambil semua data gacha dari DB
+  const [crystals, pity, pulls, freePacks, shards, collection,
+         pullHistory, milestones, lastLoginBonus, xpLastGranted,
+         checkinLastDate, checkinStreak, checkinTotal] = await Promise.all([
+    kvGet('gacha:crystals').catch(() => null),
+    kvGet('gacha:pity').catch(() => null),
+    kvGet('gacha:pulls').catch(() => null),
+    kvGet('gacha:freePacks').catch(() => null),
+    kvGet('gacha:shards').catch(() => null),
+    kvGet('gacha:collection').catch(() => null),
+    kvGet('gacha:pullHistory').catch(() => null),
+    kvGet('gacha:journalMilestonesReached').catch(() => null),
+    kvGet('gacha:lastLoginBonus').catch(() => null),
+    kvGet('gacha:xpLastGranted').catch(() => null),
+    kvGet('gacha:checkinLastDate').catch(() => null),
+    kvGet('gacha:checkinStreak').catch(() => null),
+    kvGet('gacha:checkinTotal').catch(() => null),
+  ]);
+
+  const data = {
+    version: 2,
+    entries: normalizeJournalEntries(entries),
+    gacha: {
+      crystals:      crystals   ?? 0,
+      pity:          pity       ?? 0,
+      pulls:         pulls      ?? 0,
+      freePacks:     freePacks  ?? 0,
+      shards:        shards     ?? 0,
+      collection:    collection ?? [],
+      pullHistory:   pullHistory ?? [],
+      milestones:    milestones ?? [],
+      lastLoginBonus,
+      xpLastGranted: xpLastGranted ?? 0,
+      checkinLastDate,
+      checkinStreak: checkinStreak ?? 0,
+      checkinTotal:  checkinTotal  ?? 0,
+    },
+    exportedAt: new Date().toISOString(),
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href = url; a.download = `jurnal-${todayStr()}.json`; a.click(); URL.revokeObjectURL(url);
+  a.href = url; a.download = `kronik-backup-${todayStr()}.json`; a.click();
+  URL.revokeObjectURL(url);
   toggleSettings();
 }
 
@@ -2184,11 +2224,31 @@ function importData(event) {
       const normalizedImported = normalizeJournalEntries(rawEntries);
       const existingIds = new Set(entries.map(e => e.id));
       const newEntries  = normalizedImported.filter(e => e.id && !existingIds.has(e.id));
-      // Prepend new entries with correct order
       entries = [...newEntries, ...entries].map((e, i) => ({ ...e, order: i, updatedAt: new Date().toISOString() }));
       await dbPutAllEntries(entries);
+
+      // Restore gacha data kalau ada
+      if (parsed && parsed.gacha) {
+        const g = parsed.gacha;
+        const ops = [];
+        if (g.crystals    != null) ops.push(kvSet('gacha:crystals',     g.crystals));
+        if (g.pity        != null) ops.push(kvSet('gacha:pity',         g.pity));
+        if (g.pulls       != null) ops.push(kvSet('gacha:pulls',        g.pulls));
+        if (g.freePacks   != null) ops.push(kvSet('gacha:freePacks',    g.freePacks));
+        if (g.shards      != null) ops.push(kvSet('gacha:shards',       g.shards));
+        if (g.collection  != null) ops.push(kvSet('gacha:collection',   g.collection));
+        if (g.pullHistory != null) ops.push(kvSet('gacha:pullHistory',  g.pullHistory));
+        if (g.milestones  != null) ops.push(kvSet('gacha:journalMilestonesReached', g.milestones));
+        if (g.lastLoginBonus)      ops.push(kvSet('gacha:lastLoginBonus',  g.lastLoginBonus));
+        if (g.xpLastGranted != null) ops.push(kvSet('gacha:xpLastGranted', g.xpLastGranted));
+        if (g.checkinLastDate)     ops.push(kvSet('gacha:checkinLastDate', g.checkinLastDate));
+        if (g.checkinStreak != null) ops.push(kvSet('gacha:checkinStreak', g.checkinStreak));
+        if (g.checkinTotal  != null) ops.push(kvSet('gacha:checkinTotal',  g.checkinTotal));
+        await Promise.all(ops);
+      }
+
       jRenderSpread(); toggleSettings();
-      alert(`${newEntries.length} lembaran berhasil diimport.`);
+      alert(`${newEntries.length} lembaran berhasil diimport.` + (parsed?.gacha ? '\nData gacha juga direstore.' : ''));
     } catch(err) { alert('Gagal import: format file tidak valid.'); }
   };
   reader.readAsText(file); event.target.value = '';
