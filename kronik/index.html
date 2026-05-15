@@ -564,6 +564,44 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
 .habit-meta { font-size: 10px; color: var(--rpg-text-dim); font-style: italic; }
 .habit-streak { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold-dim); white-space: nowrap; }
 
+/* ── Quest Log (habits_log di journal page) ── */
+.quest-log {
+  margin-top: 20px;
+  border-top: 1px solid rgba(150,100,50,0.15);
+  padding-top: 14px;
+}
+.quest-log-title {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(150,100,50,0.5);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.quest-log-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(150,100,50,0.12);
+}
+.quest-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(150,100,50,0.07);
+}
+.quest-item:last-child { border-bottom: none; }
+.quest-check { font-size: 11px; color: rgba(150,100,50,0.5); margin-top: 1px; flex-shrink: 0; }
+.quest-info { flex: 1; }
+.quest-name { font-family: 'Lora', serif; font-size: 12px; color: rgba(100,70,40,0.75); line-height: 1.4; }
+.quest-cat { font-size: 10px; color: rgba(100,70,40,0.4); font-style: italic; }
+.quest-time { font-size: 10px; color: rgba(100,70,40,0.35); white-space: nowrap; margin-top: 1px; }
+.quest-log-empty { font-size: 11px; color: rgba(100,70,40,0.3); font-style: italic; padding: 4px 0; }
+
 .todos-summary { background: var(--rpg-parchment2); border: 1px solid rgba(201,168,76,0.1); border-left: 3px solid var(--gold-dim); padding: 10px 14px; margin-bottom: 20px; }
 .todos-title { font-family: 'Cinzel', serif; font-size: 11px; color: var(--gold); margin-bottom: 6px; }
 .todos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -1009,7 +1047,7 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
 
       <div class="legend-row">
         <span class="legend-icon">✨</span>
-        <span><b>Kreativitas</b> dari habit kategori <b>Kreativitas</b> & <b>Belajar</b></span>
+        <span><b>Imajinasi</b> dari habit kategori <b>Kreativitas / Seni</b> & <b>Belajar</b></span>
       </div>
 
       <div class="legend-row">
@@ -1019,7 +1057,7 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
 
       <div class="legend-row">
         <span class="legend-icon">💬</span>
-        <span><b>Karisma</b> dari habit kategori <b>Karir & Bisnis</b> & <b>Sosial</b> + aksi sosial</span>
+        <span><b>Karisma</b> dari habit kategori <b>Karir & Bisnis</b> & <b>Sosial</b> + streak konsisten + todo urgent selesai</span>
       </div>
 
       <div class="legend-row">
@@ -1029,7 +1067,7 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
 
       <div class="legend-row">
         <span class="legend-icon">⚡</span>
-        <span><b>Ketangkasan</b> dari habit kategori <b>Produktivitas</b> + todo urgent selesai</span>
+        <span><b>Ketangkasan</b> dari habit kategori <b>Produktivitas</b> + semua todo selesai</span>
       </div>
     </div>
 
@@ -1522,6 +1560,35 @@ function jDeleteEntry() {
   }
 }
 
+// ── Quest Log renderer — tampilkan habits_log di journal page ──
+function renderQuestLog(habitsLog) {
+  if (!Array.isArray(habitsLog) || habitsLog.length === 0) {
+    return `<div class="quest-log">
+      <div class="quest-log-title">Quest Log</div>
+      <div class="quest-log-empty">Belum ada aktivitas tercatat hari ini.</div>
+    </div>`;
+  }
+  const items = habitsLog.map(item => {
+    const name = item.habitName || item.name || 'Habit';
+    const cat  = item.category || '';
+    const time = item.completedAt
+      ? new Date(item.completedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      : '';
+    return `<div class="quest-item">
+      <span class="quest-check">✦</span>
+      <div class="quest-info">
+        <div class="quest-name">${name}</div>
+        ${cat ? `<div class="quest-cat">${cat}</div>` : ''}
+      </div>
+      ${time ? `<div class="quest-time">${time}</div>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="quest-log">
+    <div class="quest-log-title">Quest Log</div>
+    ${items}
+  </div>`;
+}
+
 function jBuildPage(oldEl, inAnim, outAnim) {
   const vp = document.getElementById('page-viewport');
   const visibleEntries = getVisibleEntries(entries);
@@ -1571,6 +1638,7 @@ function jBuildPage(oldEl, inAnim, outAnim) {
         <input class="entry-title-input" id="entry-title" type="text" placeholder="Judul lembaran..." value="${entry.title||''}" />
       </div>
       <textarea id="entry-ta" placeholder="Tulis sesuatu...">${entry.content||''}</textarea>
+      ${renderQuestLog(entry.habits_log || [])}
     </div>`;
 
   vp.appendChild(div);
@@ -1810,12 +1878,12 @@ const CATEGORY_RULES = {
     weight: 1.5
   },
   'Belajar': {
-    stats: ['Kecerdasan','Kreativitas'],
+    stats: ['Kecerdasan','Imajinasi'],
     vitals: [],
     weight: 1.5
   },
   'Kreativitas': {
-    stats: ['Kreativitas'],
+    stats: ['Imajinasi'],
     vitals: [],
     weight: 1.5
   },
@@ -1841,8 +1909,61 @@ const CATEGORY_RULES = {
   }
 };
 
-const STAT_COLORS = { Kecerdasan:'#4c7ec9', Kreativitas:'#9c6ec9', Kekuatan:'#c94c4c', Karisma:'#c9a84c', Kebijaksanaan:'#5aaa6a', Ketangkasan:'#c97c4c' };
-const STAT_ICONS  = { Kecerdasan:'🧠', Kreativitas:'✨', Kekuatan:'💪', Karisma:'💬', Kebijaksanaan:'📖', Ketangkasan:'⚡' };
+const STAT_COLORS = { Kecerdasan:'#4c7ec9', Imajinasi:'#9c6ec9', Kekuatan:'#c94c4c', Karisma:'#c9a84c', Kebijaksanaan:'#5aaa6a', Ketangkasan:'#c97c4c' };
+const STAT_ICONS  = { Kecerdasan:'🧠', Imajinasi:'✨', Kekuatan:'💪', Karisma:'💬', Kebijaksanaan:'📖', Ketangkasan:'⚡' };
+
+/**
+ * Keyword matcher untuk kategori custom dari Daily OS.
+ * Kalau user tulis "Lainnya..." dan isi sendiri (misal "Coding", "Memasak", "Musik"),
+ * kita coba tebak stat yang paling relevan berdasarkan kata kunci.
+ */
+const CATEGORY_KEYWORDS = {
+  'Olahraga':       ['gym','fitnes','fitness','lari','renang','sepeda','yoga','pilates','zumba','martial','bela diri','atletik','sport','latihan','workout','angkat','beban','cardio','kardio'],
+  'Kesehatan':      ['tidur','makan','diet','nutrisi','vitamin','suplemen','minum air','detox','meditasi','napas','relaksasi','istirahat','sehat','medical','dokter'],
+  'Belajar':        ['baca','buku','kursus','kuliah','sekolah','coding','program','bahasa','study','belajar','riset','research','nulis','menulis','artikel','nonton','tutorial','les','private'],
+  'Kreativitas':    ['gambar','lukis','desain','design','foto','video','musik','lagu','nyanyi','dance','tari','craft','kerajinan','seni','art','animasi','ilustrasi','komik','puisi','cerpen','novel','edit'],
+  'Produktivitas':  ['kerja','kerjaan','task','tugas','project','proyek','deadline','meeting','rapat','planning','plan','review','laporan','report','email','administrasi'],
+  'Karir & Bisnis': ['bisnis','usaha','jualan','dagang','startup','klien','client','marketing','sales','networking','linkedin','portofolio','karir','career','promosi','presentasi','negosiasi'],
+  'Sosial':         ['teman','keluarga','orang tua','pasangan','kencan','date','kumpul','reuni','volunteer','komunitas','chat','telpon','video call','hangout','arisan'],
+  'Keuangan':       ['nabung','tabung','investasi','saham','reksa','crypto','anggaran','budget','catat','pengeluaran','pemasukan','tagihan','cicilan','utang','piutang'],
+  'Spiritual':      ['sholat','solat','ibadah','doa','dzikir','ngaji','quran','gereja','meditasi','rohani','spiritual','mindfulness','syukur','puasa'],
+};
+
+/**
+ * Resolve kategori habit ke CATEGORY_RULES yang tepat.
+ * Return: { rule, matched, originalCategory }
+ *   rule            → object dari CATEGORY_RULES yang dipakai
+ *   matched         → nama kategori yg berhasil di-match (null kalau fallback ke General)
+ *   originalCategory → kategori asli dari habit
+ */
+function resolveCategoryRule(rawCategory) {
+  let category = rawCategory || 'General';
+
+  // Handle "Olahraga / Fisik" → "Olahraga"
+  if (category.includes('/')) category = category.split('/')[0].trim();
+
+  // 1. Exact match ke CATEGORY_RULES
+  if (CATEGORY_RULES[category]) {
+    return { rule: CATEGORY_RULES[category], matched: category, originalCategory: rawCategory };
+  }
+
+  // 2. Case-insensitive exact match
+  const lower = category.toLowerCase();
+  const exactKey = Object.keys(CATEGORY_RULES).find(k => k.toLowerCase() === lower);
+  if (exactKey) {
+    return { rule: CATEGORY_RULES[exactKey], matched: exactKey, originalCategory: rawCategory };
+  }
+
+  // 3. Keyword match — cek apakah nama/kata dalam kategori cocok keyword
+  for (const [targetCat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some(kw => lower.includes(kw))) {
+      return { rule: CATEGORY_RULES[targetCat], matched: targetCat, originalCategory: rawCategory };
+    }
+  }
+
+  // 4. Fallback ke General — kategori benar-benar tidak dikenal
+  return { rule: CATEGORY_RULES['General'], matched: null, originalCategory: rawCategory };
+}
 
 function calcLevel(xp) {
   let level = 1, rem = xp;
@@ -1906,19 +2027,21 @@ function parseData(data) {
     return { ...h, totalCompletions, streak };
   });
 
-  const scores = { Kecerdasan:0, Kreativitas:0, Kekuatan:0, Karisma:0, Kebijaksanaan:0, Ketangkasan:0 };
+  const scores = { Kecerdasan:0, Imajinasi:0, Kekuatan:0, Karisma:0, Kebijaksanaan:0, Ketangkasan:0 };
   const vitalScores = { hp: 0, mp: 0, st: 0 };
 
   habitStats.forEach(h => {
     const completions = h.totalCompletions;
     if (completions === 0) return;
 
-    // Ambil kategori — handle "Olahraga / Fisik" jadi "Olahraga"
-    let category = h.category || 'General';
-    if (category.includes('/')) category = category.split('/')[0].trim();
-
-    const cat = CATEGORY_RULES[category] || CATEGORY_RULES['General'];
+    // Resolve kategori — exact match, keyword match, atau fallback ke General
+    const resolved = resolveCategoryRule(h.category);
+    const cat = resolved.rule;
     const pts = completions * cat.weight * 3;
+
+    // Simpan info resolved ke habitStat untuk ditampilkan di UI
+    h._resolvedCategory = resolved.matched;
+    h._categoryUnknown  = resolved.matched === null && (h.category || 'General') !== 'General';
 
     cat.stats.forEach(s => scores[s] = (scores[s]||0) + pts);
     cat.vitals.forEach(v => vitalScores[v] = (vitalScores[v]||0) + completions * cat.weight * 2);
@@ -1943,22 +2066,43 @@ function parseData(data) {
   }).length;
   scores.Ketangkasan += todoDone * 4;
   scores.Kecerdasan  += todoDone * 2;
-  scores.Karisma     += urgentDone * 3;
+  scores.Karisma     += urgentDone * 5;   // urgent todo naik dari *3 → *5
 
-  const maxScore = Math.max(...Object.values(scores), 1);
+  // Karisma bonus: konsistensi (streak) semua habit mencerminkan reliabilitas
+  // Setiap habit dengan streak ≥ 3 hari kasih bonus Karisma kecil
+  habitStats.forEach(h => {
+    if (h.streak >= 3)  scores.Karisma += h.streak * 0.8;
+    if (h.streak >= 7)  scores.Karisma += 10;   // bonus milestone 1 minggu
+    if (h.streak >= 30) scores.Karisma += 25;   // bonus milestone 1 bulan
+  });
+
+  // Karisma bonus: todo completion rate — orang yang deliver janji punya charisma tinggi
+  if (todoTotal > 0) {
+    const completionRate = todoDone / Math.min(todoTotal, 30); // cap 30 biar tidak overflow
+    scores.Karisma += Math.round(completionRate * 40);
+  }
+
+  // Normalisasi ABSOLUTE — pakai sigmoid-like formula, bukan relatif ke maxScore.
+  // Stat tidak akan turun hanya karena habit baru ditambah.
+  // Baseline: 90 raw score (30 completions * weight 1 * 3) → ~50 stat
+  // rawScore=0→5, raw=90→50, raw=270→75, raw=540→83, raw=900→91, raw=∞→95
+  function absNorm(raw, midpoint = 90) {
+    if (raw <= 0) return 5;
+    return Math.min(95, Math.round((raw / (raw + midpoint)) * 90) + 5);
+  }
   const normalizedStats = {};
-  Object.entries(scores).forEach(([k, v]) => { normalizedStats[k] = Math.min(100, Math.round((v / maxScore) * 85) + 5); });
+  Object.entries(scores).forEach(([k, v]) => { normalizedStats[k] = absNorm(v); });
 
-  const maxVital = Math.max(...Object.values(vitalScores), 1);
-  const hp = Math.min(100, Math.round((vitalScores.hp / maxVital) * 80) + 20);
-  const mp = Math.min(100, Math.round((vitalScores.mp / maxVital) * 80) + 15);
-  const st = Math.min(100, Math.round((vitalScores.st / maxVital) * 80) + 15);
+  // Vitals juga pakai absolute norm, midpoint lebih kecil (lebih mudah naik)
+  const hp = Math.min(95, absNorm(vitalScores.hp, 60) + 5);
+  const mp = Math.min(95, absNorm(vitalScores.mp, 50));
+  const st = Math.min(95, absNorm(vitalScores.st, 40));
 
   const { level, rem, needed, pct } = calcLevel(totalPoints);
 
   const dominantStat = Object.entries(normalizedStats).sort((a,b) => b[1]-a[1])[0][0];
-  const classMap   = { Kecerdasan:'Cendekia', Kreativitas:'Kreator', Kekuatan:'Pejuang', Karisma:'Pemimpin', Kebijaksanaan:'Bijaksana', Ketangkasan:'Petualang' };
-  const avatarMap  = { Kecerdasan:'🧠', Kreativitas:'🎨', Kekuatan:'⚔️', Karisma:'👑', Kebijaksanaan:'📜', Ketangkasan:'⚡' };
+  const classMap   = { Kecerdasan:'Cendekia', Imajinasi:'Kreator', Kekuatan:'Pejuang', Karisma:'Pemimpin', Kebijaksanaan:'Bijaksana', Ketangkasan:'Petualang' };
+  const avatarMap  = { Kecerdasan:'🧠', Imajinasi:'🎨', Kekuatan:'⚔️', Karisma:'👑', Kebijaksanaan:'📜', Ketangkasan:'⚡' };
 
   const passiveTraits = generateTraits(habitStats, normalizedStats, todoDone, todoTotal);
 
@@ -1984,7 +2128,7 @@ function generateTraits(habitStats, stats, todoDone, todoTotal) {
   if (topHabits[0]?.streak >= 3) traits.push(`${topHabits[0].name} Enthusiast`);
   if (stats.Kebijaksanaan > 60) traits.push('Deep Thinker');
   if (stats.Kekuatan > 55) traits.push('Disiplin Fisik');
-  if (stats.Kreativitas > 60) traits.push('Creative Mind');
+  if (stats.Imajinasi > 60) traits.push('Creative Mind');
   if (stats.Ketangkasan > 55) traits.push('Task Hunter');
   if (todoDone === todoTotal && todoTotal > 0) traits.push('Perfect Clear ✦');
   if (habitStats.some(h => h.streak === 0 && h.totalCompletions === 0)) traits.push('Work in Progress');
@@ -2055,11 +2199,18 @@ function renderProfile(result, skipCache) {
     const subInfo = totalItems > 1 ? ` · ${totalItems} aktivitas` : '';
     const div = document.createElement('div');
     div.className = 'habit-row';
+    // Kategori display: kalau custom & unresolved → tampilkan warning
+    const catDisplay = h._categoryUnknown
+      ? `${h.category} <span style="color:#c97c4c;font-size:9px" title="Kategori tidak dikenal, dianggap General">⚠ General</span>`
+      : h._resolvedCategory && h._resolvedCategory !== h.category
+        ? `${h.category} <span style="color:#5aaa6a;font-size:9px" title="Dikenali sebagai ${h._resolvedCategory}">→ ${h._resolvedCategory}</span>`
+        : h.category;
+
     div.innerHTML = `
       <div class="habit-dot" style="background:${h.color||'#888'}"></div>
       <div class="habit-info">
         <div class="habit-name">${h.name}</div>
-        <div class="habit-meta">${h.category}${subInfo} · ${h.totalCompletions}x (30 hari)</div>
+        <div class="habit-meta">${catDisplay}${subInfo} · ${h.totalCompletions}x (30 hari)</div>
       </div>
       <div class="habit-streak">${h.streak > 0 ? '🔥 '+h.streak+'d' : '—'}</div>`;
     habitsList.appendChild(div);
@@ -2782,8 +2933,31 @@ async function ajBootGenerate() {
     const habitsNotDone = habitDetails.filter(h => h.doneItems === 0);
 
     // 6. Filter todos: selesai kemarin
-    const todosDone    = getActiveTodos(dosData).filter(t => isTodoCompletedOnDate(t, yesterdayStr)).map(t => t.title);
-    const todosNotDone = getActiveTodos(dosData).filter(t => !t.done).map(t => t.title);
+    const allActiveTodos = getActiveTodos(dosData);
+    const todosDone = allActiveTodos.filter(t => isTodoCompletedOnDate(t, yesterdayStr)).map(t => t.title);
+
+    // "Belum selesai" = hanya todo yang MEMANG seharusnya dikerjakan kemarin atau sebelumnya:
+    //   - priority 'urgent' (hari ini/urgent), ATAU
+    //   - punya deadline <= kemarin (sudah jatuh tempo)
+    // Todo dengan deadline besok/minggu depan atau priority 'soon'/'normal' tanpa deadline
+    // TIDAK dianggap terlewat — belum waktunya
+    const todosNotDone = allActiveTodos.filter(t => {
+      if (t.done) return false;
+      const isPastDue = t.deadline && t.deadline <= yesterdayStr;
+      const isUrgent  = t.priority === 'urgent';
+      return isPastDue || isUrgent;
+    }).map(t => {
+      const overdueSuffix = (t.deadline && t.deadline < yesterdayStr) ? ' [overdue]' : '';
+      return t.title + overdueSuffix;
+    });
+
+    // Todo yang disimpan untuk nanti — sebagai konteks positif (user punya rencana)
+    const todosFuture = allActiveTodos.filter(t => {
+      if (t.done) return false;
+      const isPastDue = t.deadline && t.deadline <= yesterdayStr;
+      const isUrgent  = t.priority === 'urgent';
+      return !isPastDue && !isUrgent;
+    }).map(t => t.title);
 
     // 7. Hitung XP kemarin
     let yesterdayXP = 0;
@@ -2795,8 +2969,9 @@ async function ajBootGenerate() {
     const doneList     = habitsDone.map(h => h.name).join(', ') || '-';
     const partialList  = habitsPartial.map(h => `${h.name} (${h.doneItems}/${h.totalItems} aktivitas)`).join(', ') || '-';
     const missedList   = habitsNotDone.map(h => h.name).join(', ') || '-';
-    const todoDoneList = todosDone.join(', ') || '-';
-    const todoMissList = todosNotDone.join(', ') || '-';
+    const todoDoneList   = todosDone.join(', ') || '-';
+    const todoMissList   = todosNotDone.join(', ') || '-';
+    const todoFutureList = todosFuture.join(', ') || '-';
 
     const hasActivity = habitsDone.length > 0 || habitsPartial.length > 0 || todosDone.length > 0;
 
@@ -2812,14 +2987,17 @@ XP kemarin: ${yesterdayXP}
 HABIT SELESAI PENUH: ${doneList}
 HABIT SEBAGIAN: ${partialList}
 HABIT TIDAK DIKERJAKAN: ${missedList}
-TODO SELESAI: ${todoDoneList}
-TODO BELUM SELESAI: ${todoMissList}
+TODO SELESAI KEMARIN: ${todoDoneList}
+TODO TERLEWAT/OVERDUE (seharusnya selesai kemarin atau urgent): ${todoMissList}
+TODO DIRENCANAKAN UNTUK BESOK/NANTI (belum waktunya, jangan dikritik): ${todoFutureList}
 
 INSTRUKSI PENTING:
 - Tulis untuk tanggal ${yesterdayStr} (kemarin), bukan hari ini
-- Jika ada habit/todo yang TIDAK dikerjakan, WAJIB dikritik dengan jujur — tanyakan kenapa belum dilakukan, jangan hanya menulis hal positif
+- Hanya kritik todo yang ada di "TODO TERLEWAT/OVERDUE" — todo yang "DIRENCANAKAN UNTUK BESOK/NANTI" JANGAN dikritik karena memang belum waktunya
+- Jika ada habit yang TIDAK dikerjakan, kritik dengan jujur — tanyakan kenapa belum dilakukan
 - Jika habit hanya dikerjakan sebagian, sebutkan dan refleksikan kenapa tidak sampai selesai
 - Boleh apresiasi yang sudah dikerjakan, tapi jangan menutupi kekurangan dengan pujian kosong
+- Jika todo future list ada isinya, boleh sebut sebagai rencana ke depan — ini hal positif
 - Jika semua selesai, boleh positif — tapi tetap reflektif
 - Gunakan sudut pandang orang pertama (aku/saya)
 - JANGAN hanya menulis hal-hal positif jika ada yang terlewat`;
