@@ -146,6 +146,175 @@ body.tab-profile .nav-tab[data-tab="profile"].active .nav-icon { filter: none; }
 body.tab-profile .nav-tab[data-tab="profile"].active .nav-label { color: var(--gold); }
 body.tab-profile .nav-tab[data-tab="profile"].active::after { background: var(--gold); }
 
+body.tab-gacha .bottom-nav {
+  background: rgba(10,5,20,0.95);
+  border-top: 1px solid rgba(150,100,255,0.2);
+  backdrop-filter: blur(8px);
+}
+body.tab-gacha .nav-tab[data-tab="gacha"].active .nav-icon { filter: none; }
+body.tab-gacha .nav-tab[data-tab="gacha"].active .nav-label { color: #c084fc; }
+body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   GACHA PANEL
+═══════════════════════════════════════════════════════════════════════ */
+#panel-gacha {
+  overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  background: #0a0514;
+  color: #e8d5ff;
+  font-family: 'Crimson Pro', Georgia, serif;
+}
+.gacha-wrapper { width: 100%; max-width: 500px; margin: 0 auto; padding: 20px 16px 24px; }
+
+/* ── Header ── */
+.gacha-header { text-align: center; padding: 16px 0 8px; }
+.gacha-title { font-family: 'Cinzel', serif; font-size: 22px; letter-spacing: 3px; color: #c084fc; text-shadow: 0 0 20px rgba(192,132,252,0.5); }
+.gacha-subtitle { font-size: 12px; letter-spacing: 2px; color: rgba(200,160,255,0.5); margin-top: 4px; }
+
+/* ── Wallet ── */
+.gacha-wallet { display: flex; gap: 10px; margin: 14px 0; }
+.wallet-card {
+  flex: 1; background: rgba(255,255,255,0.04); border: 1px solid rgba(192,132,252,0.2);
+  border-radius: 10px; padding: 12px; text-align: center;
+}
+.wallet-val { font-family: 'Cinzel', serif; font-size: 20px; color: #e9d5ff; line-height: 1; }
+.wallet-label { font-size: 10px; letter-spacing: 2px; color: rgba(200,160,255,0.5); margin-top: 4px; }
+.wallet-card.crystal .wallet-val { color: #67e8f9; text-shadow: 0 0 8px rgba(103,232,249,0.4); }
+.wallet-card.pack .wallet-val { color: #fde68a; text-shadow: 0 0 8px rgba(253,230,138,0.4); }
+
+/* ── Pack ── */
+.gacha-pack-zone { display: flex; justify-content: center; margin: 8px 0 4px; }
+.pack-wrap {
+  position: relative; width: 160px; height: 200px; cursor: pointer;
+  transition: transform 0.3s;
+}
+.pack-wrap:hover { transform: translateY(-4px); }
+.pack-wrap.pulling { pointer-events: none; }
+.gacha-pack-visual {
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, #1e0a3c 0%, #2d1060 50%, #1a0730 100%);
+  border: 1px solid rgba(192,132,252,0.4);
+  border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; position: relative; overflow: hidden;
+  box-shadow: 0 4px 24px rgba(139,92,246,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.gacha-pack-visual::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(192,132,252,0.08) 50%, transparent 70%);
+  animation: packShimmer 4s linear infinite;
+}
+@keyframes packShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+.pack-seal { font-size: 36px; position: relative; z-index: 1; animation: sealPulse 2s ease-in-out infinite; }
+@keyframes sealPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.pack-name { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px; color: #e9d5ff; position: relative; z-index: 1; }
+.pack-count-badge { font-size: 10px; color: rgba(200,160,255,0.6); position: relative; z-index: 1; }
+
+/* ── Pull buttons ── */
+.gacha-pull-btns { display: flex; gap: 10px; margin: 14px 0 8px; }
+.btn-gacha-pull {
+  flex: 1; padding: 12px 8px; border: 1px solid rgba(192,132,252,0.35);
+  background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(109,40,217,0.2) 100%);
+  border-radius: 10px; color: #e9d5ff; cursor: pointer; font-family: 'Cinzel', serif;
+  font-size: 11px; letter-spacing: 1px; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.btn-gacha-pull:hover { border-color: rgba(192,132,252,0.7); background: linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(109,40,217,0.35) 100%); transform: translateY(-1px); }
+.btn-gacha-pull:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+.btn-pull-cost { display: block; font-size: 13px; color: #67e8f9; margin-bottom: 2px; }
+.btn-pull-label { display: block; font-size: 10px; color: rgba(200,160,255,0.6); }
+.btn-gacha-pull.free { border-color: rgba(253,230,138,0.4); background: linear-gradient(135deg, rgba(180,130,0,0.15) 0%, rgba(120,80,0,0.2) 100%); }
+.btn-gacha-pull.free .btn-pull-cost { color: #fde68a; }
+
+/* ── Pity bar ── */
+.gacha-pity { margin: 6px 0 14px; }
+.pity-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.pity-label { font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 2px; color: rgba(200,160,255,0.5); }
+.pity-count { font-family: 'Cinzel', serif; font-size: 10px; color: #c084fc; }
+.pity-track { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+.pity-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #c084fc); border-radius: 2px; transition: width 0.6s ease; }
+
+/* ── Pack open overlay ── */
+.gacha-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.92); z-index: 9000;
+  flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px;
+}
+.gacha-overlay.active { display: flex; }
+.gacha-rip-wrap { position: relative; width: 180px; height: 240px; }
+.g-rip-half {
+  position: absolute; width: 100%; height: 50%;
+  background: linear-gradient(135deg, #1e0a3c, #2d1060);
+  border: 1px solid rgba(192,132,252,0.4);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+  overflow: hidden;
+}
+.g-rip-half::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(192,132,252,0.08) 50%, transparent 70%);
+  animation: packShimmer 4s linear infinite;
+}
+.g-rip-top { top: 0; border-radius: 12px 12px 0 0; align-items: flex-end; padding-bottom: 8px; }
+.g-rip-bottom { bottom: 0; border-radius: 0 0 12px 12px; align-items: flex-start; padding-top: 8px; }
+.g-rip-top.torn { transform: translateY(-120%) rotate(-5deg); }
+.g-rip-bottom.torn { transform: translateY(120%) rotate(5deg); }
+.g-pack-emoji { font-size: 48px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; animation: sealPulse 2s ease-in-out infinite; }
+.g-legend-flash { position: fixed; inset: 0; background: radial-gradient(circle, rgba(255,140,0,0.3) 0%, transparent 70%); opacity: 0; pointer-events: none; z-index: 8999; }
+.g-legend-flash.flash { animation: legendFlash 0.6s ease-out forwards; }
+@keyframes legendFlash { 0%{opacity:0} 20%{opacity:1} 100%{opacity:0} }
+.g-svg-particles { position: fixed; inset: 0; pointer-events: none; z-index: 9001; overflow: visible; }
+
+.g-cards-reveal { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 340px; opacity: 0; transition: opacity 0.4s; }
+.g-cards-reveal.visible { opacity: 1; }
+.g-card { width: 90px; height: 130px; perspective: 600px; cursor: pointer; }
+.g-card-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.23,1,0.32,1); }
+.g-card.flipped .g-card-inner { transform: rotateY(180deg); }
+.g-card-back, .g-card-front { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.g-card-back { background: linear-gradient(135deg, #1e0a3c, #2d1060); border: 1px solid rgba(192,132,252,0.3); font-size: 28px; }
+.g-card-front { transform: rotateY(180deg); border: 1px solid rgba(255,255,255,0.15); flex-direction: column; overflow: hidden; }
+.g-card-front.common { background: linear-gradient(135deg, #1a2030, #2a3040); border-color: #94a3b8; }
+.g-card-front.rare { background: linear-gradient(135deg, #0d1f3c, #1a3a6e); border-color: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.3); }
+.g-card-front.epic { background: linear-gradient(135deg, #1e0a3c, #3b1a6e); border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.4); }
+.g-card-front.legendary { background: linear-gradient(135deg, #2a1000, #6b2e00); border-color: #f59e0b; box-shadow: 0 0 14px rgba(245,158,11,0.5); animation: legendaryGlow 2s ease-in-out infinite; }
+@keyframes legendaryGlow { 0%,100%{box-shadow:0 0 14px rgba(245,158,11,0.5)} 50%{box-shadow:0 0 22px rgba(245,158,11,0.8)} }
+.g-card-art { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+.g-card-info { width: 100%; padding: 4px 5px; background: rgba(0,0,0,0.3); }
+.g-card-name { font-family: 'Cinzel', serif; font-size: 7px; letter-spacing: 0.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-card-rarity { font-size: 7px; text-align: center; letter-spacing: 1px; }
+.g-card-rarity.common { color: #94a3b8; }
+.g-card-rarity.rare { color: #60a5fa; }
+.g-card-rarity.epic { color: #c084fc; }
+.g-card-rarity.legendary { color: #fbbf24; }
+.btn-gacha-claim { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px; padding: 12px 32px; background: linear-gradient(135deg, rgba(139,92,246,0.3), rgba(109,40,217,0.4)); border: 1px solid rgba(192,132,252,0.5); color: #e9d5ff; border-radius: 8px; cursor: pointer; opacity: 0; transition: opacity 0.4s; }
+.btn-gacha-claim.visible { opacity: 1; }
+.btn-gacha-claim:hover { background: linear-gradient(135deg, rgba(139,92,246,0.5), rgba(109,40,217,0.6)); }
+
+/* ── Collection ── */
+.gacha-section-title { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 3px; color: rgba(200,160,255,0.5); border-bottom: 1px solid rgba(192,132,252,0.15); padding-bottom: 8px; margin: 16px 0 12px; }
+.gacha-stats-row { display: flex; gap: 10px; margin-bottom: 14px; }
+.gacha-stat-card { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(192,132,252,0.12); border-radius: 8px; padding: 10px; text-align: center; }
+.gacha-stat-val { font-family: 'Cinzel', serif; font-size: 18px; color: #e9d5ff; }
+.gacha-stat-label { font-size: 9px; letter-spacing: 1.5px; color: rgba(200,160,255,0.4); margin-top: 2px; }
+.gacha-coll-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gacha-coll-card { aspect-ratio: 3/4; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); position: relative; }
+.gacha-coll-card.common { border-color: #475569; }
+.gacha-coll-card.rare { border-color: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.2); }
+.gacha-coll-card.epic { border-color: #a855f7; box-shadow: 0 0 8px rgba(168,85,247,0.25); }
+.gacha-coll-card.legendary { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.3); animation: legendaryGlow 2s ease-in-out infinite; }
+.gacha-coll-emoji { font-size: 22px; }
+.gacha-coll-name { font-family: 'Cinzel', serif; font-size: 7px; text-align: center; padding: 0 4px; color: rgba(230,220,255,0.8); }
+.gacha-coll-count { position: absolute; top: 3px; right: 5px; font-size: 8px; color: rgba(200,160,255,0.5); }
+.gacha-empty { grid-column: 1/-1; text-align: center; color: rgba(200,160,255,0.3); font-size: 13px; padding: 24px; }
+.gacha-coll-card.gacha-coll-silhouette {
+  border-color: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.015);
+  filter: none;
+}
+.gacha-no-crystal { text-align: center; color: #f87171; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 1px; padding: 8px; opacity: 0; transition: opacity 0.3s; }
+.gacha-no-crystal.show { opacity: 1; }
+
 /* ── TAB PANELS ─────────────────────────────────────────────────────────── */
 .tab-panel {
   position: fixed; inset: 0;
@@ -1110,6 +1279,126 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     GACHA PANEL
+═══════════════════════════════════════════════════════════ -->
+<div class="tab-panel hidden" id="panel-gacha">
+  <div class="gacha-wrapper">
+
+    <div class="gacha-header">
+      <div class="gacha-title">✦ REALM PULL ✦</div>
+      <div class="gacha-subtitle">SUMMON YOUR HEROES</div>
+    </div>
+
+    <!-- Wallet -->
+    <div class="gacha-wallet">
+      <div class="wallet-card crystal">
+        <div class="wallet-val" id="g-crystals">0</div>
+        <div class="wallet-label">💎 CRYSTAL</div>
+      </div>
+      <div class="wallet-card" style="border-color:rgba(251,191,36,0.3)">
+        <div class="wallet-val" id="g-shards" style="color:#fbbf24; text-shadow:0 0 8px rgba(251,191,36,0.4)">0</div>
+        <div class="wallet-label">🔮 SHARD</div>
+      </div>
+      <div class="wallet-card pack">
+        <div class="wallet-val" id="g-free-packs">0</div>
+        <div class="wallet-label">🎁 FREE PACK</div>
+      </div>
+    </div>
+    <!-- Redeem shard -->
+    <div style="text-align:center; margin: -4px 0 10px;">
+      <button class="btn-gacha-pull" id="gBtnRedeem" onclick="gachaRedeemShards()" style="width:100%; padding:8px;" disabled>
+        <span class="btn-pull-cost" id="gRedeemLabel">0 Shard → 0 Crystal</span>
+        <span class="btn-pull-label">REDEEM SHARD</span>
+      </button>
+    </div>
+
+    <!-- Pack visual -->
+    <div class="gacha-pack-zone">
+      <div class="pack-wrap" id="gPackWrap">
+        <div class="gacha-pack-visual">
+          <div class="pack-seal">🎴</div>
+          <div class="pack-name">HERO PACK</div>
+          <div class="pack-count-badge">1 HERO PER PACK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pull buttons -->
+    <div class="gacha-pull-btns">
+      <button class="btn-gacha-pull" id="gBtn1" onclick="gachaPull(1)">
+        <span class="btn-pull-cost">💎 80</span>
+        <span class="btn-pull-label">PULL × 1</span>
+      </button>
+      <button class="btn-gacha-pull" id="gBtn3" onclick="gachaPull(3)">
+        <span class="btn-pull-cost">💎 240</span>
+        <span class="btn-pull-label">PULL × 3</span>
+      </button>
+      <button class="btn-gacha-pull free" id="gBtnFree" onclick="gachaFreePull()" disabled>
+        <span class="btn-pull-cost" id="gFreePullLabel">0 TERSISA</span>
+        <span class="btn-pull-label">FREE PACK</span>
+      </button>
+    </div>
+
+    <!-- Pity bar -->
+    <div class="gacha-pity">
+      <div class="pity-row">
+        <span class="pity-label">PITY METER</span>
+        <span class="pity-count"><span id="g-pity-left">90</span> pulls to guaranteed ✦</span>
+      </div>
+      <div class="pity-track"><div class="pity-fill" id="g-pity-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="gacha-no-crystal" id="g-no-crystal">✦ Crystal tidak cukup ✦</div>
+
+    <!-- Reward log -->
+    <div class="gacha-section-title">CARA DAPAT CRYSTAL</div>
+    <div style="font-size:12px; color:rgba(200,160,255,0.55); line-height:1.8; margin-bottom:16px;">
+      💎 Setiap <b style="color:#e9d5ff">100 XP</b> di Daily OS → +100 Crystal<br>
+      🎁 Setiap <b style="color:#e9d5ff">Level Up</b> di Kronik → +1 Free Pack<br>
+      🔥 Streak <b style="color:#e9d5ff">7 hari</b> berturut-turut → +100 Crystal<br>
+      ♻️ Kartu <b style="color:#e9d5ff">duplikat</b> → Shard (tukar ke Crystal)
+    </div>
+
+    <!-- Collection -->
+    <div class="gacha-section-title">KOLEKSI HERO</div>
+    <div class="gacha-stats-row">
+      <div class="gacha-stat-card">
+        <div class="gacha-stat-val" id="g-stat-total">0</div>
+        <div class="gacha-stat-label">TOTAL</div>
+      </div>
+      <div class="gacha-stat-card">
+        <div class="gacha-stat-val" id="g-stat-unique">0</div>
+        <div class="gacha-stat-label">UNIQUE</div>
+      </div>
+      <div class="gacha-stat-card">
+        <div class="gacha-stat-val" id="g-stat-legend">0</div>
+        <div class="gacha-stat-label">LEGENDARY</div>
+      </div>
+      <div class="gacha-stat-card">
+        <div class="gacha-stat-val" id="g-total-pulls">0</div>
+        <div class="gacha-stat-label">PULLS</div>
+      </div>
+    </div>
+    <div class="gacha-coll-grid" id="g-coll-grid">
+      <div class="gacha-empty">Belum ada hero.<br>Mulai pull untuk mengisi koleksimu!</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Pack open overlay -->
+<div class="gacha-overlay" id="gOverlay">
+  <div class="g-legend-flash" id="gLegendFlash"></div>
+  <svg class="g-svg-particles" id="gParticles"></svg>
+  <div class="gacha-rip-wrap" id="gRipWrap">
+    <div class="g-rip-half g-rip-top" id="gRipTop"><div class="g-pack-emoji">🎴</div></div>
+    <div class="g-rip-half g-rip-bottom" id="gRipBottom"></div>
+  </div>
+  <div class="g-cards-reveal" id="gCardsReveal"></div>
+  <button class="btn-gacha-claim" id="gBtnClaim">CLAIM ✦</button>
+</div>
+
 <!-- ── BOTTOM NAV ── -->
 <nav class="bottom-nav">
   <button class="nav-tab active" data-tab="journal" onclick="switchTab('journal')">
@@ -1119,6 +1408,10 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
   <button class="nav-tab" data-tab="profile" onclick="switchTab('profile')">
     <span class="nav-icon">⚔️</span>
     <span class="nav-label">Profil</span>
+  </button>
+  <button class="nav-tab" data-tab="gacha" onclick="switchTab('gacha')">
+    <span class="nav-icon">🎴</span>
+    <span class="nav-label">Gacha</span>
   </button>
 </nav>
 
@@ -1171,14 +1464,19 @@ function switchTab(tab) {
 
   document.getElementById('panel-journal').classList.toggle('hidden', tab !== 'journal');
   document.getElementById('panel-profile').classList.toggle('hidden', tab !== 'profile');
+  document.getElementById('panel-gacha').classList.toggle('hidden', tab !== 'gacha');
   document.getElementById('ambient').style.opacity = tab === 'journal' ? '1' : '0';
 
-  document.body.className = tab === 'journal' ? 'tab-journal' : 'tab-profile';
+  if (tab === 'journal') document.body.className = 'tab-journal';
+  else if (tab === 'profile') document.body.className = 'tab-profile';
+  else document.body.className = 'tab-gacha';
 
   if (tab !== 'journal' && jCurrentId) {
     clearTimeout(jSaveTimer);
     jFlushSave();
   }
+
+  if (tab === 'gacha') gachaRefreshUI();
 }
 
 
@@ -3141,6 +3439,10 @@ INSTRUKSI PENTING:
     // ── Auto Journal: generate jurnal kemarin saat boot ──
     ajBootGenerate(); // fire-and-forget, tidak block render
 
+    // ── Gacha: daily login bonus + milestone catch-up ──
+    gachaDailyLoginBonus().catch(() => {});
+    gachaMilestoneCatchUp().catch(() => {});
+
   } catch(err) {
     console.error('Kronik boot error:', err);
   } finally {
@@ -3156,6 +3458,456 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.warn('[Kronik SW] Failed:', err));
     });
   }
+
+/* ════════════════════════════════════════════════════════════════════
+   GACHA SYSTEM — Realm Pull
+   State disimpan di EcosystemDB kv.gacha namespace:
+     gacha:crystals    → number
+     gacha:pity        → number  (0–89)
+     gacha:pulls       → number
+     gacha:freePacks   → number
+     gacha:collection  → [{id, count}, ...]
+════════════════════════════════════════════════════════════════════ */
+
+const GACHA_HEROES = [
+  { id:'c1', name:'Iron Guard',    class:'Knight',     rarity:'common',    emoji:'🛡️', atk:42, def:68 },
+  { id:'c2', name:'Forest Scout',  class:'Ranger',     rarity:'common',    emoji:'🏹', atk:55, def:40 },
+  { id:'c3', name:'Apprentice',    class:'Mage',       rarity:'common',    emoji:'🔮', atk:60, def:30 },
+  { id:'c4', name:'Thief',         class:'Rogue',      rarity:'common',    emoji:'🗡️', atk:58, def:35 },
+  { id:'c5', name:'Healer',        class:'Cleric',     rarity:'common',    emoji:'✨', atk:30, def:50 },
+  { id:'c6', name:'Brawler',       class:'Fighter',    rarity:'common',    emoji:'👊', atk:65, def:55 },
+  { id:'r1', name:'Silver Blade',  class:'Knight',     rarity:'rare',      emoji:'⚔️', atk:75, def:80 },
+  { id:'r2', name:'Storm Archer',  class:'Ranger',     rarity:'rare',      emoji:'🌩️', atk:88, def:55 },
+  { id:'r3', name:'Frost Witch',   class:'Mage',       rarity:'rare',      emoji:'❄️', atk:95, def:42 },
+  { id:'r4', name:'Shadow Step',   class:'Rogue',      rarity:'rare',      emoji:'🌑', atk:90, def:48 },
+  { id:'r5', name:'Battle Priest', class:'Cleric',     rarity:'rare',      emoji:'⚡', atk:65, def:75 },
+  { id:'r6', name:'Venom Blade',   class:'Rogue',      rarity:'rare',      emoji:'🐍', atk:85, def:52 },
+  { id:'e1', name:'Crimson Knight',class:'Paladin',    rarity:'epic',      emoji:'🔴', atk:105,def:110 },
+  { id:'e2', name:'Arcane Lord',   class:'Archmage',   rarity:'epic',      emoji:'🌀', atk:130,def:60  },
+  { id:'e3', name:'Night Stalker', class:'Assassin',   rarity:'epic',      emoji:'🦇', atk:120,def:65  },
+  { id:'e4', name:'Warlord',       class:'Berserker',  rarity:'epic',      emoji:'🪓', atk:125,def:85  },
+  { id:'l1', name:'Dragon Emperor',class:'Sovereign',  rarity:'legendary', emoji:'🐉', atk:180,def:160 },
+  { id:'l2', name:'Void Witch',    class:'Rift Mage',  rarity:'legendary', emoji:'🌌', atk:195,def:120 },
+  { id:'l3', name:'Ashen Phoenix', class:'Revenant',   rarity:'legendary', emoji:'🔥', atk:170,def:145 },
+  { id:'l4', name:'Shadowlord',    class:'Dark Knight', rarity:'legendary',emoji:'💀', atk:185,def:155 },
+];
+
+const GACHA_RATES    = { common:0.58, rare:0.30, epic:0.10, legendary:0.02 };
+const GACHA_COSTS    = { 1: 80, 3: 240 };
+const GACHA_PITY_MAX = 90;
+const GACHA_SHARD_VALUE       = { common:5, rare:15, epic:40, legendary:100 };
+const GACHA_SHARD_TO_CRYSTAL  = 5;
+
+/* ── KV helpers ── */
+const gGet = (k) => EcosystemDB.kv.gacha.get(k);
+const gSet = (k, v) => EcosystemDB.kv.gacha.set(k, v);
+
+/* ── Read full state from DB ── */
+async function gachaLoadState() {
+  const [crystals, pity, pulls, freePacks, collection, shards] = await Promise.all([
+    gGet('crystals'), gGet('pity'), gGet('pulls'),
+    gGet('freePacks'), gGet('collection'), gGet('shards'),
+  ]);
+  return {
+    crystals:   crystals   ?? 0,
+    pity:       pity       ?? 0,
+    pulls:      pulls      ?? 0,
+    freePacks:  freePacks  ?? 0,
+    collection: collection ?? [],
+    shards:     shards     ?? 0,
+  };
+}
+
+/* ── Refresh UI only (no DB write) ── */
+async function gachaRefreshUI() {
+  const s = await gachaLoadState();
+  document.getElementById('g-crystals').textContent    = s.crystals.toLocaleString();
+  document.getElementById('g-shards').textContent      = s.shards.toLocaleString();
+  document.getElementById('g-free-packs').textContent  = s.freePacks;
+  document.getElementById('g-total-pulls').textContent = s.pulls.toLocaleString();
+  // Pity
+  const pityLeft = GACHA_PITY_MAX - s.pity;
+  document.getElementById('g-pity-left').textContent   = pityLeft;
+  document.getElementById('g-pity-fill').style.width   = Math.round((s.pity / GACHA_PITY_MAX) * 100) + '%';
+  // Pull buttons
+  document.getElementById('gBtn1').disabled    = s.crystals < GACHA_COSTS[1];
+  document.getElementById('gBtn3').disabled    = s.crystals < GACHA_COSTS[3];
+  const freeBtn = document.getElementById('gBtnFree');
+  freeBtn.disabled = s.freePacks <= 0;
+  document.getElementById('gFreePullLabel').textContent = s.freePacks > 0 ? `${s.freePacks} TERSISA` : '0 TERSISA';
+  // Redeem button
+  const crystalFromShards = s.shards * GACHA_SHARD_TO_CRYSTAL;
+  const redeemBtn = document.getElementById('gBtnRedeem');
+  redeemBtn.disabled = s.shards <= 0;
+  document.getElementById('gRedeemLabel').textContent = `${s.shards} Shard → ${crystalFromShards} Crystal`;
+  gachaRenderCollection(s.collection);
+}
+
+/* ── Gacha logic ── */
+function gachaRollRarity(forceLegendary = false) {
+  if (forceLegendary) return 'legendary';
+  const r = Math.random();
+  if (r < GACHA_RATES.legendary) return 'legendary';
+  if (r < GACHA_RATES.legendary + GACHA_RATES.epic) return 'epic';
+  if (r < GACHA_RATES.legendary + GACHA_RATES.epic + GACHA_RATES.rare) return 'rare';
+  return 'common';
+}
+
+function gachaRollHero(rarity) {
+  const pool = GACHA_HEROES.filter(h => h.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+async function gachaPull(count) {
+  const s = await gachaLoadState();
+  const cost = GACHA_COSTS[count];
+  if (s.crystals < cost) {
+    const el = document.getElementById('g-no-crystal');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+    return;
+  }
+  s.crystals -= cost;
+  await gachaDoPull(s, count);
+}
+
+async function gachaFreePull() {
+  const s = await gachaLoadState();
+  if (s.freePacks <= 0) return;
+  s.freePacks -= 1;
+  await gachaDoPull(s, 1);
+}
+
+async function gachaDoPull(s, count) {
+  document.getElementById('gPackWrap').classList.add('pulling');
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    s.pity++;
+    const force = s.pity >= GACHA_PITY_MAX;
+    const rarity = gachaRollRarity(force);
+    if (rarity === 'legendary') s.pity = 0;
+    results.push(gachaRollHero(rarity));
+  }
+  s.pulls += count;
+
+  // Save state
+  await Promise.all([
+    gSet('crystals',  s.crystals),
+    gSet('pity',      s.pity),
+    gSet('pulls',     s.pulls),
+    gSet('freePacks', s.freePacks),
+  ]);
+
+  gachaOpenAnimation(results, s);
+}
+
+/* Setelah claim: commit collection ke DB dan refresh */
+let _gachaPendingHeroes = [];
+let _gachaPendingState  = null;
+
+async function gachaCommitCollection(heroes) {
+  const s = await gachaLoadState();
+  let shardsGained = 0;
+  const shardLog = [];
+
+  heroes.forEach(hero => {
+    const existing = s.collection.find(c => c.id === hero.id);
+    if (existing) {
+      // Duplikat → dapat shard, tidak nambah count
+      const shard = GACHA_SHARD_VALUE[hero.rarity] ?? 5;
+      shardsGained += shard;
+      shardLog.push(`${hero.emoji} ${hero.name} → +${shard} Shard`);
+    } else {
+      s.collection.push({ id: hero.id, count: 1 });
+    }
+  });
+
+  s.shards += shardsGained;
+  await Promise.all([
+    gSet('collection', s.collection),
+    gSet('shards', s.shards),
+  ]);
+
+  if (shardsGained > 0) {
+    showRpgToast(`🔮 +${shardsGained} Shard dari duplikat!`);
+  }
+
+  gachaRefreshUI();
+  document.getElementById('gPackWrap').classList.remove('pulling');
+}
+
+/* ── Redeem all shards → crystal ── */
+async function gachaRedeemShards() {
+  const s = await gachaLoadState();
+  if (s.shards <= 0) return;
+  const gained = s.shards * GACHA_SHARD_TO_CRYSTAL;
+  s.crystals += gained;
+  const oldShards = s.shards;
+  s.shards = 0;
+  await Promise.all([
+    gSet('crystals', s.crystals),
+    gSet('shards', 0),
+  ]);
+  showRpgToast(`💎 +${gained} Crystal dari ${oldShards} Shard!`);
+  gachaRefreshUI();
+}
+
+/* ── Animation ── */
+function gachaOpenAnimation(heroes, state) {
+  _gachaPendingHeroes = heroes;
+  _gachaPendingState  = state;
+
+  const overlay = document.getElementById('gOverlay');
+  overlay.classList.add('active');
+
+  const ripTop    = document.getElementById('gRipTop');
+  const ripBottom = document.getElementById('gRipBottom');
+  ripTop.classList.remove('torn');
+  ripBottom.classList.remove('torn');
+
+  const reveal = document.getElementById('gCardsReveal');
+  reveal.innerHTML = '';
+  reveal.classList.remove('visible');
+
+  const claim = document.getElementById('gBtnClaim');
+  claim.classList.remove('visible');
+
+  setTimeout(() => {
+    ripTop.classList.add('torn');
+    ripBottom.classList.add('torn');
+    gachaSpawnParticles(heroes);
+  }, 600);
+
+  setTimeout(() => {
+    gachaShowCards(heroes);
+  }, 1200);
+}
+
+function gachaSpawnParticles(heroes) {
+  const svg = document.getElementById('gParticles');
+  svg.innerHTML = '';
+  const hasLegend = heroes.some(h => h.rarity === 'legendary');
+  const color = hasLegend ? '#ff8c00' : '#a855f7';
+
+  if (hasLegend) {
+    const flash = document.getElementById('gLegendFlash');
+    flash.classList.remove('flash');
+    void flash.offsetWidth;
+    flash.classList.add('flash');
+  }
+
+  for (let i = 0; i < 22; i++) {
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    const x  = 45 + Math.random() * 10;
+    const y  = 40 + Math.random() * 10;
+    const tx = (Math.random() - 0.5) * 320;
+    const ty = (Math.random() - 0.5) * 320;
+    circle.setAttribute('cx', `${x}vw`);
+    circle.setAttribute('cy', `${y}vh`);
+    circle.setAttribute('r', Math.random() * 5 + 2);
+    circle.setAttribute('fill', color);
+    circle.style.opacity = '0';
+    svg.appendChild(circle);
+    setTimeout(() => {
+      circle.style.transition = `all ${0.5 + Math.random() * 0.7}s cubic-bezier(0.25,0.46,0.45,0.94)`;
+      circle.style.opacity = '0.85';
+      circle.style.transform = `translate(${tx}px, ${ty}px)`;
+      setTimeout(() => { circle.style.opacity = '0'; }, 400);
+    }, 50);
+  }
+}
+
+function gachaShowCards(heroes) {
+  const reveal = document.getElementById('gCardsReveal');
+  reveal.innerHTML = '';
+  heroes.forEach((hero, i) => {
+    const card = gachaBuildCard(hero);
+    reveal.appendChild(card);
+    setTimeout(() => card.classList.add('flipped'), i * 350 + 100);
+  });
+  reveal.classList.add('visible');
+  const claim = document.getElementById('gBtnClaim');
+  setTimeout(() => claim.classList.add('visible'), heroes.length * 350 + 800);
+}
+
+function gachaBuildCard(hero) {
+  const div = document.createElement('div');
+  div.className = 'g-card';
+  div.innerHTML = `
+    <div class="g-card-inner">
+      <div class="g-card-back">🎴</div>
+      <div class="g-card-front ${hero.rarity}">
+        <div class="g-card-art">${hero.emoji}</div>
+        <div class="g-card-info">
+          <div class="g-card-name">${hero.name}</div>
+          <div class="g-card-rarity ${hero.rarity}">${hero.rarity.toUpperCase()}</div>
+        </div>
+      </div>
+    </div>`;
+  return div;
+}
+
+document.getElementById('gBtnClaim').addEventListener('click', () => {
+  gachaCommitCollection(_gachaPendingHeroes);
+  document.getElementById('gOverlay').classList.remove('active');
+});
+document.getElementById('gOverlay').addEventListener('click', function(e) {
+  if (e.target === this) {
+    const claim = document.getElementById('gBtnClaim');
+    if (claim.classList.contains('visible')) claim.click();
+  }
+});
+
+/* ── Collection render ── */
+function gachaRenderCollection(collection) {
+  const grid = document.getElementById('g-coll-grid');
+  grid.innerHTML = '';
+
+  const rarityOrder = { legendary:0, epic:1, rare:2, common:3 };
+  // Selalu tampilkan semua 20 hero, urut rarity
+  const allSorted = [...GACHA_HEROES].sort((a, b) => rarityOrder[a.rarity] - rarityOrder[b.rarity]);
+
+  allSorted.forEach(hero => {
+    const owned = collection?.find(c => c.id === hero.id);
+    const card  = document.createElement('div');
+
+    if (owned) {
+      // Hero sudah punya — tampil normal
+      card.className = `gacha-coll-card ${hero.rarity}`;
+      card.title = `${hero.name} — ${hero.class}`;
+      card.innerHTML = `
+        <span class="gacha-coll-emoji">${hero.emoji}</span>
+        <div class="gacha-coll-name">${hero.name}</div>`;
+    } else {
+      // Hero belum punya — silhouette
+      card.className = 'gacha-coll-card gacha-coll-silhouette';
+      card.title = '???';
+      card.innerHTML = `
+        <span class="gacha-coll-emoji" style="filter:brightness(0);opacity:0.25">${hero.emoji}</span>
+        <div class="gacha-coll-name" style="color:rgba(255,255,255,0.15)">???</div>`;
+    }
+    grid.appendChild(card);
+  });
+
+  const total  = (collection ?? []).reduce((s, c) => s + c.count, 0);
+  const unique = (collection ?? []).length;
+  const legend = (collection ?? []).filter(c => GACHA_HEROES.find(h => h.id === c.id)?.rarity === 'legendary').length;
+  document.getElementById('g-stat-total').textContent  = total;
+  document.getElementById('g-stat-unique').textContent = `${unique}/20`;
+  document.getElementById('g-stat-legend').textContent = legend;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   GACHA REWARD HOOKS — dipanggil dari dalam Kronik saat event terjadi
+
+   gachaOnLevelUp(prevLevel, newLevel)  → +1 free pack per level up
+   gachaOnStreak7()                     → +100 crystal per 7d streak
+   Fungsi ini juga diekspos ke window agar bisa dipanggil dari Daily OS
+   via BroadcastChannel atau postMessage.
+════════════════════════════════════════════════════════════════════ */
+
+async function gachaOnLevelUp(prevLevel, newLevel) {
+  if (!newLevel || newLevel <= prevLevel) return;
+  const gained = newLevel - prevLevel; // bisa multi-level kalau XP lompat
+  for (let i = 0; i < gained; i++) {
+    await EcosystemDB.grantFreePack(`Level up ${prevLevel + i} → ${prevLevel + i + 1}`);
+  }
+  showRpgToast(`🎁 +${gained} Free Pack karena Level Up!`);
+  if (currentTab === 'gacha') gachaRefreshUI();
+}
+
+async function gachaOnStreak7(habitName) {
+  await EcosystemDB.grantCrystals(100, `7-day streak: ${habitName}`);
+  showRpgToast('💎 +100 Crystal — Streak 7 Hari!');
+  if (currentTab === 'gacha') gachaRefreshUI();
+}
+
+// Expose globally so Daily OS can call via BroadcastChannel handler
+window.gachaOnLevelUp  = gachaOnLevelUp;
+window.gachaOnStreak7  = gachaOnStreak7;
+
+/* ── Patch renderProfile to detect level up and fire gachaOnLevelUp ── */
+let _gachaPrevLevel = 0;
+const _origRenderProfile = renderProfile;
+renderProfile = function(result, skipCache) {
+  const newLevel = result?.level ?? 0;
+  if (_gachaPrevLevel > 0 && newLevel > _gachaPrevLevel) {
+    gachaOnLevelUp(_gachaPrevLevel, newLevel).catch(() => {});
+  }
+  _gachaPrevLevel = newLevel;
+  return _origRenderProfile(result, skipCache);
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   DAILY LOGIN BONUS
+   Sekali per hari saat buka Kronik → +30 Crystal
+════════════════════════════════════════════════════════════════════ */
+async function gachaDailyLoginBonus() {
+  const today     = todayStr();
+  const lastLogin = await gGet('lastLoginBonus');
+  if (lastLogin === today) return; // sudah dapat hari ini
+
+  await gSet('lastLoginBonus', today);
+  await EcosystemDB.grantCrystals(30, `Daily login ${today}`);
+  showRpgToast('🌅 +30 Crystal — Daily Login!');
+  if (currentTab === 'gacha') gachaRefreshUI();
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   MILESTONE CRYSTAL — Journal entries
+   Milestone: 1, 10, 25, 50, 100 entries
+   Catch-up: saat pertama kali aktif, hitung semua entry yang sudah ada
+════════════════════════════════════════════════════════════════════ */
+const JOURNAL_MILESTONES = [
+  { count:   1, crystal:  50, label: 'Jurnal pertama'   },
+  { count:  10, crystal: 100, label: '10 Jurnal'        },
+  { count:  25, crystal: 200, label: '25 Jurnal'        },
+  { count:  50, crystal: 300, label: '50 Jurnal'        },
+  { count: 100, crystal: 500, label: '100 Jurnal'       },
+];
+
+async function gachaCheckJournalMilestone(entryCount) {
+  const reached = (await gGet('journalMilestonesReached')) ?? [];
+  let totalGained = 0;
+  const newReached = [];
+
+  for (const m of JOURNAL_MILESTONES) {
+    if (entryCount >= m.count && !reached.includes(m.count)) {
+      totalGained += m.crystal;
+      newReached.push(m.count);
+    }
+  }
+
+  if (newReached.length > 0) {
+    const updated = [...reached, ...newReached];
+    await gSet('journalMilestonesReached', updated);
+    await EcosystemDB.grantCrystals(totalGained, `Journal milestone: ${newReached.join(', ')} entries`);
+    showRpgToast(`📚 +${totalGained} Crystal — Milestone Jurnal!`);
+    if (currentTab === 'gacha') gachaRefreshUI();
+  }
+}
+
+async function gachaMilestoneCatchUp() {
+  // Hitung entry yang sudah ada di DB
+  const allEntries = await dbGetAllEntries();
+  const entryCount = allEntries.length;
+  if (entryCount === 0) return;
+  await gachaCheckJournalMilestone(entryCount);
+}
+
+/* ── Juga panggil tiap kali entry baru dibuat ── */
+// Di-hook ke dbPutEntry via wrapper agar otomatis terpanggil
+const _origDbPutEntry = dbPutEntry;
+async function dbPutEntry(entry) {
+  await _origDbPutEntry(entry);
+  // Cek milestone setelah simpan (hitung dari entries in-memory)
+  try {
+    const count = entries.length;
+    if (count > 0) gachaCheckJournalMilestone(count).catch(() => {});
+  } catch(e) {}
+}
+
+
 </script>
 </body>
 </html>
