@@ -1580,6 +1580,9 @@ async function doDeleteAll() {
   // ── Cleanup localStorage global ───────────────────────────
   localStorage.removeItem('ecosystemku_last_backup');
 
+  // Clear sessionStorage flags (checkin dismissed, dll)
+  sessionStorage.clear();
+
   // Tampilkan tombol tutup
   document.getElementById('clear-modal-close').style.display = 'block';
   initBackupInfo();
