@@ -1294,7 +1294,7 @@
     }
     .checkin-title {
       font-family: 'DM Mono', monospace; font-size: 11px;
-      letter-spacing: 3px; color: var(--text-3);
+      letter-spacing: 3px; color: var(--text-2);
       text-align: center; margin-bottom: 4px;
     }
     .checkin-day-label {
@@ -1315,14 +1315,16 @@
       position: relative; gap: 1px;
     }
     .checkin-cell.claimed {
-      background: rgba(99,102,241,0.15);
-      border-color: #6366f1; color: var(--text);
+      background: rgba(99,102,241,0.18);
+      border-color: #6366f1; color: #6366f1;
     }
+    .checkin-cell.claimed .checkin-cell-reward { font-size: 14px; }
+    .checkin-cell.claimed .checkin-cell-val { color: #6366f1; opacity: 0.7; }
     .checkin-cell.today {
       border-color: #6366f1; background: #6366f1;
       color: #fff; font-weight: 700;
     }
-    .checkin-cell.today.claimed { opacity: 0.6; }
+    .checkin-cell.today.claimed { background: #4f46e5; opacity: 0.85; }
     .checkin-cell-day { font-size: 7px; opacity: 0.6; }
     .checkin-cell-reward { font-size: 11px; }
     .checkin-cell-val { font-size: 7px; font-weight: 600; }
@@ -1344,7 +1346,7 @@
     .checkin-streak-row {
       display: flex; justify-content: center; gap: 16px;
       font-family: 'DM Mono', monospace; font-size: 10px;
-      color: var(--text-3); margin-bottom: 12px;
+      color: var(--text-2); margin-bottom: 12px;
     }
     .checkin-streak-val { color: var(--text); font-weight: 700; }
     .btn-checkin-close {
@@ -4652,13 +4654,18 @@ function renderCheckinModal(cycleDay, streak, totalDays, claimedToday) {
     const isToday = dayNum === cycleDay;
 
     const cell = document.createElement('div');
-    cell.className = 'checkin-cell' + (isPast ? ' claimed' : '') + (isToday ? ' today' : '');
+    const isTodayClaimed = isToday && claimedToday;
+    cell.className = 'checkin-cell'
+      + (isPast || isTodayClaimed ? ' claimed' : '')
+      + (isToday ? ' today' : '');
 
     const emoji = reward.freePack ? '🎁' : '💎';
+    const rewardIcon = isPast || isTodayClaimed ? '✅' : emoji;
+    const valText = reward.freePack ? `+${reward.freePack}pk` : `+${reward.crystal}`;
     cell.innerHTML = `
       <span class="checkin-cell-day">${dayNum}</span>
-      <span class="checkin-cell-reward">${isPast ? '✓' : emoji}</span>
-      <span class="checkin-cell-val">${reward.freePack ? `+${reward.freePack}pk` : `+${reward.crystal}`}</span>`;
+      <span class="checkin-cell-reward">${rewardIcon}</span>
+      <span class="checkin-cell-val">${isPast || isTodayClaimed ? '✓' : valText}</span>`;
     grid.appendChild(cell);
   }
 
