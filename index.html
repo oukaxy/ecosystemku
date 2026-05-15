@@ -1260,11 +1260,18 @@ async function exportZip() {
     try {
       const habits = await EcosystemDB.habits.getAll();
       const todos  = await EcosystemDB.todos.getAll();
-      // localStorage extras (coach memory, xp)
       const coachMemory = (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })();
       const xp          = localStorage.getItem('dailyos_xp') ?? null;
+      // Gacha/checkin data
+      const [checkinLastDate, checkinStreak, checkinTotal,
+             xpLastGranted, crystals, freePacks] = await Promise.all([
+        EcosystemDB.kv.gacha.get('checkinLastDate'), EcosystemDB.kv.gacha.get('checkinStreak'),
+        EcosystemDB.kv.gacha.get('checkinTotal'),    EcosystemDB.kv.gacha.get('xpLastGranted'),
+        EcosystemDB.kv.gacha.get('crystals'),        EcosystemDB.kv.gacha.get('freePacks'),
+      ]);
       zip.file(`daily-os-${date}.json`, JSON.stringify({
         ...meta, habits, todos,
+        gacha: { checkinLastDate, checkinStreak, checkinTotal, xpLastGranted, crystals, freePacks },
         localStorage: { dailyos_xp: xp, dailyos_coach_memory: coachMemory }
       }, null, 2));
       _setAppStatus('dailyos', 'Daily OS', 'ok');
@@ -1295,9 +1302,24 @@ async function exportZip() {
       const profileName    = await EcosystemDB.kv.kronik.get('profile_name');
       const profileAvatar  = await EcosystemDB.kv.kronik.get('profile_avatar');
       const rpgCache       = await EcosystemDB.kv.kronik.get('rpg_profile_cache');
+      // Gacha data
+      const [crystals, pity, pulls, freePacks, shards, collection,
+             pullHistory, milestones, lastLoginBonus, xpLastGranted,
+             checkinLastDate, checkinStreak, checkinTotal] = await Promise.all([
+        EcosystemDB.kv.gacha.get('crystals'),    EcosystemDB.kv.gacha.get('pity'),
+        EcosystemDB.kv.gacha.get('pulls'),       EcosystemDB.kv.gacha.get('freePacks'),
+        EcosystemDB.kv.gacha.get('shards'),      EcosystemDB.kv.gacha.get('collection'),
+        EcosystemDB.kv.gacha.get('pullHistory'), EcosystemDB.kv.gacha.get('journalMilestonesReached'),
+        EcosystemDB.kv.gacha.get('lastLoginBonus'), EcosystemDB.kv.gacha.get('xpLastGranted'),
+        EcosystemDB.kv.gacha.get('checkinLastDate'), EcosystemDB.kv.gacha.get('checkinStreak'),
+        EcosystemDB.kv.gacha.get('checkinTotal'),
+      ]);
       zip.file(`kronik-${date}.json`, JSON.stringify({
         ...meta, entries,
-        profile: { profile_name: profileName, profile_avatar: profileAvatar, rpg_profile_cache: rpgCache }
+        profile: { profile_name: profileName, profile_avatar: profileAvatar, rpg_profile_cache: rpgCache },
+        gacha: { crystals, pity, pulls, freePacks, shards, collection: collection ?? [],
+                 pullHistory: pullHistory ?? [], milestones: milestones ?? [],
+                 lastLoginBonus, xpLastGranted, checkinLastDate, checkinStreak, checkinTotal }
       }, null, 2));
       _setAppStatus('kronik', 'Kronik', 'ok');
     } catch(e) {
@@ -1796,6 +1818,19 @@ async function _doRestore(data, mode) {
           if (raw.localStorage.dailyos_xp) localStorage.setItem('dailyos_xp', raw.localStorage.dailyos_xp);
           if (raw.localStorage.dailyos_coach_memory) localStorage.setItem('dailyos_coach_memory', JSON.stringify(raw.localStorage.dailyos_coach_memory));
         }
+
+        // Restore gacha/checkin data
+        if (raw.gacha) {
+          const g = raw.gacha;
+          const ops = [];
+          if (g.checkinLastDate)       ops.push(EcosystemDB.kv.gacha.set('checkinLastDate', g.checkinLastDate));
+          if (g.checkinStreak != null)  ops.push(EcosystemDB.kv.gacha.set('checkinStreak',  g.checkinStreak));
+          if (g.checkinTotal  != null)  ops.push(EcosystemDB.kv.gacha.set('checkinTotal',   g.checkinTotal));
+          if (g.xpLastGranted != null)  ops.push(EcosystemDB.kv.gacha.set('xpLastGranted',  g.xpLastGranted));
+          if (g.crystals      != null)  ops.push(EcosystemDB.kv.gacha.set('crystals',       g.crystals));
+          if (g.freePacks     != null)  ops.push(EcosystemDB.kv.gacha.set('freePacks',      g.freePacks));
+          if (ops.length > 0) await Promise.all(ops);
+        }
         _setRestoreStatus('dailyos', 'Daily OS', 'ok');
       } catch(e) {
         console.error('[Restore] Daily OS:', e);
@@ -1850,6 +1885,26 @@ async function _doRestore(data, mode) {
         if (raw.profile) {
           if (raw.profile.profile_name)   await EcosystemDB.kv.kronik.set('profile_name',   raw.profile.profile_name);
           if (raw.profile.profile_avatar) await EcosystemDB.kv.kronik.set('profile_avatar', raw.profile.profile_avatar);
+        }
+
+        // Restore gacha data
+        if (raw.gacha) {
+          const g = raw.gacha;
+          const ops = [];
+          if (g.crystals      != null)  ops.push(EcosystemDB.kv.gacha.set('crystals',     g.crystals));
+          if (g.pity          != null)  ops.push(EcosystemDB.kv.gacha.set('pity',         g.pity));
+          if (g.pulls         != null)  ops.push(EcosystemDB.kv.gacha.set('pulls',        g.pulls));
+          if (g.freePacks     != null)  ops.push(EcosystemDB.kv.gacha.set('freePacks',    g.freePacks));
+          if (g.shards        != null)  ops.push(EcosystemDB.kv.gacha.set('shards',       g.shards));
+          if (g.collection    != null)  ops.push(EcosystemDB.kv.gacha.set('collection',   g.collection));
+          if (g.pullHistory   != null)  ops.push(EcosystemDB.kv.gacha.set('pullHistory',  g.pullHistory));
+          if (g.milestones    != null)  ops.push(EcosystemDB.kv.gacha.set('journalMilestonesReached', g.milestones));
+          if (g.lastLoginBonus)         ops.push(EcosystemDB.kv.gacha.set('lastLoginBonus',  g.lastLoginBonus));
+          if (g.xpLastGranted != null)  ops.push(EcosystemDB.kv.gacha.set('xpLastGranted',  g.xpLastGranted));
+          if (g.checkinLastDate)        ops.push(EcosystemDB.kv.gacha.set('checkinLastDate', g.checkinLastDate));
+          if (g.checkinStreak != null)  ops.push(EcosystemDB.kv.gacha.set('checkinStreak',  g.checkinStreak));
+          if (g.checkinTotal  != null)  ops.push(EcosystemDB.kv.gacha.set('checkinTotal',   g.checkinTotal));
+          if (ops.length > 0) await Promise.all(ops);
         }
         _setRestoreStatus('kronik', 'Kronik', 'ok');
       } catch(e) {
@@ -2078,9 +2133,17 @@ function cloudBackup() {
 
       // Kumpulkan data sama seperti exportZip
       _setAppStatus('dailyos', 'Daily OS', 'loading');
+      const [checkinLastDate, checkinStreak, checkinTotal,
+             xpLastGranted, gacha_crystals, gacha_freePacks] = await Promise.all([
+        EcosystemDB.kv.gacha.get('checkinLastDate'), EcosystemDB.kv.gacha.get('checkinStreak'),
+        EcosystemDB.kv.gacha.get('checkinTotal'),    EcosystemDB.kv.gacha.get('xpLastGranted'),
+        EcosystemDB.kv.gacha.get('crystals'),        EcosystemDB.kv.gacha.get('freePacks'),
+      ]);
       backup.dailyos = {
         habits: await EcosystemDB.habits.getAll(),
         todos:  await EcosystemDB.todos.getAll(),
+        gacha: { checkinLastDate, checkinStreak, checkinTotal,
+                 xpLastGranted, crystals: gacha_crystals, freePacks: gacha_freePacks },
         localStorage: {
           dailyos_xp: localStorage.getItem('dailyos_xp'),
           dailyos_coach_memory: (() => { try { return JSON.parse(localStorage.getItem('dailyos_coach_memory') || 'null'); } catch(e) { return null; } })(),
@@ -2096,12 +2159,27 @@ function cloudBackup() {
       _setAppStatus('ideku', 'IdeKu', 'ok');
 
       _setAppStatus('kronik', 'Kronik', 'loading');
+      const [kCrystals, kPity, kPulls, kFreePacks, kShards, kCollection,
+             kPullHistory, kMilestones, kLastLogin, kXpLast,
+             kCheckinDate, kCheckinStreak, kCheckinTotal] = await Promise.all([
+        EcosystemDB.kv.gacha.get('crystals'),    EcosystemDB.kv.gacha.get('pity'),
+        EcosystemDB.kv.gacha.get('pulls'),       EcosystemDB.kv.gacha.get('freePacks'),
+        EcosystemDB.kv.gacha.get('shards'),      EcosystemDB.kv.gacha.get('collection'),
+        EcosystemDB.kv.gacha.get('pullHistory'), EcosystemDB.kv.gacha.get('journalMilestonesReached'),
+        EcosystemDB.kv.gacha.get('lastLoginBonus'), EcosystemDB.kv.gacha.get('xpLastGranted'),
+        EcosystemDB.kv.gacha.get('checkinLastDate'), EcosystemDB.kv.gacha.get('checkinStreak'),
+        EcosystemDB.kv.gacha.get('checkinTotal'),
+      ]);
       backup.kronik = {
         entries:  await EcosystemDB.journal.getAll(),
         profile: {
           profile_name:   await EcosystemDB.kv.kronik.get('profile_name'),
           profile_avatar: await EcosystemDB.kv.kronik.get('profile_avatar'),
         },
+        gacha: { crystals: kCrystals, pity: kPity, pulls: kPulls, freePacks: kFreePacks,
+                 shards: kShards, collection: kCollection ?? [], pullHistory: kPullHistory ?? [],
+                 milestones: kMilestones ?? [], lastLoginBonus: kLastLogin, xpLastGranted: kXpLast,
+                 checkinLastDate: kCheckinDate, checkinStreak: kCheckinStreak, checkinTotal: kCheckinTotal },
       };
       _setAppStatus('kronik', 'Kronik', 'ok');
 
