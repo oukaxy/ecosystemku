@@ -279,8 +279,7 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 .g-card-front.epic { background: linear-gradient(135deg, #1e0a3c, #3b1a6e); border-color: #a855f7; box-shadow: 0 0 10px rgba(168,85,247,0.4); }
 .g-card-front.legendary { background: linear-gradient(135deg, #2a1000, #6b2e00); border-color: #f59e0b; box-shadow: 0 0 14px rgba(245,158,11,0.5); animation: legendaryGlow 2s ease-in-out infinite; }
 @keyframes legendaryGlow { 0%,100%{box-shadow:0 0 14px rgba(245,158,11,0.5)} 50%{box-shadow:0 0 22px rgba(245,158,11,0.8)} }
-.g-card-art { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; }
-.g-card-art img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.g-card-art { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
 .g-card-info { width: 100%; padding: 4px 5px; background: rgba(0,0,0,0.3); }
 .g-card-name { font-family: 'Cinzel', serif; font-size: 7px; letter-spacing: 0.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .g-card-rarity { font-size: 7px; text-align: center; letter-spacing: 1px; }
@@ -305,8 +304,6 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 .gacha-coll-card.epic { border-color: #a855f7; box-shadow: 0 0 8px rgba(168,85,247,0.25); }
 .gacha-coll-card.legendary { border-color: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.3); animation: legendaryGlow 2s ease-in-out infinite; }
 .gacha-coll-emoji { font-size: 22px; }
-.gacha-coll-img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 7px; display: block; }
-.gacha-coll-silhouette .gacha-coll-img { filter: brightness(0) opacity(0.2); }
 .gacha-coll-name { font-family: 'Cinzel', serif; font-size: 7px; text-align: center; padding: 0 4px; color: rgba(230,220,255,0.8); }
 .gacha-coll-count { position: absolute; top: 3px; right: 5px; font-size: 8px; color: rgba(200,160,255,0.5); }
 .gacha-empty { grid-column: 1/-1; text-align: center; color: rgba(200,160,255,0.3); font-size: 13px; padding: 24px; }
@@ -326,7 +323,6 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 .gacha-history-item.epic      { border-color: rgba(168,85,247,0.25); background: rgba(168,85,247,0.04); }
 .gacha-history-item.rare      { border-color: rgba(59,130,246,0.25); background: rgba(59,130,246,0.04); }
 .g-hist-emoji { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
-.g-hist-img { width: 36px; height: 36px; object-fit: cover; object-position: top; border-radius: 6px; flex-shrink: 0; }
 .g-hist-info  { flex: 1; }
 .g-hist-name  { font-family: 'Cinzel', serif; font-size: 11px; color: #e9d5ff; }
 .g-hist-meta  { font-size: 9px; color: rgba(200,160,255,0.45); margin-top: 2px; letter-spacing: 1px; }
@@ -371,8 +367,7 @@ body.tab-gacha .nav-tab[data-tab="gacha"].active::after { background: #c084fc; }
 @keyframes slideUpSheet { from{transform:translateY(100%)} to{transform:translateY(0)} }
 .hero-detail-handle { width: 40px; height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; margin: 0 auto 20px; }
 .hero-detail-top { display: flex; gap: 16px; align-items: center; margin-bottom: 18px; }
-.hero-detail-art { font-size: 52px; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; overflow: hidden; }
-.hero-detail-art img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.hero-detail-art { font-size: 52px; width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
 .hero-detail-art.common    { background: linear-gradient(135deg,#1a2030,#2a3040); }
 .hero-detail-art.rare      { background: linear-gradient(135deg,#0d1f3c,#1a3a6e); }
 .hero-detail-art.epic      { background: linear-gradient(135deg,#1e0a3c,#3b1a6e); }
@@ -3655,26 +3650,26 @@ if ('serviceWorker' in navigator) {
 ════════════════════════════════════════════════════════════════════ */
 
 const GACHA_HEROES = [
-  { id:'c1', name:'Kazuma Satou',       class:'Adventurer',   rarity:'common',    image:'heroes/c1.webp', atk:42, def:68 },
-  { id:'c2', name:'Darkness',           class:'Crusader',     rarity:'common',    image:'heroes/c2.webp', atk:55, def:40 },
-  { id:'c3', name:'Subaru Natsuki',     class:'Summoned',     rarity:'common',    image:'heroes/c3.webp', atk:60, def:30 },
-  { id:'c4', name:'Julius Juukulius',   class:'Knight',       rarity:'common',    image:'heroes/c4.webp', atk:58, def:35 },
-  { id:'c5', name:'Frederica Baumann',  class:'Half-Beast',   rarity:'common',    image:'heroes/c5.webp', atk:50, def:45 },
-  { id:'c6', name:'Petra Leyte',        class:'Maid',         rarity:'common',    image:'heroes/c6.webp', atk:35, def:38 },
-  { id:'r1', name:'Aqua',               class:'Goddess',      rarity:'rare',      image:'heroes/r1.webp', atk:75, def:80 },
-  { id:'r2', name:'Megumin',            class:'Arch Wizard',  rarity:'rare',      image:'heroes/r2.webp', atk:88, def:55 },
-  { id:'r3', name:'Reimu Hakurei',      class:'Shrine Maiden',rarity:'rare',      image:'heroes/r3.webp', atk:95, def:42 },
-  { id:'r4', name:'Red Hood',           class:'Hunter',       rarity:'rare',      image:'heroes/r4.webp', atk:90, def:48 },
-  { id:'r5', name:'Crusch Karsten',     class:'General',      rarity:'rare',      image:'heroes/r5.webp', atk:85, def:78 },
-  { id:'r6', name:'Anastasia Hoshin',   class:'Merchant',     rarity:'rare',      image:'heroes/r6.webp', atk:70, def:65 },
-  { id:'e1', name:'Emilia',             class:'Half-Elf',     rarity:'epic',      image:'heroes/e1.webp', atk:105,def:110 },
-  { id:'e2', name:'Beatrice',           class:'Archivist',    rarity:'epic',      image:'heroes/e2.webp', atk:130,def:60  },
-  { id:'e3', name:'Ram',                class:'Oni',          rarity:'epic',      image:'heroes/e3.webp', atk:120,def:65  },
-  { id:'e4', name:'Grimm',              class:'Undead',       rarity:'epic',      image:'heroes/e4.webp', atk:125,def:85  },
-  { id:'l1', name:'Leaf',               class:'Goddess',      rarity:'legendary', image:'heroes/l1.webp', atk:180,def:160 },
-  { id:'l2', name:'Rem',                class:'Oni Maid',     rarity:'legendary', image:'heroes/l2.webp', atk:195,def:120 },
-  { id:'l3', name:'Reinhard Van Astrea',class:'Knight',       rarity:'legendary', image:'heroes/l3.webp', atk:170,def:145 },
-  { id:'l4', name:'Johan Liebert',      class:'Phantom',      rarity:'legendary', image:'heroes/l4.webp', atk:185,def:155 },
+  { id:'c1', name:'Iron Guard',    class:'Knight',     rarity:'common',    emoji:'🛡️', atk:42, def:68 },
+  { id:'c2', name:'Forest Scout',  class:'Ranger',     rarity:'common',    emoji:'🏹', atk:55, def:40 },
+  { id:'c3', name:'Apprentice',    class:'Mage',       rarity:'common',    emoji:'🔮', atk:60, def:30 },
+  { id:'c4', name:'Thief',         class:'Rogue',      rarity:'common',    emoji:'🗡️', atk:58, def:35 },
+  { id:'c5', name:'Healer',        class:'Cleric',     rarity:'common',    emoji:'✨', atk:30, def:50 },
+  { id:'c6', name:'Brawler',       class:'Fighter',    rarity:'common',    emoji:'👊', atk:65, def:55 },
+  { id:'r1', name:'Silver Blade',  class:'Knight',     rarity:'rare',      emoji:'⚔️', atk:75, def:80 },
+  { id:'r2', name:'Storm Archer',  class:'Ranger',     rarity:'rare',      emoji:'🌩️', atk:88, def:55 },
+  { id:'r3', name:'Frost Witch',   class:'Mage',       rarity:'rare',      emoji:'❄️', atk:95, def:42 },
+  { id:'r4', name:'Shadow Step',   class:'Rogue',      rarity:'rare',      emoji:'🌑', atk:90, def:48 },
+  { id:'r5', name:'Battle Priest', class:'Cleric',     rarity:'rare',      emoji:'⚡', atk:65, def:75 },
+  { id:'r6', name:'Venom Blade',   class:'Rogue',      rarity:'rare',      emoji:'🐍', atk:85, def:52 },
+  { id:'e1', name:'Crimson Knight',class:'Paladin',    rarity:'epic',      emoji:'🔴', atk:105,def:110 },
+  { id:'e2', name:'Arcane Lord',   class:'Archmage',   rarity:'epic',      emoji:'🌀', atk:130,def:60  },
+  { id:'e3', name:'Night Stalker', class:'Assassin',   rarity:'epic',      emoji:'🦇', atk:120,def:65  },
+  { id:'e4', name:'Warlord',       class:'Berserker',  rarity:'epic',      emoji:'🪓', atk:125,def:85  },
+  { id:'l1', name:'Dragon Emperor',class:'Sovereign',  rarity:'legendary', emoji:'🐉', atk:180,def:160 },
+  { id:'l2', name:'Void Witch',    class:'Rift Mage',  rarity:'legendary', emoji:'🌌', atk:195,def:120 },
+  { id:'l3', name:'Ashen Phoenix', class:'Revenant',   rarity:'legendary', emoji:'🔥', atk:170,def:145 },
+  { id:'l4', name:'Shadowlord',    class:'Dark Knight', rarity:'legendary',emoji:'💀', atk:185,def:155 },
 ];
 
 const GACHA_RATES    = { common:0.58, rare:0.30, epic:0.10, legendary:0.02 };
@@ -3935,7 +3930,7 @@ function gachaBuildCard(hero) {
     <div class="g-card-inner">
       <div class="g-card-back">🎴</div>
       <div class="g-card-front ${hero.rarity}">
-        <div class="g-card-art"><img src="${hero.image}" alt="${hero.name}" loading="lazy"></div>
+        <div class="g-card-art">${hero.emoji}</div>
         <div class="g-card-info">
           <div class="g-card-name">${hero.name}</div>
           <div class="g-card-rarity ${hero.rarity}">${hero.rarity.toUpperCase()}</div>
@@ -3961,26 +3956,26 @@ document.getElementById('gOverlay').addEventListener('click', function(e) {
    HERO DETAIL MODAL
 ════════════════════════════════════════════════════════════════════ */
 const HERO_FLAVORS = {
-  c1: 'Adventurer kere yang lebih sering mati konyol daripada menang. Tapi entah kenapa selalu selamat.',
-  c2: 'Ksatria crusader yang terlalu masochis. Pukulan musuh terasa seperti hadiah baginya.',
-  c3: 'Kembali dari kematian lagi dan lagi. Setiap loop membuatnya lebih kuat — dan lebih hancur di dalam.',
-  c4: 'Ksatria sejati kerajaan Lugnica. Kesopanannya menyembunyikan kekuatan yang luar biasa.',
-  c5: 'Penjaga gerbang vila Roswaal. Senyumnya manis, tapi cakarnya lebih tajam dari yang kau kira.',
-  c6: 'Maid muda yang setia sepenuh hati. Tekadnya jauh melampaui usianya yang masih belia.',
-  r1: 'Mantan dewi air yang terbuang ke dunia manusia. Lebih sering menangis daripada membantu.',
-  r2: 'Satu mantra. Satu ledakan. Explosion adalah seni, dan ia adalah seniman tunggalnya.',
-  r3: 'Shrine maiden penjaga keseimbangan dunia. Sudah menumpas dewa-dewa yang lebih kuat dari kebanyakan.',
-  r4: 'Lahir dari dongeng gelap. Topengnya menyembunyikan wajah yang telah melihat terlalu banyak.',
-  r5: 'Jenderal terkuat kerajaan. Pedangnya setajam penilaiannya — tidak pernah meleset.',
-  r6: 'Merchant cerdik dari Kararagi. Di balik senyum manisnya tersimpan kalkulasi yang tak pernah salah.',
-  e1: 'Half-elf yang membawa kutukan nama penyihir besar. Hatinya murni meski dunia tak mau percaya.',
-  e2: 'Arsiwan agung penjaga perpustakaan rahasia. Pengetahuannya melampaui batas waktu, I suppose.',
-  e3: 'Oni dengan satu tanduk yang tersisa. Kekuatannya berbanding lurus dengan cintanya yang terluka.',
-  e4: 'Undead yang berkelana tanpa akhir di dunia dongeng yang telah rusak. Tujuannya hanya satu.',
-  l1: 'Bukan sekadar peri hutan. Ia adalah Mary Sue — dewi penciptaan yang menulis ulang semua ending.',
-  l2: 'Oni maid yang tersimpan dalam kristal es. Cintanya tulus, namun takdirnya terlalu kejam.',
-  l3: 'Ksatria terkuat yang pernah ada. Tidak ada serangan yang bisa melukainya — itu bukan hiperbola.',
-  l4: 'Iblis tanpa wajah yang tidak membunuh dengan tangan. Kata-katanya adalah senjata yang paling mematikan.',
+  c1: 'Penjaga garis depan yang setia. Tamengnya tak pernah retak meski ribuan serangan menghantam.',
+  c2: 'Mata tajam di balik dedaunan. Panahnya selalu menemukan celah di antara kegelapan hutan.',
+  c3: 'Masih belajar, tapi percikannya sudah menjanjikan. Suatu hari sihirnya akan mengguncang dunia.',
+  c4: 'Tangan yang cepat, kaki yang lebih cepat. Tidak ada kantong yang aman di dekatnya.',
+  c5: 'Cahayanya menyembuhkan lebih dari sekadar luka. Ia menyentuh jiwa yang patah.',
+  c6: 'Tidak butuh pedang. Tinjunya sudah cukup untuk merobohkan tembok batu.',
+  r1: 'Pedangnya ditempa dari bintang jatuh. Setiap tebasan meninggalkan kilatan perak di udara.',
+  r2: 'Petir bukan hanya cuaca baginya — itu senjata. Panahnya melesat secepat kilat.',
+  r3: 'Dingin bukan kelemahannya. Es yang ia hembuskan membekukan waktu itu sendiri.',
+  r4: 'Tidak terlihat sampai terlambat. Bayangannya bergerak lebih cepat dari pikiranmu.',
+  r5: 'Bertempur sambil berdoa. Setiap pukulannya adalah doa yang terwujud.',
+  r6: 'Racunnya tidak membunuh seketika — itu bagian dari rencananya yang lebih besar.',
+  e1: 'Ksatria merah yang namanya ditakuti di seluruh benua. Zirahnya ternoda darah musuh.',
+  e2: 'Arkana bukan ilmu baginya — itu napas. Setiap kata mantranya mengubah realita.',
+  e3: 'Lahir dari kegelapan malam. Senyumnya adalah pertanda terakhir yang akan kau ingat.',
+  e4: 'Amarahnya adalah senjata. Semakin terluka, semakin kuat serangannya.',
+  l1: 'Sang kaisar naga. Nafasnya membakar gunung, langkahnya mengguncang bumi.',
+  l2: 'Datang dari celah antara dunia. Ia melihat segalanya — masa lalu, kini, dan yang belum terjadi.',
+  l3: 'Mati dan terlahir kembali dari abu. Setiap kematiannya hanya membuatnya lebih kuat.',
+  l4: 'Penguasa kegelapan yang memilih kesunyian. Ketika ia bicara, seluruh realm terdiam.',
 };
 
 function heroDetailOpen(heroId) {
@@ -3990,7 +3985,7 @@ function heroDetailOpen(heroId) {
   if (!hero) return;
 
   document.getElementById('hd-art').className    = `hero-detail-art ${hero.rarity}`;
-  document.getElementById('hd-art').innerHTML     = `<img src="${hero.image}" alt="${hero.name}">`;
+  document.getElementById('hd-art').textContent   = hero.emoji;
   document.getElementById('hd-rarity').className  = `hero-detail-rarity ${hero.rarity}`;
   document.getElementById('hd-rarity').textContent = hero.rarity.toUpperCase();
   document.getElementById('hd-name').textContent  = hero.name;
@@ -4035,7 +4030,7 @@ function gachaRenderCollection(collection) {
       card.title = `${hero.name} — ${hero.class}`;
       card.style.cursor = 'pointer';
       card.innerHTML = `
-        <img class="gacha-coll-img" src="${hero.image}" alt="${hero.name}" loading="lazy">
+        <span class="gacha-coll-emoji">${hero.emoji}</span>
         <div class="gacha-coll-name">${hero.name}</div>`;
       card.addEventListener('click', () => heroDetailOpen(hero.id));
     } else {
@@ -4043,7 +4038,7 @@ function gachaRenderCollection(collection) {
       card.className = 'gacha-coll-card gacha-coll-silhouette';
       card.title = '???';
       card.innerHTML = `
-        <img class="gacha-coll-img" src="${hero.image}" alt="???" loading="lazy">
+        <span class="gacha-coll-emoji" style="filter:brightness(0);opacity:0.25">${hero.emoji}</span>
         <div class="gacha-coll-name" style="color:rgba(255,255,255,0.15)">???</div>`;
     }
     grid.appendChild(card);
@@ -4120,7 +4115,7 @@ function gachaRenderHistory(history) {
     const div = document.createElement('div');
     div.className = `gacha-history-item ${hero.rarity}`;
     div.innerHTML = `
-      <img class="g-hist-img" src="${hero.image}" alt="${hero.name}" loading="lazy">
+      <span class="g-hist-emoji">${hero.emoji}</span>
       <div class="g-hist-info">
         <div class="g-hist-name">${hero.name}</div>
         <div class="g-hist-meta">${hero.class} · ${dateStr}</div>
@@ -4137,29 +4132,29 @@ function gachaRenderHistory(history) {
 ════════════════════════════════════════════════════════════════════ */
 const HERO_BONUSES = {
   // Common — bonus kecil
-  c1: { label: 'Kazuma: +3 ST',           st: 3 },
-  c2: { label: 'Darkness: +4 HP',         hp: 4 },
-  c3: { label: 'Subaru: +2 HP +2 ST',     hp: 2, st: 2 },
-  c4: { label: 'Julius: +3 HP',           hp: 3 },
-  c5: { label: 'Frederica: +3 ST',        st: 3 },
-  c6: { label: 'Petra: +2 HP +2 MP',      hp: 2, mp: 2 },
+  c1: { label: 'Iron Guard: +3 HP',     hp: 3 },
+  c2: { label: 'Forest Scout: +3 ST',   st: 3 },
+  c3: { label: 'Apprentice: +3 MP',     mp: 3 },
+  c4: { label: 'Thief: +2 ST',          st: 2 },
+  c5: { label: 'Healer: +4 HP',         hp: 4 },
+  c6: { label: 'Brawler: +2 HP +2 ST',  hp: 2, st: 2 },
   // Rare — bonus medium
-  r1: { label: 'Aqua: +6 HP',             hp: 6 },
-  r2: { label: 'Megumin: +5 MP',          mp: 5 },
-  r3: { label: 'Reimu: +4 HP +3 MP',      hp: 4, mp: 3 },
-  r4: { label: 'Red Hood: +5 ST',         st: 5 },
-  r5: { label: 'Crusch: +5 HP +3 ST',     hp: 5, st: 3 },
-  r6: { label: 'Anastasia: +4 MP +3 ST',  mp: 4, st: 3 },
+  r1: { label: 'Silver Blade: +5 HP',   hp: 5 },
+  r2: { label: 'Storm Archer: +5 ST',   st: 5 },
+  r3: { label: 'Frost Witch: +5 MP',    mp: 5 },
+  r4: { label: 'Shadow Step: +4 ST',    st: 4 },
+  r5: { label: 'Battle Priest: +6 HP',  hp: 6 },
+  r6: { label: 'Venom Blade: +3 HP +3 ST', hp: 3, st: 3 },
   // Epic — bonus besar
-  e1: { label: 'Emilia: +8 MP',           mp: 8 },
-  e2: { label: 'Beatrice: +8 MP',         mp: 8 },
-  e3: { label: 'Ram: +7 ST',              st: 7 },
-  e4: { label: 'Grimm: +5 HP +5 ST',      hp: 5, st: 5 },
-  // Legendary — bonus besar
-  l1: { label: 'Leaf: +12 MP',            mp: 12 },
-  l2: { label: 'Rem: +10 HP +5 ST',       hp: 10, st: 5 },
-  l3: { label: 'Reinhard: +12 HP',        hp: 12 },
-  l4: { label: 'Johan: +8 HP +8 ST',      hp: 8, st: 8 },
+  e1: { label: 'Crimson Knight: +8 HP', hp: 8 },
+  e2: { label: 'Arcane Lord: +8 MP',    mp: 8 },
+  e3: { label: 'Night Stalker: +7 ST',  st: 7 },
+  e4: { label: 'Warlord: +5 HP +5 ST',  hp: 5, st: 5 },
+  // Legendary — bonus besar + bonus ganda
+  l1: { label: 'Dragon Emperor: +12 HP +5 ST', hp: 12, st: 5 },
+  l2: { label: 'Void Witch: +12 MP',    mp: 12 },
+  l3: { label: 'Ashen Phoenix: +10 HP +5 MP', hp: 10, mp: 5 },
+  l4: { label: 'Shadowlord: +8 HP +8 ST', hp: 8, st: 8 },
 };
 
 // Cap per vital agar tidak terlalu OP
