@@ -4314,15 +4314,17 @@ async function gachaMilestoneCatchUp() {
 
 /* ── Juga panggil tiap kali entry baru dibuat ── */
 // Di-hook ke dbPutEntry via wrapper agar otomatis terpanggil
+// PENTING: gunakan assignment (bukan function declaration) agar tidak terkena hoisting
+// yang menyebabkan _origDbPutEntry menunjuk ke wrapper itu sendiri (infinite loop)
 const _origDbPutEntry = dbPutEntry;
-async function dbPutEntry(entry) {
+dbPutEntry = async function(entry) {
   await _origDbPutEntry(entry);
   // Cek milestone setelah simpan (hitung dari entries in-memory)
   try {
     const count = entries.length;
     if (count > 0) gachaCheckJournalMilestone(count).catch(() => {});
   } catch(e) {}
-}
+};
 
 
 </script>
