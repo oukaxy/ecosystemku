@@ -2618,36 +2618,37 @@ function saveHabit() {
     const oldName = habits[editHabitIdx].name;
     const oldSubTasks = habits[editHabitIdx].subTasks || [];
     habits[editHabitIdx] = { ...habits[editHabitIdx], name, category, color, icon, subTasks, activeDays };
-    // Kalau nama diubah, pastikan history lama tetap pakai snapshot nama lama.
-    // Entry format string 'main' (data sebelum fitur snapshot) dikonversi ke format baru
-    // dengan oldName sebagai snapshot — jadi rename tidak mengubah tampilan di kalender.
-    if (oldName !== name) {
-      const h = habits[editHabitIdx];
-      Object.keys(h.history || {}).forEach(ds => {
-        h.history[ds] = h.history[ds].map(entry => {
-          if (typeof entry === 'string' && entry === 'main') {
-            return { id: 'main', text: oldName };
-          }
+
+    // Buat map subId -> teks lama
+    const oldSubMap = {};
+    oldSubTasks.forEach(s => { oldSubMap[s.id] = s.text; });
+
+    const h = habits[editHabitIdx];
+
+    // Freeze semua entry history dengan snapshot teks LAMA agar
+    // tampilan kalender tidak berubah saat habit/sub-aktivitas di-rename.
+    // Berlaku untuk format string lama maupun format object baru.
+    Object.keys(h.history || {}).forEach(ds => {
+      h.history[ds] = h.history[ds].map(entry => {
+        if (typeof entry === 'string') {
+          // Format string lama → konversi ke object dengan teks lama
+          if (entry === 'main') return { id: 'main', text: oldName };
+          if (oldSubMap[entry]) return { id: entry, text: oldSubMap[entry] };
           return entry;
-        });
-      });
-    }
-    // Kalau ada sub-aktivitas yang di-rename, konversi entry string lama
-    // ke format baru dengan teks lama sebagai snapshot
-    {
-      const h = habits[editHabitIdx];
-      // Buat map subId -> teks lama
-      const oldSubMap = {};
-      oldSubTasks.forEach(s => { oldSubMap[s.id] = s.text; });
-      Object.keys(h.history || {}).forEach(ds => {
-        h.history[ds] = h.history[ds].map(entry => {
-          if (typeof entry === 'string' && entry !== 'main' && oldSubMap[entry]) {
-            return { id: entry, text: oldSubMap[entry] };
+        }
+        // Format object — kalau belum punya text (null/undefined), isi dengan teks lama
+        if (typeof entry === 'object' && entry !== null) {
+          if (entry.id === 'main' && !entry.text) {
+            return { ...entry, text: oldName };
           }
-          return entry;
-        });
+          if (entry.id !== 'main' && !entry.text && oldSubMap[entry.id]) {
+            return { ...entry, text: oldSubMap[entry.id] };
+          }
+        }
+        // Sudah punya snapshot text → biarkan apa adanya
+        return entry;
       });
-    }
+    });
   } else {
     habits.push({ name, category, color, icon, subTasks, history: {}, collapsed: false, activeDays, archived: false });
   }
