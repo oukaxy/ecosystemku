@@ -2615,7 +2615,39 @@ function saveHabit() {
   // Kosong = setiap hari (tidak ada filter)
 
   if (editHabitIdx !== null) {
+    const oldName = habits[editHabitIdx].name;
+    const oldSubTasks = habits[editHabitIdx].subTasks || [];
     habits[editHabitIdx] = { ...habits[editHabitIdx], name, category, color, icon, subTasks, activeDays };
+    // Kalau nama diubah, pastikan history lama tetap pakai snapshot nama lama.
+    // Entry format string 'main' (data sebelum fitur snapshot) dikonversi ke format baru
+    // dengan oldName sebagai snapshot — jadi rename tidak mengubah tampilan di kalender.
+    if (oldName !== name) {
+      const h = habits[editHabitIdx];
+      Object.keys(h.history || {}).forEach(ds => {
+        h.history[ds] = h.history[ds].map(entry => {
+          if (typeof entry === 'string' && entry === 'main') {
+            return { id: 'main', text: oldName };
+          }
+          return entry;
+        });
+      });
+    }
+    // Kalau ada sub-aktivitas yang di-rename, konversi entry string lama
+    // ke format baru dengan teks lama sebagai snapshot
+    {
+      const h = habits[editHabitIdx];
+      // Buat map subId -> teks lama
+      const oldSubMap = {};
+      oldSubTasks.forEach(s => { oldSubMap[s.id] = s.text; });
+      Object.keys(h.history || {}).forEach(ds => {
+        h.history[ds] = h.history[ds].map(entry => {
+          if (typeof entry === 'string' && entry !== 'main' && oldSubMap[entry]) {
+            return { id: entry, text: oldSubMap[entry] };
+          }
+          return entry;
+        });
+      });
+    }
   } else {
     habits.push({ name, category, color, icon, subTasks, history: {}, collapsed: false, activeDays, archived: false });
   }
@@ -3291,7 +3323,7 @@ function renderChart() {
       dt += (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
       dd += (h.history[ds] || []).length;
     });
-    dataPoints.push(dt === 0 ? 0 : Math.round((dd/dt)*100));
+    dataPoints.push(dt === 0 ? 0 : Math.min(100, Math.round((dd/dt)*100)));
   }
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(ctx, {
@@ -3306,13 +3338,13 @@ function renderChart() {
         tension: 0.4,
         pointRadius: 2,
         borderWidth: 1.5,
-        clip: false
+        clip: { top: false, bottom: false, left: false, right: false }
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: { left: 4, right: 4, top: 6, bottom: 0 } },
+      layout: { padding: { left: 4, right: 4, top: 14, bottom: 0 } },
       plugins: { legend: { display: false } },
       scales: {
         x: { grid: { display: false }, ticks: { color: isDark ? '#6B6A65' : '#A8A7A2', font: { size: 10 } } },
