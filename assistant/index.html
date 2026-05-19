@@ -2251,9 +2251,19 @@
     }
   }
 
+  function tickRemHand() {
+    if (!model || currentCharId !== 'rem') return;
+    // Apply ulang HAND & ARM params tiap frame — cegah motion engine reset ke 0
+    ALL_HAND_PARAMS.forEach(p => setCoreParam(p, 0));
+    Object.entries(remCurrentHandMap).forEach(([p, v]) => setCoreParam(p, v));
+    setCoreParam('PARAM_ARM_R_ORDER', remCurrentArmOrder.r);
+    setCoreParam('PARAM_ARM_L_ORDER', remCurrentArmOrder.l);
+  }
+
   function onTick(delta) {
     tickBlink(delta);
     tickIdle(delta);
+    tickRemHand();
     tickFollow(delta);
     tickLipSync();
     tickExpression();
@@ -2337,6 +2347,10 @@
     'idle':     [ {r:1,l:1}, {r:1,l:1}, {r:1,l:1}, {r:1,l:1}, {r:1,l:1} ],
   };
 
+  // State HAND & ARM params yang sedang aktif — di-apply ulang tiap frame
+  let remCurrentHandMap = {};
+  let remCurrentArmOrder = { r: 1, l: 1 };
+
   const ALL_HAND_PARAMS = [
     'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
     'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
@@ -2390,17 +2404,15 @@
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
 
-    // Reset semua HAND params ke 0 dulu (baseline bersih)
+    // Simpan state untuk di-apply ulang tiap frame (supaya tidak di-reset motion engine)
+    remCurrentHandMap = REM_HAND_MAP[name]?.[index] ?? {};
+    remCurrentArmOrder = REM_ARM_ORDER_MAP[name]?.[index] ?? {r:1, l:1};
+
+    // Apply sekarang juga
     ALL_HAND_PARAMS.forEach(p => setCoreParam(p, 0));
-
-    // Apply HAND params dari map — tidak bergantung motion engine
-    const handMap = REM_HAND_MAP[name]?.[index] ?? {};
-    Object.entries(handMap).forEach(([p, v]) => setCoreParam(p, v));
-
-    // Apply ARM_ORDER dari map
-    const armOrder = REM_ARM_ORDER_MAP[name]?.[index] ?? {r:1, l:1};
-    setCoreParam('PARAM_ARM_R_ORDER', armOrder.r);
-    setCoreParam('PARAM_ARM_L_ORDER', armOrder.l);
+    Object.entries(remCurrentHandMap).forEach(([p, v]) => setCoreParam(p, v));
+    setCoreParam('PARAM_ARM_R_ORDER', remCurrentArmOrder.r);
+    setCoreParam('PARAM_ARM_L_ORDER', remCurrentArmOrder.l);
 
     // Play motion untuk animasi tubuh/wajah (motion engine handle sisanya)
     try {
