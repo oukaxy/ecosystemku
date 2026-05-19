@@ -2353,14 +2353,16 @@
         'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
       ];
       const core = model?.internalModel?.coreModel;
-      if (!core) return;
+      if (!core) { showToast(`[DEBUG] no coreModel`); return; }
+      const active = [];
       handParams.forEach(p => {
         const idx = core.getParameterIndex(p);
         if (idx >= 0) {
           const val = core.getParameterValueByIndex(idx);
-          if (val > 0.5) activeHandParams.add(p);
+          if (val > 0.5) { activeHandParams.add(p); active.push(`${p.replace('PARAM_HAND_','')}=${val.toFixed(2)}`); }
         }
       });
+      showToast(`[${name}] active: ${active.length ? active.join(', ') : 'none'}`);
     });
   }
 
