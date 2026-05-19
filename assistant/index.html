@@ -2342,8 +2342,8 @@
       } catch (_2) {}
     }
 
-    // Setelah motion engine apply frame pertama, catat param mana yang jadi aktif
-    requestAnimationFrame(() => {
+    // Cek nilai HAND params di beberapa titik waktu setelah motion dipanggil
+    const checkHand = (label) => {
       const handParams = [
         'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
         'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
@@ -2353,17 +2353,20 @@
         'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
       ];
       const core = model?.internalModel?.coreModel;
-      if (!core) { showToast(`[DEBUG] no coreModel`); return; }
+      if (!core) { showToast(`[${label}] no coreModel`); return; }
       const active = [];
       handParams.forEach(p => {
         const idx = core.getParameterIndex(p);
         if (idx >= 0) {
           const val = core.getParameterValueByIndex(idx);
-          if (val > 0.5) { activeHandParams.add(p); active.push(`${p.replace('PARAM_HAND_','')}=${val.toFixed(2)}`); }
+          if (val > 0.001) active.push(`${p.replace('PARAM_HAND_','')}=${val.toFixed(2)}`);
         }
       });
-      showToast(`[${name}] active: ${active.length ? active.join(', ') : 'none'}`);
-    });
+      showToast(`[${label}] ${active.length ? active.join(', ') : 'ALL ZERO'}`);
+    };
+    requestAnimationFrame(() => checkHand(`${name} 1f`));
+    setTimeout(() => checkHand(`${name} 300ms`), 300);
+    setTimeout(() => checkHand(`${name} 1s`), 1000);
   }
 
   function setExpression(name) {
