@@ -1594,6 +1594,7 @@
     // Unload model lama
     if (model) {
       app.ticker.remove(onTick);
+      app.ticker.remove(tickRemHand);
       app.stage.removeChild(model);
       model.destroy();
       model = null;
@@ -1633,7 +1634,8 @@
 
       requestAnimationFrame(() => resizeApp());
 
-      app.ticker.add(onTick, null, PIXI.UPDATE_PRIORITY.LOW);
+      app.ticker.add(onTick, null, -50); // LOW priority — jalan setelah motion engine
+      app.ticker.add(tickRemHand, null, -100); // LOWEST — jalan paling akhir, override motion engine
 
       // Update nama di tag
       modelNameEl.textContent = charCfg.name;
@@ -2272,7 +2274,6 @@
     tickLipSync();
     tickExpression();
     tickPet(delta);
-    tickRemHand();
 
     if (DEBUG) {
       frameCount++;
