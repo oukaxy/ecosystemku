@@ -1640,6 +1640,11 @@
       statusEl.textContent = '· idle';
       if (DEBUG) dbgChar.textContent = charCfg.id;
 
+      // Rem — inisialisasi hand state ke idle[0] sebagai default
+      if (charCfg.id === 'rem') {
+        remCurrentHandMap  = REM_HAND_MAP['idle']?.[0] ?? {};
+        remCurrentArmOrder = REM_ARM_ORDER_MAP['idle']?.[0] ?? {r:1, l:1};
+      }
 
       // Render expression bar sesuai karakter
       renderExprBar(charCfg.id);
