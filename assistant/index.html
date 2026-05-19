@@ -1633,7 +1633,7 @@
 
       requestAnimationFrame(() => resizeApp());
 
-      app.ticker.add(onTick);
+      app.ticker.add(onTick, null, PIXI.UPDATE_PRIORITY.LOW);
 
       // Update nama di tag
       modelNameEl.textContent = charCfg.name;
@@ -2268,11 +2268,11 @@
   function onTick(delta) {
     tickBlink(delta);
     tickIdle(delta);
-    tickRemHand();
     tickFollow(delta);
     tickLipSync();
     tickExpression();
     tickPet(delta);
+    tickRemHand();
 
     if (DEBUG) {
       frameCount++;
