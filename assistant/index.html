@@ -2318,6 +2318,24 @@
     ],
   };
 
+  // Mapping ARM_ORDER per motion — diambil dari file .motion3.json
+  const REM_ARM_ORDER_MAP = {
+    'happy':    [ {r:1,l:1}, {r:1,l:1} ],
+    'sad':      [ {r:1,l:1}, {r:1,l:1} ],
+    'cry':      [ {r:1,l:1} ],
+    'angry':    [ {r:0,l:0}, {r:0,l:0} ],
+    'surprise': [ {r:1,l:1} ],
+    'shame':    [ {r:1,l:1}, {r:1,l:1} ],
+    'upset':    [ {r:1,l:0} ],
+    'serious':  [ {r:1,l:1}, {r:1,l:1} ],
+    'proud':    [ {r:1,l:1} ],
+    'doubt':    [ {r:1,l:1} ],
+    'puzzle':   [ {r:1,l:1}, {r:1,l:1}, {r:1,l:1} ],
+    'appeal':   [ {r:1,l:1}, {r:1,l:1}, {r:1,l:1} ],
+    'smile':    [ {r:1,l:1} ],
+    'idle':     [ {r:1,l:1}, {r:1,l:1}, {r:1,l:1}, {r:1,l:1}, {r:1,l:1} ],
+  };
+
   const ALL_HAND_PARAMS = [
     'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
     'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
@@ -2377,6 +2395,11 @@
     // Apply HAND params dari map — tidak bergantung motion engine
     const handMap = REM_HAND_MAP[name]?.[index] ?? {};
     Object.entries(handMap).forEach(([p, v]) => setCoreParam(p, v));
+
+    // Apply ARM_ORDER dari map
+    const armOrder = REM_ARM_ORDER_MAP[name]?.[index] ?? {r:1, l:1};
+    setCoreParam('PARAM_ARM_R_ORDER', armOrder.r);
+    setCoreParam('PARAM_ARM_L_ORDER', armOrder.l);
 
     // Play motion untuk animasi tubuh/wajah (motion engine handle sisanya)
     try {
