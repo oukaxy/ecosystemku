@@ -1640,6 +1640,18 @@
       statusEl.textContent = '· idle';
       if (DEBUG) dbgChar.textContent = charCfg.id;
 
+      // Rem — reset semua HAND params ke 0 sekali saat load sebagai baseline bersih
+      if (charCfg.id === 'rem') {
+        activeHandParams.clear();
+        [
+          'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
+          'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
+          'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
+          'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
+          'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
+          'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
+        ].forEach(p => setCoreParam(p, 0));
+      }
 
       // Render expression bar sesuai karakter
       renderExprBar(charCfg.id);
