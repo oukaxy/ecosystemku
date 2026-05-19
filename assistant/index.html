@@ -2321,11 +2321,19 @@
     handParams.forEach(p => setCoreParam(p, 0));
   }
 
+  // Track HAND params yang aktif (=1) dari motion sebelumnya
+  let activeHandParams = new Set();
+
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
     const count = REM_MOTION_MAP[name];
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
+
+    // Reset hanya param yang aktif dari motion sebelumnya — tidak reset semua, tidak flicker
+    activeHandParams.forEach(p => setCoreParam(p, 0));
+    activeHandParams.clear();
+
     try {
       model.motion(name, index, 2);
     } catch (_) {
@@ -2333,6 +2341,27 @@
         model.internalModel.motionManager.startMotion(name, index, 2);
       } catch (_2) {}
     }
+
+    // Setelah motion engine apply frame pertama, catat param mana yang jadi aktif
+    requestAnimationFrame(() => {
+      const handParams = [
+        'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
+        'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
+        'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
+        'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
+        'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
+        'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
+      ];
+      const core = model?.internalModel?.coreModel;
+      if (!core) return;
+      handParams.forEach(p => {
+        const idx = core.getParameterIndex(p);
+        if (idx >= 0) {
+          const val = core.getParameterValueByIndex(idx);
+          if (val > 0.5) activeHandParams.add(p);
+        }
+      });
+    });
   }
 
   function setExpression(name) {
