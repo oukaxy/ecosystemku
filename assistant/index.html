@@ -1640,18 +1640,6 @@
       statusEl.textContent = '· idle';
       if (DEBUG) dbgChar.textContent = charCfg.id;
 
-      // Rem — reset semua HAND params ke 0 sekali saat load sebagai baseline bersih
-      if (charCfg.id === 'rem') {
-        activeHandParams.clear();
-        [
-          'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
-          'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
-          'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
-          'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
-          'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
-          'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
-        ].forEach(p => setCoreParam(p, 0));
-      }
 
       // Render expression bar sesuai karakter
       renderExprBar(charCfg.id);
@@ -2354,31 +2342,28 @@
       } catch (_2) {}
     }
 
-    // Cek nilai HAND params di beberapa titik waktu setelah motion dipanggil
-    const checkHand = (label) => {
-      const handParams = [
-        'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
-        'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
-        'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
-        'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
-        'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
-        'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
-      ];
+    // Setelah motion apply, catat param aktif untuk di-reset saat motion berikutnya
+    const HAND_PARAMS = [
+      'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
+      'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
+      'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
+      'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
+      'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
+      'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
+    ];
+    const trackActive = () => {
       const core = model?.internalModel?.coreModel;
-      if (!core) { showToast(`[${label}] no coreModel`); return; }
-      const active = [];
-      handParams.forEach(p => {
+      if (!core) return;
+      HAND_PARAMS.forEach(p => {
         const idx = core.getParameterIndex(p);
-        if (idx >= 0) {
-          const val = core.getParameterValueByIndex(idx);
-          if (val > 0.001) active.push(`${p.replace('PARAM_HAND_','')}=${val.toFixed(2)}`);
+        if (idx >= 0 && core.getParameterValueByIndex(idx) > 0.5) {
+          activeHandParams.add(p);
         }
       });
-      showToast(`[${label}] ${active.length ? active.join(', ') : 'ALL ZERO'}`);
     };
-    requestAnimationFrame(() => checkHand(`${name} 1f`));
-    setTimeout(() => checkHand(`${name} 300ms`), 300);
-    setTimeout(() => checkHand(`${name} 1s`), 1000);
+    // Track di beberapa titik karena motion mungkin lazy load
+    setTimeout(trackActive, 100);
+    setTimeout(trackActive, 500);
   }
 
   function setExpression(name) {
