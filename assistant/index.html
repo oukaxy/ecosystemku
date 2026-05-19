@@ -2283,6 +2283,50 @@
   }
 
   /* ── Expression control ──────────────────────────────────────── */
+  // Mapping HAND params per motion — diambil langsung dari file .motion3.json
+  // Hanya param yang bernilai > 0 yang dicantumkan (sisanya = 0)
+  const REM_HAND_MAP = {
+    'happy':    [ // index 0: happy_01, index 1: happy_02
+      { PARAM_HAND_R_08: 1, PARAM_HAND_L_01: 1 },
+      { PARAM_HAND_R_08: 1, PARAM_HAND_L_08: 1 },
+    ],
+    'sad':      [ // index 0: sad_01, index 1: (no hand data)
+      { PARAM_HAND_R_08: 1, PARAM_HAND_L_08: 1 },
+      {},
+    ],
+    'cry':      [ { PARAM_HAND_R_08: 1, PARAM_HAND_L_04: 1 } ],
+    'angry':    [ { PARAM_HAND_R_07: 1, PARAM_HAND_L_07: 1 },
+                  { PARAM_HAND_R_07: 1, PARAM_HAND_L_07: 1 } ],
+    'surprise': [ { PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1 } ],
+    'shame':    [ { PARAM_HAND_R_05: 1, PARAM_HAND_L_05: 1 },
+                  { PARAM_HAND_R_05: 1, PARAM_HAND_L_05: 1 } ],
+    'upset':    [ { PARAM_HAND_R_05: 1, PARAM_HAND_L_07: 1 } ],
+    'serious':  [ { PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1 },
+                  { PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1 } ],
+    'proud':    [ { PARAM_HAND_R_05: 1, PARAM_HAND_L_01: 1 } ],
+    'doubt':    [ { PARAM_HAND_R_07: 1, PARAM_HAND_L_07: 1 } ],
+    'puzzle':   [ { PARAM_HAND_R_08: 1, PARAM_HAND_L_01: 1 },
+                  {}, {} ],
+    'appeal':   [ { PARAM_HAND_R_04: 1, PARAM_HAND_L_04: 1 },
+                  { PARAM_HAND_R_05: 1, PARAM_HAND_L_05: 1 },
+                  { PARAM_HAND_R_05: 1, PARAM_HAND_L_05: 1 } ],
+    'smile':    [ {} ],
+    'idle':     [ // index 0: wait_01, index 1: navi_01, index 2-4: bound (no data)
+      { PARAM_HAND_R_05: 1, PARAM_HAND_L_07: 1 },
+      { PARAM_HAND_R_02: 1, PARAM_HAND_L_07: 1 },
+      {}, {}, {},
+    ],
+  };
+
+  const ALL_HAND_PARAMS = [
+    'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
+    'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
+    'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
+    'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
+    'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
+    'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
+  ];
+
   // Rem motion map — group name → jumlah motion (sesuai Character.model3.json)
   // playRemMotion akan random index dari 0..(count-1)
   const REM_MOTION_MAP = {
@@ -2321,19 +2365,20 @@
     handParams.forEach(p => setCoreParam(p, 0));
   }
 
-  // Track HAND params yang aktif (=1) dari motion sebelumnya
-  let activeHandParams = new Set();
-
   function playRemMotion(name) {
     if (!model || currentCharId !== 'rem') return;
     const count = REM_MOTION_MAP[name];
     if (!count || count === 0) return;
     const index = Math.floor(Math.random() * count);
 
-    // Reset hanya param yang aktif dari motion sebelumnya — tidak reset semua, tidak flicker
-    activeHandParams.forEach(p => setCoreParam(p, 0));
-    activeHandParams.clear();
+    // Reset semua HAND params ke 0 dulu (baseline bersih)
+    ALL_HAND_PARAMS.forEach(p => setCoreParam(p, 0));
 
+    // Apply HAND params dari map — tidak bergantung motion engine
+    const handMap = REM_HAND_MAP[name]?.[index] ?? {};
+    Object.entries(handMap).forEach(([p, v]) => setCoreParam(p, v));
+
+    // Play motion untuk animasi tubuh/wajah (motion engine handle sisanya)
     try {
       model.motion(name, index, 2);
     } catch (_) {
@@ -2341,29 +2386,6 @@
         model.internalModel.motionManager.startMotion(name, index, 2);
       } catch (_2) {}
     }
-
-    // Setelah motion apply, catat param aktif untuk di-reset saat motion berikutnya
-    const HAND_PARAMS = [
-      'PARAM_HAND_R_01','PARAM_HAND_R_02','PARAM_HAND_R_03','PARAM_HAND_R_04',
-      'PARAM_HAND_R_05','PARAM_HAND_R_06','PARAM_HAND_R_07','PARAM_HAND_R_08',
-      'PARAM_HAND_R_09','PARAM_HAND_R_10','PARAM_HAND_R_11',
-      'PARAM_HAND_L_01','PARAM_HAND_L_02','PARAM_HAND_L_03','PARAM_HAND_L_04',
-      'PARAM_HAND_L_05','PARAM_HAND_L_06','PARAM_HAND_L_07','PARAM_HAND_L_08',
-      'PARAM_HAND_L_09','PARAM_HAND_L_10','PARAM_HAND_L_11',
-    ];
-    const trackActive = () => {
-      const core = model?.internalModel?.coreModel;
-      if (!core) return;
-      HAND_PARAMS.forEach(p => {
-        const idx = core.getParameterIndex(p);
-        if (idx >= 0 && core.getParameterValueByIndex(idx) > 0.5) {
-          activeHandParams.add(p);
-        }
-      });
-    };
-    // Track di beberapa titik karena motion mungkin lazy load
-    setTimeout(trackActive, 100);
-    setTimeout(trackActive, 500);
   }
 
   function setExpression(name) {
