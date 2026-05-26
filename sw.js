@@ -2,7 +2,7 @@
 // Scope dibatasi ke root '/' saja (tidak intercept subdirektori app lain)
 // Strategy: network-first untuk semua request dashboard
 
-const CACHE_NAME = 'ecosystemku-dashboard-v1';
+const CACHE_NAME = 'ecosystemku-dashboard-v2';
 
 // File yang di-cache untuk offline
 const PRECACHE = [
