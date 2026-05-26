@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kronik-v5';
+const CACHE_NAME = 'kronik-v6';
 const ASSETS = [
   './index.html',
   './manifest.json',
