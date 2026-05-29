@@ -1,4 +1,4 @@
-const CACHE = 'jernih-v1';
+const CACHE = 'jernih-v2';
 const ASSETS = ['/jernih/', '/jernih/index.html', '/shared/ecosystem-db.js'];
 
 self.addEventListener('install', e => {
