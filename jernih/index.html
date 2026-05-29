@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jernih</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0e0f11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0f11;
+    --surface: #15161a;
+    --border: #22252d;
+    --text: #d4d5d9;
+    --muted: #5a5d6a;
+    --accent-cold: #4a90b8;
+    --accent-warm: #c47a3a;
+    --accent-clear: #5a9e6f;
+    --tag-emosi: #3d2020;
+    --tag-emosi-text: #e07070;
+    --tag-fakta: #1a2e3d;
+    --tag-fakta-text: #70a8e0;
+    --danger: #7a3535;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Layout ── */
+  #app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-style: italic;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+
+  .logo span {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-icon {
+    width: 36px; height: 36px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all 0.15s;
+  }
+  .btn-icon:hover { color: var(--text); border-color: var(--accent-cold); }
+
+  /* ── Views ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── List View ── */
+  .new-btn {
+    width: 100%;
+    padding: 14px 20px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+  }
+  .new-btn:hover {
+    border-color: var(--accent-cold);
+    color: var(--accent-cold);
+    background: rgba(74,144,184,0.04);
+  }
+  .new-btn::before { content: '+ '; opacity: 0.5; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .problem-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .problem-card:hover {
+    border-color: #30333d;
+    transform: translateY(-1px);
+  }
+
+  .card-title {
+    font-family: var(--serif);
+    font-size: 17px;
+    color: #fff;
+    margin-bottom: 6px;
+    line-height: 1.3;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    font-weight: 400;
+  }
+  .badge-proyek { background: #1a2235; color: #6a90c8; }
+  .badge-personal { background: #231a35; color: #9a70c8; }
+  .badge-kerja { background: #1f2a1a; color: #70a860; }
+  .badge-lainnya { background: #252520; color: #a0a070; }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .status-dump { background: var(--muted); }
+  .status-analisis { background: var(--accent-warm); }
+  .status-jernih { background: var(--accent-clear); }
+
+  .card-date { color: var(--muted); font-size: 11px; }
+  .card-stage { color: var(--muted); font-size: 11px; }
+
+  .card-delete {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    padding: 4px;
+  }
+  .problem-card:hover .card-delete { opacity: 1; }
+  .card-delete:hover { color: #e07070 !important; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .big { font-family: var(--serif); font-size: 40px; font-style: italic; display: block; margin-bottom: 12px; color: #2a2b30; }
+
+  /* ── Detail / Editor View ── */
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  .stage-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .stage-btn {
+    flex: 1;
+    padding: 10px 8px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .stage-btn:last-child { border-right: none; }
+  .stage-btn.active {
+    background: var(--surface);
+    color: var(--text);
+  }
+  .stage-btn .num {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 2px;
+    color: inherit;
+  }
+
+  /* Stage 1 — Dump */
+  .stage-panel { display: none; }
+  .stage-panel.active { display: block; }
+
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .field-group { margin-bottom: 24px; }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--accent-cold);
+  }
+  input[type="text"]::placeholder, textarea::placeholder {
+    color: var(--muted);
+  }
+  select option { background: #1a1b1f; }
+
+  .title-input {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-style: italic;
+    padding: 14px 16px;
+  }
+
+  textarea { line-height: 1.7; }
+  .tall { min-height: 120px; }
+  .short { min-height: 80px; }
+
+  /* Stage 2 — Pisah */
+  .sentiment-guide {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  .sentiment-guide strong { color: var(--text); }
+
+  .segment-list { margin-bottom: 16px; }
+
+  .segment-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+  }
+
+  .segment-text {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+    outline: none;
+    font-family: var(--mono);
+    resize: none;
+    min-height: 44px;
+    transition: border-color 0.15s;
+  }
+  .segment-text:focus { border-color: var(--accent-cold); }
+
+  .segment-type {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .type-btn {
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    color: var(--muted);
+  }
+  .type-btn:hover { opacity: 0.8; }
+  .type-btn.emosi.active { background: var(--tag-emosi); border-color: var(--tag-emosi-text); color: var(--tag-emosi-text); }
+  .type-btn.fakta.active { background: var(--tag-fakta); border-color: var(--tag-fakta-text); color: var(--tag-fakta-text); }
+
+  .segment-remove {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 16px; padding: 10px 4px;
+    transition: color 0.15s;
+  }
+  .segment-remove:hover { color: #e07070; }
+
+  .add-segment-btn {
+    width: 100%;
+    padding: 10px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .add-segment-btn:hover { border-color: var(--accent-cold); color: var(--accent-cold); }
+
+  /* Stage 3 — Evaluasi */
+  .eval-question {
+    margin-bottom: 28px;
+  }
+
+  .eval-q {
+    font-family: var(--serif);
+    font-size: 16px;
+    font-style: italic;
+    color: #fff;
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+
+  .eval-q small {
+    display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .rating-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .rating-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.3;
+  }
+  .rating-btn .icon { font-size: 18px; display: block; margin-bottom: 3px; }
+  .rating-btn:hover { border-color: var(--accent-cold); }
+  .rating-btn.selected-panik { background: #3d1c1c; border-color: #e07070; color: #e07070; }
+  .rating-btn.selected-campur { background: #2d2a1a; border-color: #c4a03a; color: #c4a03a; }
+  .rating-btn.selected-jernih { background: #1a2d1e; border-color: var(--accent-clear); color: var(--accent-clear); }
+
+  /* Verdict */
+  .verdict-box {
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 32px;
+    border: 1px solid;
+  }
+  .verdict-box.panik { border-color: #5a2020; background: #1e1010; }
+  .verdict-box.campur { border-color: #5a4a10; background: #1e1a0a; }
+  .verdict-box.jernih { border-color: #1a4a25; background: #0e1e12; }
+
+  .verdict-title {
+    font-family: var(--serif);
+    font-size: 20px;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .verdict-box.panik .verdict-title { color: #e07070; }
+  .verdict-box.campur .verdict-title { color: #c4a03a; }
+  .verdict-box.jernih .verdict-title { color: var(--accent-clear); }
+
+  .verdict-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+  /* ── Save button ── */
+  .save-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-primary {
+    flex: 1;
+    padding: 13px 20px;
+    background: var(--accent-cold);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .btn-primary:hover { background: #5aa0c8; }
+
+  .btn-secondary {
+    padding: 13px 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--text); color: var(--text); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    color: var(--text);
+    transition: transform 0.3s ease;
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Filter bar ── */
+  .filter-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-chip.active, .filter-chip:hover {
+    border-color: var(--accent-cold);
+    color: var(--accent-cold);
+    background: rgba(74,144,184,0.08);
+  }
+
+  /* ── Stats bar ── */
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  .stat-box {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+  .stat-num { font-family: var(--serif); font-size: 24px; color: #fff; }
+  .stat-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  @media (max-width: 480px) {
+    .stage-btn { font-size: 10px; padding: 8px 4px; }
+    .rating-btn { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="logo">
+      jernih
+      <span>ruang berpikir</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" onclick="showView('list')" title="Daftar masalah">☰</button>
+    </div>
+  </header>
+
+  <!-- ── LIST VIEW ── -->
+  <div class="view active" id="view-list">
+    <div class="stats-row" id="stats-row"></div>
+    <button class="new-btn" onclick="newProblem()">masalah baru</button>
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-chip active" data-filter="semua" onclick="setFilter('semua', this)">Semua</button>
+      <button class="filter-chip" data-filter="dump" onclick="setFilter('dump', this)">Dump</button>
+      <button class="filter-chip" data-filter="analisis" onclick="setFilter('analisis', this)">Analisis</button>
+      <button class="filter-chip" data-filter="jernih" onclick="setFilter('jernih', this)">Jernih</button>
+    </div>
+    <div class="section-label">masalah tercatat</div>
+    <div id="problem-list"></div>
+  </div>
+
+  <!-- ── DETAIL VIEW ── -->
+  <div class="view" id="view-detail">
+    <button class="back-btn" onclick="showView('list')">← kembali</button>
+
+    <div class="stage-nav">
+      <button class="stage-btn active" data-stage="0" onclick="goStage(0)">
+        <span class="num">①</span>Dump
+      </button>
+      <button class="stage-btn" data-stage="1" onclick="goStage(1)">
+        <span class="num">②</span>Pisah
+      </button>
+      <button class="stage-btn" data-stage="2" onclick="goStage(2)">
+        <span class="num">③</span>Evaluasi
+      </button>
+    </div>
+
+    <!-- Stage 1: Dump -->
+    <div class="stage-panel active" id="stage-0">
+      <div class="field-group">
+        <label class="field-label">judul masalah</label>
+        <input type="text" class="title-input" id="f-title" placeholder="Apa masalahnya?" autocomplete="off">
+      </div>
+      <div class="field-group">
+        <label class="field-label">kategori</label>
+        <select id="f-category">
+          <option value="proyek">Proyek</option>
+          <option value="personal">Personal</option>
+          <option value="kerja">Kerja</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">tulis semua yang ada di kepala — bebas, jangan disaring dulu</label>
+        <textarea class="tall" id="f-dump" placeholder="Ceritakan apa adanya. Emosi, fakta, kekhawatiran, semua. Ini ruang aman..."></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">apa yang kamu takutkan terjadi?</label>
+        <textarea class="short" id="f-fear" placeholder="Ketakutan terbesar dari masalah ini..."></textarea>
+      </div>
+      <div class="save-row">
+        <button class="btn-secondary" onclick="saveDraft()">Simpan draf</button>
+        <button class="btn-primary" onclick="goStage(1)">Lanjut pisah →</button>
+      </div>
+    </div>
+
+    <!-- Stage 2: Pisah -->
+    <div class="stage-panel" id="stage-1">
+      <div class="sentiment-guide">
+        <strong>Pisahkan mana emosi, mana fakta.</strong><br>
+        <span style="color:#e07070">Emosi</span> = perasaan, asumsi, ketakutan, "rasanya seperti..."<br>
+        <span style="color:#70a8e0">Fakta</span> = hal yang bisa dibuktikan, data, kejadian nyata
+      </div>
+      <div class="field-group">
+        <label class="field-label">pecah masalahmu menjadi segmen-segmen kecil</label>
+        <div class="segment-list" id="segment-list"></div>
+        <button class="add-segment-btn" onclick="addSegment()">+ tambah segmen</button>
+      </div>
+      <div class="save-row">
+        <button class="btn-secondary" onclick="goStage(0)">← kembali</button>
+        <button class="btn-primary" onclick="goStage(2)">Lanjut evaluasi →</button>
+      </div>
+    </div>
+
+    <!-- Stage 3: Evaluasi -->
+    <div class="stage-panel" id="stage-2">
+      <div class="eval-question">
+        <div class="eval-q">
+          Keputusan yang sedang kamu pertimbangkan, diambil karena apa?
+          <small>Bukan solusinya — tapi motif di balik keputusan itu</small>
+        </div>
+        <div class="rating-row">
+          <button class="rating-btn" data-q="motif" data-v="panik" onclick="setRating('motif','panik',this)">
+            <span class="icon">🔥</span>Panik / tertekan
+          </button>
+          <button class="rating-btn" data-q="motif" data-v="campur" onclick="setRating('motif','campur',this)">
+            <span class="icon">🌊</span>Campur
+          </button>
+          <button class="rating-btn" data-q="motif" data-v="jernih" onclick="setRating('motif','jernih',this)">
+            <span class="icon">🧊</span>Pikiran jernih
+          </button>
+        </div>
+      </div>
+
+      <div class="eval-question">
+        <div class="eval-q">
+          Kalau kamu tidak sedang ditekan, apakah solusi ini masih masuk akal?
+          <small>Bayangkan kamu tenang, cukup tidur, tidak ada deadline</small>
+        </div>
+        <div class="rating-row">
+          <button class="rating-btn" data-q="realistis" data-v="panik" onclick="setRating('realistis','panik',this)">
+            <span class="icon">❌</span>Tidak masuk akal
+          </button>
+          <button class="rating-btn" data-q="realistis" data-v="campur" onclick="setRating('realistis','campur',this)">
+            <span class="icon">🤔</span>Mungkin
+          </button>
+          <button class="rating-btn" data-q="realistis" data-v="jernih" onclick="setRating('realistis','jernih',this)">
+            <span class="icon">✓</span>Ya, masuk akal
+          </button>
+        </div>
+      </div>
+
+      <div class="eval-question">
+        <div class="eval-q">
+          Apakah solusi ini membantu jangka panjang, atau cuma menghilangkan rasa tidak nyaman sekarang?
+        </div>
+        <div class="rating-row">
+          <button class="rating-btn" data-q="jangka" data-v="panik" onclick="setRating('jangka','panik',this)">
+            <span class="icon">🩹</span>Cuma sekarang
+          </button>
+          <button class="rating-btn" data-q="jangka" data-v="campur" onclick="setRating('jangka','campur',this)">
+            <span class="icon">↔️</span>Dua-duanya
+          </button>
+          <button class="rating-btn" data-q="jangka" data-v="jernih" onclick="setRating('jangka','jernih',this)">
+            <span class="icon">🌱</span>Jangka panjang
+          </button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">kalau kamu bisa pause dan berpikir jernih — apa yang sebenarnya perlu dilakukan?</label>
+        <textarea class="tall" id="f-clarity" placeholder="Tulis di sini. Tidak harus sempurna. Yang penting jujur..."></textarea>
+      </div>
+
+      <div id="verdict-container"></div>
+
+      <div class="save-row">
+        <button class="btn-secondary" onclick="goStage(1)">← kembali</button>
+        <button class="btn-primary" onclick="saveProblem()">Simpan & selesai</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/shared/ecosystem-db.js"></script>
+<script>
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let problems = [];
+let current  = null;
+let currentFilter = 'semua';
+
+const NAMESPACE = 'jernih';
+
+/* ════════════════════════════════════════════════
+   DB HELPERS
+════════════════════════════════════════════════ */
+async function dbLoad() {
+  try {
+    const db = await EcosystemDB.open();
+    const raw = await EcosystemDB.kv.get(`${NAMESPACE}:problems`);
+    problems = raw ? JSON.parse(raw) : [];
+  } catch(e) {
+    // Fallback localStorage
+    const raw = localStorage.getItem('jernih_problems');
+    problems = raw ? JSON.parse(raw) : [];
+  }
+}
+
+async function dbSave() {
+  try {
+    await EcosystemDB.kv.set(`${NAMESPACE}:problems`, JSON.stringify(problems));
+  } catch(e) {
+    localStorage.setItem('jernih_problems', JSON.stringify(problems));
+  }
+}
+
+/* ════════════════════════════════════════════════
+   VIEWS
+════════════════════════════════════════════════ */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(`view-${name}`).classList.add('active');
+  if (name === 'list') renderList();
+}
+
+/* ════════════════════════════════════════════════
+   LIST
+════════════════════════════════════════════════ */
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  const container = document.getElementById('problem-list');
+  let list = [...problems].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  if (currentFilter !== 'semua') list = list.filter(p => p.stage === currentFilter);
+
+  // Stats
+  const statsEl = document.getElementById('stats-row');
+  const total = problems.length;
+  const jernih = problems.filter(p => p.stage === 'jernih').length;
+  const aktif  = problems.filter(p => p.stage !== 'jernih').length;
+  statsEl.innerHTML = `
+    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-box"><div class="stat-num">${aktif}</div><div class="stat-lbl">Aktif</div></div>
+    <div class="stat-box"><div class="stat-num">${jernih}</div><div class="stat-lbl">Jernih</div></div>
+  `;
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><span class="big">—</span>${currentFilter === 'semua' ? 'Belum ada masalah tercatat.' : 'Tidak ada di kategori ini.'}</div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(p => {
+    const date = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '';
+    const stageName = { dump: 'Dump', analisis: 'Analisis', jernih: 'Jernih' }[p.stage] || 'Dump';
+    const stageClass = p.stage || 'dump';
+    const catBadge = { proyek:'badge-proyek', personal:'badge-personal', kerja:'badge-kerja', lainnya:'badge-lainnya' }[p.category] || 'badge-lainnya';
+    return `
+      <div class="problem-card" onclick="openProblem('${p.id}')">
+        <div class="card-title">${escHtml(p.title || 'Tanpa judul')}</div>
+        <div class="card-meta">
+          <span class="badge ${catBadge}">${p.category || 'lainnya'}</span>
+          <span class="status-dot status-${stageClass}"></span>
+          <span class="card-stage">${stageName}</span>
+          <span class="card-date">${date}</span>
+        </div>
+        <button class="card-delete" onclick="event.stopPropagation();deleteProblem('${p.id}')">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════
+   PROBLEM CRUD
+════════════════════════════════════════════════ */
+function newProblem() {
+  current = {
+    id: Date.now().toString(),
+    title: '',
+    category: 'proyek',
+    dump: '',
+    fear: '',
+    segments: [],
+    ratings: {},
+    clarity: '',
+    stage: 'dump',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  loadIntoEditor();
+  goStage(0);
+  showView('detail');
+}
+
+function openProblem(id) {
+  current = problems.find(p => p.id === id);
+  if (!current) return;
+  loadIntoEditor();
+  const stageMap = { dump: 0, analisis: 1, jernih: 2 };
+  goStage(stageMap[current.stage] || 0);
+  showView('detail');
+}
+
+function loadIntoEditor() {
+  document.getElementById('f-title').value = current.title || '';
+  document.getElementById('f-category').value = current.category || 'proyek';
+  document.getElementById('f-dump').value = current.dump || '';
+  document.getElementById('f-fear').value = current.fear || '';
+  document.getElementById('f-clarity').value = current.clarity || '';
+
+  renderSegments();
+  renderRatings();
+  updateVerdict();
+}
+
+function readFromEditor() {
+  current.title    = document.getElementById('f-title').value.trim();
+  current.category = document.getElementById('f-category').value;
+  current.dump     = document.getElementById('f-dump').value;
+  current.fear     = document.getElementById('f-fear').value;
+  current.clarity  = document.getElementById('f-clarity').value;
+  current.updatedAt = Date.now();
+}
+
+function upsertCurrent() {
+  const idx = problems.findIndex(p => p.id === current.id);
+  if (idx >= 0) problems[idx] = current;
+  else problems.push(current);
+}
+
+async function saveDraft() {
+  readFromEditor();
+  current.stage = 'dump';
+  upsertCurrent();
+  await dbSave();
+  toast('Draf disimpan');
+}
+
+async function saveProblem() {
+  readFromEditor();
+  const r = current.ratings;
+  const scores = [r.motif, r.realistis, r.jangka].filter(Boolean);
+  const hasJernih = scores.filter(s=>s==='jernih').length >= 2;
+  const hasPanik  = scores.filter(s=>s==='panik').length >= 2;
+  current.stage = hasJernih ? 'jernih' : hasPanik ? 'analisis' : 'analisis';
+  upsertCurrent();
+  await dbSave();
+  toast('Tersimpan ✓');
+  setTimeout(() => showView('list'), 600);
+}
+
+async function deleteProblem(id) {
+  if (!confirm('Hapus masalah ini?')) return;
+  problems = problems.filter(p => p.id !== id);
+  await dbSave();
+  renderList();
+}
+
+/* ════════════════════════════════════════════════
+   STAGES
+════════════════════════════════════════════════ */
+function goStage(n) {
+  document.querySelectorAll('.stage-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === n);
+  });
+  document.querySelectorAll('.stage-panel').forEach((panel, i) => {
+    panel.classList.toggle('active', i === n);
+  });
+  if (n === 2) { renderRatings(); updateVerdict(); }
+}
+
+/* ════════════════════════════════════════════════
+   SEGMENTS
+════════════════════════════════════════════════ */
+function renderSegments() {
+  const list = document.getElementById('segment-list');
+  if (!current.segments || !current.segments.length) {
+    list.innerHTML = '';
+    // Pre-populate from dump if empty
+    if (current.dump) addSegment(current.dump);
+    else addSegment();
+    return;
+  }
+  list.innerHTML = current.segments.map((seg, i) => buildSegmentHTML(seg, i)).join('');
+}
+
+function buildSegmentHTML(seg, i) {
+  const emosiActive = seg.type === 'emosi' ? 'active' : '';
+  const faktaActive = seg.type === 'fakta' ? 'active' : '';
+  return `
+    <div class="segment-item" data-idx="${i}">
+      <textarea class="segment-text" rows="2"
+        onchange="updateSegmentText(${i}, this.value)"
+        oninput="autoResize(this)"
+      >${escHtml(seg.text || '')}</textarea>
+      <div class="segment-type">
+        <button class="type-btn emosi ${emosiActive}" onclick="setSegmentType(${i},'emosi',this)">emosi</button>
+        <button class="type-btn fakta ${faktaActive}" onclick="setSegmentType(${i},'fakta',this)">fakta</button>
+      </div>
+      <button class="segment-remove" onclick="removeSegment(${i})">×</button>
+    </div>
+  `;
+}
+
+function addSegment(text='') {
+  if (!current.segments) current.segments = [];
+  current.segments.push({ text, type: null });
+  renderSegments();
+}
+
+function updateSegmentText(i, val) {
+  if (current.segments[i]) current.segments[i].text = val;
+}
+
+function setSegmentType(i, type, btn) {
+  current.segments[i].type = type;
+  const item = btn.closest('.segment-item');
+  item.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function removeSegment(i) {
+  current.segments.splice(i, 1);
+  renderSegments();
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+/* ════════════════════════════════════════════════
+   RATINGS & VERDICT
+════════════════════════════════════════════════ */
+function renderRatings() {
+  if (!current.ratings) current.ratings = {};
+  ['motif','realistis','jangka'].forEach(q => {
+    const val = current.ratings[q];
+    if (!val) return;
+    document.querySelectorAll(`[data-q="${q}"]`).forEach(btn => {
+      btn.classList.remove('selected-panik','selected-campur','selected-jernih');
+      if (btn.dataset.v === val) btn.classList.add(`selected-${val}`);
+    });
+  });
+}
+
+function setRating(q, v, btn) {
+  if (!current.ratings) current.ratings = {};
+  current.ratings[q] = v;
+  document.querySelectorAll(`[data-q="${q}"]`).forEach(b => {
+    b.classList.remove('selected-panik','selected-campur','selected-jernih');
+  });
+  btn.classList.add(`selected-${v}`);
+  updateVerdict();
+}
+
+function updateVerdict() {
+  const container = document.getElementById('verdict-container');
+  const r = current?.ratings || {};
+  const scores = [r.motif, r.realistis, r.jangka].filter(Boolean);
+  if (scores.length < 3) { container.innerHTML = ''; return; }
+
+  const panikCount  = scores.filter(s => s === 'panik').length;
+  const campurCount = scores.filter(s => s === 'campur').length;
+  const jernihCount = scores.filter(s => s === 'jernih').length;
+
+  let cls, title, text;
+
+  if (panikCount >= 2) {
+    cls = 'panik';
+    title = 'Hati-hati — keputusan ini dibuat dalam tekanan.';
+    text = 'Sebagian besar jawabanmu menunjukkan bahwa keputusan ini muncul dari rasa tertekan, bukan dari penilaian yang jernih. Sebelum lanjut, coba tunda dulu. Tidur, jalan-jalan, atau ngobrol sama orang yang dipercaya. Keputusan yang dibuat saat panik seringkali perlu direvisi.';
+  } else if (jernihCount >= 2) {
+    cls = 'jernih';
+    title = 'Kamu sudah berpikir cukup jernih.';
+    text = 'Sebagian besar jawabanmu menunjukkan keputusan ini lahir dari pikiran yang tenang dan realistis. Lanjutkan — tapi tetap catat risiko dan milestonenya.';
+  } else {
+    cls = 'campur';
+    title = 'Ada campuran emosi dan logika di sini.';
+    text = 'Normal. Tapi perlu waspada — pastikan bagian yang "emosi" tidak mendominasi eksekusi. Coba tuliskan satu langkah konkret yang paling realistis, tanpa tekanan, dan mulai dari situ.';
+  }
+
+  container.innerHTML = `
+    <div class="verdict-box ${cls}">
+      <div class="verdict-title">${title}</div>
+      <div class="verdict-text">${text}</div>
+    </div>
+  `;
+}
+
+/* ════════════════════════════════════════════════
+   UTILS
+════════════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+(async () => {
+  await dbLoad();
+  renderList();
+})();
+</script>
+</body>
+</html>
