@@ -1,620 +1,452 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jernih</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e0f11">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0e0f11;
-    --surface: #15161a;
-    --border: #22252d;
-    --text: #d4d5d9;
-    --muted: #5a5d6a;
-    --accent-cold: #4a90b8;
-    --accent-warm: #c47a3a;
-    --accent-clear: #5a9e6f;
-    --tag-emosi: #3d2020;
-    --tag-emosi-text: #e07070;
-    --tag-fakta: #1a2e3d;
-    --tag-fakta-text: #70a8e0;
-    --danger: #7a3535;
-    --serif: 'Instrument Serif', Georgia, serif;
-    --mono: 'DM Mono', monospace;
-  }
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Jernih</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#FFFFFF" id="themeColorMeta">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Jernih">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  <style>
+    :root {
+      --bg: #FFFFFF;
+      --surface: #FFFFFF;
+      --surface2: #F5F5F5;
+      --border: #EBEBEB;
+      --text: #1A1917;
+      --text-2: #6B6A65;
+      --text-3: #A8A7A2;
+      --accent: #1A1917;
+      --accent-fg: #FFFFFF;
+      --red: #C0392B;
+      --red-bg: #FDF2F0;
+      --orange: #B7770D;
+      --orange-bg: #FEF9EC;
+      --green: #2C7A7B;
+      --green-bg: #F0F8F8;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    body.dark {
+      --bg: #0F0F0F;
+      --surface: #1A1A1A;
+      --surface2: #222222;
+      --border: #2A2A2A;
+      --text: #F0F0F0;
+      --text-2: #A0A0A0;
+      --text-3: #606060;
+      --accent: #F0F0F0;
+      --accent-fg: #0F0F0F;
+      --red: #E05A4A;
+      --red-bg: #1F1210;
+      --orange: #D4922A;
+      --orange-bg: #1A1508;
+      --green: #3D9B9C;
+      --green-bg: #0A1A1A;
+      --shadow: 0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.6);
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 14px;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  /* ── Layout ── */
-  #app {
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 0 20px 80px;
-  }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 80px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    input, textarea, select {
+      user-select: text;
+      -webkit-user-select: text;
+    }
 
-  /* ── Header ── */
-  header {
-    padding: 32px 0 24px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 28px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
+    /* ── TOP BAR ── */
+    .top-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .top-bar-title { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+    .top-bar-sub { font-size: 12px; color: var(--text-3); font-family: 'DM Mono', monospace; margin-top: 1px; }
 
-  .logo {
-    font-family: var(--serif);
-    font-size: 28px;
-    font-style: italic;
-    color: #fff;
-    letter-spacing: -0.5px;
-  }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border: none; background: var(--surface2); border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: var(--text); transition: background 0.15s; flex-shrink: 0;
+    }
+    .icon-btn:hover { background: var(--border); }
+    .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .logo span {
-    display: block;
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-top: 2px;
-  }
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      background: var(--surface); border-top: 1px solid var(--border);
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      padding: 6px 0 20px; z-index: 100;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--text-3); font-size: 10px;
+      font-family: 'DM Sans', sans-serif; font-weight: 500;
+      padding: 6px 0; transition: color 0.15s;
+    }
+    .nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-item.active { color: var(--text); }
+    .nav-item.active svg { stroke-width: 2.5; }
 
-  .header-actions {
-    display: flex;
-    gap: 8px;
-  }
+    /* ── VIEWS ── */
+    .view { display: none; padding: 20px; }
+    .view.active { display: block; }
 
-  .btn-icon {
-    width: 36px; height: 36px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
-    transition: all 0.15s;
-  }
-  .btn-icon:hover { color: var(--text); border-color: var(--accent-cold); }
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      color: var(--text-3); font-family: 'DM Mono', monospace;
+    }
 
-  /* ── Views ── */
-  .view { display: none; }
-  .view.active { display: block; }
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface2); border-radius: var(--radius);
+      padding: 12px 14px; text-align: center;
+      border: 1px solid var(--border);
+    }
+    .stat-num { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+    .stat-lbl { font-size: 10px; color: var(--text-3); font-family: 'DM Mono', monospace; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-  /* ── List View ── */
-  .new-btn {
-    width: 100%;
-    padding: 14px 20px;
-    background: transparent;
-    border: 1px dashed var(--border);
-    border-radius: 12px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 13px;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.2s;
-    margin-bottom: 24px;
-    letter-spacing: 0.5px;
-  }
-  .new-btn:hover {
-    border-color: var(--accent-cold);
-    color: var(--accent-cold);
-    background: rgba(74,144,184,0.04);
-  }
-  .new-btn::before { content: '+ '; opacity: 0.5; }
+    /* ── FILTER CHIPS ── */
+    .filter-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .chip {
+      padding: 5px 12px; border-radius: 20px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-3); font-family: 'DM Mono', monospace;
+      font-size: 11px; cursor: pointer; transition: all 0.15s;
+    }
+    .chip.active, .chip:hover {
+      background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+    }
 
-  .section-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 12px;
-  }
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 90px; right: calc(50% - 220px);
+      width: 48px; height: 48px;
+      background: var(--accent); color: var(--accent-fg);
+      border: none; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-md); z-index: 90;
+      transition: transform 0.15s;
+    }
+    .fab:hover { transform: scale(1.05); }
+    .fab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    @media (max-width: 480px) { .fab { right: 20px; } }
 
-  .problem-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 18px;
-    margin-bottom: 10px;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-  }
-  .problem-card:hover {
-    border-color: #30333d;
-    transform: translateY(-1px);
-  }
+    /* ── PROBLEM CARD ── */
+    .problem-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); margin-bottom: 10px;
+      padding: 14px 16px; cursor: pointer;
+      box-shadow: var(--shadow); transition: box-shadow 0.15s;
+      position: relative;
+    }
+    .problem-card:hover { box-shadow: var(--shadow-md); }
 
-  .card-title {
-    font-family: var(--serif);
-    font-size: 17px;
-    color: #fff;
-    margin-bottom: 6px;
-    line-height: 1.3;
-  }
+    .card-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; letter-spacing: -0.2px; }
 
-  .card-meta {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
+    .card-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-  .badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-    letter-spacing: 0.5px;
-    font-weight: 400;
-  }
-  .badge-proyek { background: #1a2235; color: #6a90c8; }
-  .badge-personal { background: #231a35; color: #9a70c8; }
-  .badge-kerja { background: #1f2a1a; color: #70a860; }
-  .badge-lainnya { background: #252520; color: #a0a070; }
+    .badge {
+      font-size: 11px; padding: 2px 8px; border-radius: 20px;
+      font-family: 'DM Mono', monospace; font-weight: 400;
+    }
+    .badge-proyek   { background: #EEF2FF; color: #4F6DDE; }
+    .badge-personal { background: #F5EEFF; color: #8B5CF6; }
+    .badge-kerja    { background: #EEFAF3; color: #2C7A7B; }
+    .badge-lainnya  { background: var(--surface2); color: var(--text-3); }
+    body.dark .badge-proyek   { background: #1a1f3d; color: #7B9BFF; }
+    body.dark .badge-personal { background: #1e1028; color: #C084FC; }
+    body.dark .badge-kerja    { background: #0d2018; color: #5FC9A0; }
+    body.dark .badge-lainnya  { background: var(--surface2); color: var(--text-3); }
 
-  .status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .status-dump { background: var(--muted); }
-  .status-analisis { background: var(--accent-warm); }
-  .status-jernih { background: var(--accent-clear); }
+    .status-pill {
+      font-size: 10px; padding: 2px 8px; border-radius: 20px;
+      font-family: 'DM Mono', monospace;
+    }
+    .status-dump    { background: var(--surface2); color: var(--text-3); }
+    .status-analisis { background: var(--orange-bg); color: var(--orange); }
+    .status-jernih  { background: var(--green-bg); color: var(--green); }
 
-  .card-date { color: var(--muted); font-size: 11px; }
-  .card-stage { color: var(--muted); font-size: 11px; }
+    .card-date { font-size: 11px; color: var(--text-3); font-family: 'DM Mono', monospace; }
 
-  .card-delete {
-    position: absolute;
-    top: 12px; right: 14px;
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.15s;
-    padding: 4px;
-  }
-  .problem-card:hover .card-delete { opacity: 1; }
-  .card-delete:hover { color: #e07070 !important; }
+    .card-delete {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; color: var(--text-3);
+      cursor: pointer; font-size: 16px; opacity: 0; transition: opacity 0.15s; padding: 4px;
+    }
+    .problem-card:hover .card-delete { opacity: 1; }
+    .card-delete:hover { color: var(--red) !important; }
 
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-state .big { font-family: var(--serif); font-size: 40px; font-style: italic; display: block; margin-bottom: 12px; color: #2a2b30; }
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: var(--text-3);
+    }
+    .empty-state .empty-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 14px; }
 
-  /* ── Detail / Editor View ── */
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--muted);
-    font-size: 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    margin-bottom: 24px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    transition: color 0.15s;
-  }
-  .back-btn:hover { color: var(--text); }
+    /* ── DETAIL VIEW ── */
+    .back-btn {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--text-3); font-size: 13px; font-weight: 500;
+      background: none; border: none; cursor: pointer;
+      padding: 0 0 20px; transition: color 0.15s;
+    }
+    .back-btn:hover { color: var(--text); }
+    .back-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .stage-nav {
-    display: flex;
-    gap: 0;
-    margin-bottom: 32px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
+    /* ── STAGE TABS ── */
+    .stage-tabs {
+      display: flex; background: var(--surface2);
+      border-radius: var(--radius); padding: 4px;
+      gap: 2px; margin-bottom: 24px;
+    }
+    .stage-tab {
+      flex: 1; padding: 8px 6px;
+      background: transparent; border: none; border-radius: var(--radius-sm);
+      color: var(--text-3); font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 500; cursor: pointer;
+      transition: all 0.15s; text-align: center; line-height: 1.3;
+    }
+    .stage-tab.active {
+      background: var(--surface); color: var(--text);
+      box-shadow: var(--shadow);
+    }
 
-  .stage-btn {
-    flex: 1;
-    padding: 10px 8px;
-    background: transparent;
-    border: none;
-    border-right: 1px solid var(--border);
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.5px;
-    text-align: center;
-    line-height: 1.4;
-  }
-  .stage-btn:last-child { border-right: none; }
-  .stage-btn.active {
-    background: var(--surface);
-    color: var(--text);
-  }
-  .stage-btn .num {
-    display: block;
-    font-size: 16px;
-    margin-bottom: 2px;
-    color: inherit;
-  }
+    /* ── PANELS ── */
+    .stage-panel { display: none; }
+    .stage-panel.active { display: block; }
 
-  /* Stage 1 — Dump */
-  .stage-panel { display: none; }
-  .stage-panel.active { display: block; }
+    /* ── FORM ELEMENTS ── */
+    .field-group { margin-bottom: 20px; }
+    .field-label {
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-3); font-family: 'DM Mono', monospace;
+      display: block; margin-bottom: 8px;
+    }
 
-  .field-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-    display: block;
-  }
+    input[type="text"], textarea, select {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 15px; padding: 12px 14px; outline: none;
+      transition: border-color 0.15s; resize: none;
+    }
+    input[type="text"]:focus, textarea:focus, select:focus {
+      border-color: var(--text); background: var(--bg);
+    }
+    input[type="text"]::placeholder, textarea::placeholder { color: var(--text-3); }
+    select option { background: var(--bg); }
+    textarea { line-height: 1.65; }
 
-  .field-group { margin-bottom: 24px; }
+    /* ── HINT BOX ── */
+    .hint-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      margin-bottom: 18px; font-size: 13px; color: var(--text-2);
+      line-height: 1.6;
+    }
+    .hint-box strong { color: var(--text); }
 
-  input[type="text"], textarea, select {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 14px;
-    padding: 12px 14px;
-    outline: none;
-    transition: border-color 0.15s;
-    resize: none;
-  }
-  input[type="text"]:focus, textarea:focus, select:focus {
-    border-color: var(--accent-cold);
-  }
-  input[type="text"]::placeholder, textarea::placeholder {
-    color: var(--muted);
-  }
-  select option { background: #1a1b1f; }
+    /* ── SEGMENT LIST ── */
+    .segment-item {
+      display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-start;
+    }
+    .segment-text {
+      flex: 1; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 10px 12px;
+      font-size: 14px; line-height: 1.6; color: var(--text);
+      outline: none; font-family: 'DM Sans', sans-serif;
+      resize: none; min-height: 42px; transition: border-color 0.15s;
+    }
+    .segment-text:focus { border-color: var(--text); background: var(--bg); }
 
-  .title-input {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-style: italic;
-    padding: 14px 16px;
-  }
+    .seg-tags { display: flex; flex-direction: column; gap: 4px; }
+    .seg-tag-btn {
+      padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border); background: transparent;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      cursor: pointer; transition: all 0.15s; color: var(--text-3);
+      white-space: nowrap;
+    }
+    .seg-tag-btn.emosi.active { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+    .seg-tag-btn.fakta.active { background: var(--green-bg); border-color: var(--green); color: var(--green); }
 
-  textarea { line-height: 1.7; }
-  .tall { min-height: 120px; }
-  .short { min-height: 80px; }
+    .seg-remove {
+      background: none; border: none; color: var(--text-3);
+      cursor: pointer; padding: 10px 4px; font-size: 16px; transition: color 0.15s;
+    }
+    .seg-remove:hover { color: var(--red); }
 
-  /* Stage 2 — Pisah */
-  .sentiment-guide {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--muted);
-  }
-  .sentiment-guide strong { color: var(--text); }
+    .add-segment-btn {
+      width: 100%; padding: 10px;
+      background: transparent; border: 1px dashed var(--border);
+      border-radius: var(--radius-sm); color: var(--text-3);
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .add-segment-btn:hover { border-color: var(--text); color: var(--text); }
 
-  .segment-list { margin-bottom: 16px; }
+    /* ── EVAL QUESTIONS ── */
+    .eval-block { margin-bottom: 24px; }
+    .eval-q {
+      font-size: 14px; font-weight: 500; margin-bottom: 10px; line-height: 1.5;
+    }
+    .eval-q small { display: block; font-size: 12px; font-weight: 400; color: var(--text-3); margin-top: 3px; }
 
-  .segment-item {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-    align-items: flex-start;
-  }
+    .choice-row { display: flex; gap: 6px; }
+    .choice-btn {
+      flex: 1; padding: 10px 6px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface2); color: var(--text-2);
+      font-family: 'DM Sans', sans-serif; font-size: 12px;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+      line-height: 1.4;
+    }
+    .choice-btn .icon { font-size: 18px; display: block; margin-bottom: 3px; }
+    .choice-btn:hover { border-color: var(--text); }
+    .choice-btn.sel-panik   { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+    .choice-btn.sel-campur  { background: var(--orange-bg); border-color: var(--orange); color: var(--orange); }
+    .choice-btn.sel-jernih  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
 
-  .segment-text {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 12px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text);
-    outline: none;
-    font-family: var(--mono);
-    resize: none;
-    min-height: 44px;
-    transition: border-color 0.15s;
-  }
-  .segment-text:focus { border-color: var(--accent-cold); }
+    /* ── VERDICT ── */
+    .verdict {
+      border-radius: var(--radius); padding: 16px 18px;
+      margin-top: 24px; border: 1px solid;
+    }
+    .verdict.panik   { border-color: var(--red); background: var(--red-bg); }
+    .verdict.campur  { border-color: var(--orange); background: var(--orange-bg); }
+    .verdict.jernih  { border-color: var(--green); background: var(--green-bg); }
 
-  .segment-type {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+    .verdict-title {
+      font-size: 14px; font-weight: 600; margin-bottom: 6px;
+    }
+    .verdict.panik  .verdict-title { color: var(--red); }
+    .verdict.campur .verdict-title { color: var(--orange); }
+    .verdict.jernih .verdict-title { color: var(--green); }
+    .verdict-text { font-size: 13px; color: var(--text-2); line-height: 1.65; }
 
-  .type-btn {
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-    color: var(--muted);
-  }
-  .type-btn:hover { opacity: 0.8; }
-  .type-btn.emosi.active { background: var(--tag-emosi); border-color: var(--tag-emosi-text); color: var(--tag-emosi-text); }
-  .type-btn.fakta.active { background: var(--tag-fakta); border-color: var(--tag-fakta-text); color: var(--tag-fakta-text); }
+    /* ── ACTION BUTTONS ── */
+    .action-row {
+      display: flex; gap: 10px; margin-top: 24px;
+      padding-top: 18px; border-top: 1px solid var(--border);
+    }
+    .btn-primary {
+      flex: 1; padding: 13px 20px;
+      background: var(--accent); border: none;
+      border-radius: var(--radius-sm); color: var(--accent-fg);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary {
+      padding: 13px 18px; background: transparent;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-2); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-secondary:hover { border-color: var(--text); color: var(--text); }
 
-  .segment-remove {
-    background: none; border: none;
-    color: var(--muted); cursor: pointer;
-    font-size: 16px; padding: 10px 4px;
-    transition: color 0.15s;
-  }
-  .segment-remove:hover { color: #e07070; }
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 88px; left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--accent); color: var(--accent-fg);
+      padding: 10px 18px; border-radius: 20px;
+      font-size: 13px; font-weight: 500;
+      opacity: 0; transition: all 0.25s; z-index: 200;
+      white-space: nowrap; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  .add-segment-btn {
-    width: 100%;
-    padding: 10px;
-    background: transparent;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .add-segment-btn:hover { border-color: var(--accent-cold); color: var(--accent-cold); }
-
-  /* Stage 3 — Evaluasi */
-  .eval-question {
-    margin-bottom: 28px;
-  }
-
-  .eval-q {
-    font-family: var(--serif);
-    font-size: 16px;
-    font-style: italic;
-    color: #fff;
-    margin-bottom: 10px;
-    line-height: 1.5;
-  }
-
-  .eval-q small {
-    display: block;
-    font-family: var(--mono);
-    font-style: normal;
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  .rating-row {
-    display: flex;
-    gap: 6px;
-  }
-
-  .rating-btn {
-    flex: 1;
-    padding: 10px 4px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-    text-align: center;
-    transition: all 0.15s;
-    line-height: 1.3;
-  }
-  .rating-btn .icon { font-size: 18px; display: block; margin-bottom: 3px; }
-  .rating-btn:hover { border-color: var(--accent-cold); }
-  .rating-btn.selected-panik { background: #3d1c1c; border-color: #e07070; color: #e07070; }
-  .rating-btn.selected-campur { background: #2d2a1a; border-color: #c4a03a; color: #c4a03a; }
-  .rating-btn.selected-jernih { background: #1a2d1e; border-color: var(--accent-clear); color: var(--accent-clear); }
-
-  /* Verdict */
-  .verdict-box {
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 32px;
-    border: 1px solid;
-  }
-  .verdict-box.panik { border-color: #5a2020; background: #1e1010; }
-  .verdict-box.campur { border-color: #5a4a10; background: #1e1a0a; }
-  .verdict-box.jernih { border-color: #1a4a25; background: #0e1e12; }
-
-  .verdict-title {
-    font-family: var(--serif);
-    font-size: 20px;
-    font-style: italic;
-    margin-bottom: 8px;
-  }
-  .verdict-box.panik .verdict-title { color: #e07070; }
-  .verdict-box.campur .verdict-title { color: #c4a03a; }
-  .verdict-box.jernih .verdict-title { color: var(--accent-clear); }
-
-  .verdict-text { font-size: 13px; color: var(--muted); line-height: 1.7; }
-
-  /* ── Save button ── */
-  .save-row {
-    display: flex;
-    gap: 10px;
-    margin-top: 32px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border);
-  }
-
-  .btn-primary {
-    flex: 1;
-    padding: 13px 20px;
-    background: var(--accent-cold);
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-family: var(--mono);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
-  }
-  .btn-primary:hover { background: #5aa0c8; }
-
-  .btn-secondary {
-    padding: 13px 20px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-secondary:hover { border-color: var(--text); color: var(--text); }
-
-  /* ── Toast ── */
-  .toast {
-    position: fixed;
-    bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 20px;
-    font-size: 13px;
-    color: var(--text);
-    transition: transform 0.3s ease;
-    z-index: 100;
-    white-space: nowrap;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  /* ── Filter bar ── */
-  .filter-bar {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-  }
-  .filter-chip {
-    padding: 5px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--muted);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .filter-chip.active, .filter-chip:hover {
-    border-color: var(--accent-cold);
-    color: var(--accent-cold);
-    background: rgba(74,144,184,0.08);
-  }
-
-  /* ── Stats bar ── */
-  .stats-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 28px;
-  }
-  .stat-box {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 14px;
-    text-align: center;
-  }
-  .stat-num { font-family: var(--serif); font-size: 24px; color: #fff; }
-  .stat-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  @media (max-width: 480px) {
-    .stage-btn { font-size: 10px; padding: 8px 4px; }
-    .rating-btn { font-size: 11px; }
-  }
-</style>
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  </style>
 </head>
 <body>
-<div id="app">
 
-  <header>
-    <div class="logo">
-      jernih
-      <span>ruang berpikir</span>
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title" id="topBarTitle">Jernih</div>
+      <div class="top-bar-sub" id="topBarSub">Ruang berpikir jernih</div>
     </div>
-    <div class="header-actions">
-      <button class="btn-icon" onclick="showView('list')" title="Daftar masalah">☰</button>
-    </div>
-  </header>
+    <button class="icon-btn" onclick="toggleDark()" id="darkBtn" title="Mode gelap">
+      <svg id="darkIcon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
 
-  <!-- ── LIST VIEW ── -->
+  <!-- VIEW: LIST -->
   <div class="view active" id="view-list">
     <div class="stats-row" id="stats-row"></div>
-    <button class="new-btn" onclick="newProblem()">masalah baru</button>
-    <div class="filter-bar" id="filter-bar">
-      <button class="filter-chip active" data-filter="semua" onclick="setFilter('semua', this)">Semua</button>
-      <button class="filter-chip" data-filter="dump" onclick="setFilter('dump', this)">Dump</button>
-      <button class="filter-chip" data-filter="analisis" onclick="setFilter('analisis', this)">Analisis</button>
-      <button class="filter-chip" data-filter="jernih" onclick="setFilter('jernih', this)">Jernih</button>
+    <div class="filter-row" id="filter-row">
+      <button class="chip active" onclick="setFilter('semua',this)">Semua</button>
+      <button class="chip" onclick="setFilter('dump',this)">Dump</button>
+      <button class="chip" onclick="setFilter('analisis',this)">Proses</button>
+      <button class="chip" onclick="setFilter('jernih',this)">Jernih</button>
     </div>
-    <div class="section-label">masalah tercatat</div>
+    <div class="section-header">
+      <span class="section-title">Masalah</span>
+    </div>
     <div id="problem-list"></div>
   </div>
 
-  <!-- ── DETAIL VIEW ── -->
+  <!-- VIEW: DETAIL -->
   <div class="view" id="view-detail">
-    <button class="back-btn" onclick="showView('list')">← kembali</button>
+    <button class="back-btn" onclick="goList()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Kembali
+    </button>
 
-    <div class="stage-nav">
-      <button class="stage-btn active" data-stage="0" onclick="goStage(0)">
-        <span class="num">①</span>Dump
-      </button>
-      <button class="stage-btn" data-stage="1" onclick="goStage(1)">
-        <span class="num">②</span>Pisah
-      </button>
-      <button class="stage-btn" data-stage="2" onclick="goStage(2)">
-        <span class="num">③</span>Evaluasi
-      </button>
+    <div class="stage-tabs">
+      <button class="stage-tab active" data-s="0" onclick="goStage(0)">① Dump</button>
+      <button class="stage-tab" data-s="1" onclick="goStage(1)">② Pisah</button>
+      <button class="stage-tab" data-s="2" onclick="goStage(2)">③ Evaluasi</button>
     </div>
 
-    <!-- Stage 1: Dump -->
+    <!-- STAGE 0: DUMP -->
     <div class="stage-panel active" id="stage-0">
       <div class="field-group">
-        <label class="field-label">judul masalah</label>
-        <input type="text" class="title-input" id="f-title" placeholder="Apa masalahnya?" autocomplete="off">
+        <label class="field-label">Judul masalah</label>
+        <input type="text" id="f-title" placeholder="Tulis singkat masalahnya...">
       </div>
       <div class="field-group">
-        <label class="field-label">kategori</label>
+        <label class="field-label">Kategori</label>
         <select id="f-category">
           <option value="proyek">Proyek</option>
           <option value="personal">Personal</option>
@@ -623,197 +455,218 @@
         </select>
       </div>
       <div class="field-group">
-        <label class="field-label">tulis semua yang ada di kepala — bebas, jangan disaring dulu</label>
-        <textarea class="tall" id="f-dump" placeholder="Ceritakan apa adanya. Emosi, fakta, kekhawatiran, semua. Ini ruang aman..."></textarea>
+        <label class="field-label">Ceritakan apa adanya</label>
+        <textarea id="f-dump" rows="6" placeholder="Tulis semua yang ada di kepala. Bebas, tidak perlu rapi. Emosi, fakta, kekhawatiran — tulis semua dulu."></textarea>
       </div>
       <div class="field-group">
-        <label class="field-label">apa yang kamu takutkan terjadi?</label>
-        <textarea class="short" id="f-fear" placeholder="Ketakutan terbesar dari masalah ini..."></textarea>
+        <label class="field-label">Yang paling kamu takutkan</label>
+        <textarea id="f-fear" rows="3" placeholder="Kalau masalah ini tidak selesai, apa yang paling kamu khawatirkan?"></textarea>
       </div>
-      <div class="save-row">
+      <div class="action-row">
         <button class="btn-secondary" onclick="saveDraft()">Simpan draf</button>
-        <button class="btn-primary" onclick="goStage(1)">Lanjut pisah →</button>
+        <button class="btn-primary" onclick="goStage(1)">Lanjut →</button>
       </div>
     </div>
 
-    <!-- Stage 2: Pisah -->
+    <!-- STAGE 1: PISAH -->
     <div class="stage-panel" id="stage-1">
-      <div class="sentiment-guide">
-        <strong>Pisahkan mana emosi, mana fakta.</strong><br>
-        <span style="color:#e07070">Emosi</span> = perasaan, asumsi, ketakutan, "rasanya seperti..."<br>
-        <span style="color:#70a8e0">Fakta</span> = hal yang bisa dibuktikan, data, kejadian nyata
+      <div class="hint-box">
+        <strong>Pisahkan emosi dari fakta.</strong><br>
+        <span style="color:var(--red)">Emosi</span> = perasaan, asumsi, ketakutan, "rasanya seperti..."<br>
+        <span style="color:var(--green)">Fakta</span> = hal yang bisa dibuktikan atau sudah terjadi
       </div>
-      <div class="field-group">
-        <label class="field-label">pecah masalahmu menjadi segmen-segmen kecil</label>
-        <div class="segment-list" id="segment-list"></div>
-        <button class="add-segment-btn" onclick="addSegment()">+ tambah segmen</button>
-      </div>
-      <div class="save-row">
-        <button class="btn-secondary" onclick="goStage(0)">← kembali</button>
-        <button class="btn-primary" onclick="goStage(2)">Lanjut evaluasi →</button>
+      <label class="field-label">Pecah jadi bagian-bagian kecil</label>
+      <div id="segment-list"></div>
+      <button class="add-segment-btn" onclick="addSegment('')">+ Tambah bagian</button>
+      <div class="action-row">
+        <button class="btn-secondary" onclick="goStage(0)">← Kembali</button>
+        <button class="btn-primary" onclick="goStage(2)">Lanjut →</button>
       </div>
     </div>
 
-    <!-- Stage 3: Evaluasi -->
+    <!-- STAGE 2: EVALUASI -->
     <div class="stage-panel" id="stage-2">
-      <div class="eval-question">
+
+      <div class="eval-block">
         <div class="eval-q">
-          Keputusan yang sedang kamu pertimbangkan, diambil karena apa?
-          <small>Bukan solusinya — tapi motif di balik keputusan itu</small>
+          Keputusan yang kamu pertimbangkan, muncul dari mana?
+          <small>Bukan solusinya — tapi kenapa kamu mau ambil keputusan itu</small>
         </div>
-        <div class="rating-row">
-          <button class="rating-btn" data-q="motif" data-v="panik" onclick="setRating('motif','panik',this)">
-            <span class="icon">🔥</span>Panik / tertekan
-          </button>
-          <button class="rating-btn" data-q="motif" data-v="campur" onclick="setRating('motif','campur',this)">
-            <span class="icon">🌊</span>Campur
-          </button>
-          <button class="rating-btn" data-q="motif" data-v="jernih" onclick="setRating('motif','jernih',this)">
-            <span class="icon">🧊</span>Pikiran jernih
-          </button>
+        <div class="choice-row">
+          <button class="choice-btn" data-q="motif" data-v="panik" onclick="setRating('motif','panik',this)"><span class="icon">🔥</span>Panik / tertekan</button>
+          <button class="choice-btn" data-q="motif" data-v="campur" onclick="setRating('motif','campur',this)"><span class="icon">🌊</span>Campur-campur</button>
+          <button class="choice-btn" data-q="motif" data-v="jernih" onclick="setRating('motif','jernih',this)"><span class="icon">🧊</span>Pikiran tenang</button>
         </div>
       </div>
 
-      <div class="eval-question">
+      <div class="eval-block">
         <div class="eval-q">
-          Kalau kamu tidak sedang ditekan, apakah solusi ini masih masuk akal?
-          <small>Bayangkan kamu tenang, cukup tidur, tidak ada deadline</small>
+          Kalau kamu tidak sedang ditekan, solusi ini masih masuk akal?
+          <small>Bayangkan kamu sudah istirahat, tidak ada deadline mendesak</small>
         </div>
-        <div class="rating-row">
-          <button class="rating-btn" data-q="realistis" data-v="panik" onclick="setRating('realistis','panik',this)">
-            <span class="icon">❌</span>Tidak masuk akal
-          </button>
-          <button class="rating-btn" data-q="realistis" data-v="campur" onclick="setRating('realistis','campur',this)">
-            <span class="icon">🤔</span>Mungkin
-          </button>
-          <button class="rating-btn" data-q="realistis" data-v="jernih" onclick="setRating('realistis','jernih',this)">
-            <span class="icon">✓</span>Ya, masuk akal
-          </button>
+        <div class="choice-row">
+          <button class="choice-btn" data-q="realistis" data-v="panik" onclick="setRating('realistis','panik',this)"><span class="icon">❌</span>Tidak masuk akal</button>
+          <button class="choice-btn" data-q="realistis" data-v="campur" onclick="setRating('realistis','campur',this)"><span class="icon">🤔</span>Mungkin</button>
+          <button class="choice-btn" data-q="realistis" data-v="jernih" onclick="setRating('realistis','jernih',this)"><span class="icon">✓</span>Masuk akal</button>
         </div>
       </div>
 
-      <div class="eval-question">
+      <div class="eval-block">
         <div class="eval-q">
-          Apakah solusi ini membantu jangka panjang, atau cuma menghilangkan rasa tidak nyaman sekarang?
+          Solusi ini bantu jangka panjang, atau cuma hilangkan rasa tidak nyaman sekarang?
         </div>
-        <div class="rating-row">
-          <button class="rating-btn" data-q="jangka" data-v="panik" onclick="setRating('jangka','panik',this)">
-            <span class="icon">🩹</span>Cuma sekarang
-          </button>
-          <button class="rating-btn" data-q="jangka" data-v="campur" onclick="setRating('jangka','campur',this)">
-            <span class="icon">↔️</span>Dua-duanya
-          </button>
-          <button class="rating-btn" data-q="jangka" data-v="jernih" onclick="setRating('jangka','jernih',this)">
-            <span class="icon">🌱</span>Jangka panjang
-          </button>
+        <div class="choice-row">
+          <button class="choice-btn" data-q="jangka" data-v="panik" onclick="setRating('jangka','panik',this)"><span class="icon">🩹</span>Cuma sekarang</button>
+          <button class="choice-btn" data-q="jangka" data-v="campur" onclick="setRating('jangka','campur',this)"><span class="icon">↔️</span>Dua-duanya</button>
+          <button class="choice-btn" data-q="jangka" data-v="jernih" onclick="setRating('jangka','jernih',this)"><span class="icon">🌱</span>Jangka panjang</button>
         </div>
       </div>
 
       <div class="field-group">
-        <label class="field-label">kalau kamu bisa pause dan berpikir jernih — apa yang sebenarnya perlu dilakukan?</label>
-        <textarea class="tall" id="f-clarity" placeholder="Tulis di sini. Tidak harus sempurna. Yang penting jujur..."></textarea>
+        <label class="field-label">Kalau kamu tenang — apa yang sebenarnya perlu dilakukan?</label>
+        <textarea id="f-clarity" rows="5" placeholder="Tidak harus sempurna. Yang penting jujur sama diri sendiri."></textarea>
       </div>
 
-      <div id="verdict-container"></div>
+      <div id="verdict-box"></div>
 
-      <div class="save-row">
-        <button class="btn-secondary" onclick="goStage(1)">← kembali</button>
-        <button class="btn-primary" onclick="saveProblem()">Simpan & selesai</button>
+      <div class="action-row">
+        <button class="btn-secondary" onclick="goStage(1)">← Kembali</button>
+        <button class="btn-primary" onclick="saveProblem()">Simpan</button>
       </div>
     </div>
 
   </div>
 
-</div>
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="newProblem()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
 
-<div class="toast" id="toast"></div>
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" id="nav-list" onclick="goList()">
+      <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Daftar
+    </button>
+    <button class="nav-item" id="nav-new" onclick="newProblem()">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Masalah Baru
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
 
 <script src="/shared/ecosystem-db.js"></script>
 <script>
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
    STATE
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 let problems = [];
 let current  = null;
-let currentFilter = 'semua';
+let activeFilter = 'semua';
+const NS = 'jernih';
 
-const NAMESPACE = 'jernih';
-
-/* ════════════════════════════════════════════════
-   DB HELPERS
-════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   DB
+═══════════════════════════════ */
 async function dbLoad() {
   try {
-    const db = await EcosystemDB.open();
-    const raw = await EcosystemDB.kv.get(`${NAMESPACE}:problems`);
+    await EcosystemDB.open();
+    const raw = await EcosystemDB.kv.get(`${NS}:problems`);
     problems = raw ? JSON.parse(raw) : [];
   } catch(e) {
-    // Fallback localStorage
     const raw = localStorage.getItem('jernih_problems');
     problems = raw ? JSON.parse(raw) : [];
   }
 }
-
 async function dbSave() {
   try {
-    await EcosystemDB.kv.set(`${NAMESPACE}:problems`, JSON.stringify(problems));
+    await EcosystemDB.kv.set(`${NS}:problems`, JSON.stringify(problems));
   } catch(e) {
     localStorage.setItem('jernih_problems', JSON.stringify(problems));
   }
 }
 
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
+   DARK MODE
+═══════════════════════════════ */
+function toggleDark() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('jernih_dark', isDark ? '1' : '0');
+  document.getElementById('themeColorMeta').content = isDark ? '#0F0F0F' : '#FFFFFF';
+  updateDarkIcon(isDark);
+}
+function updateDarkIcon(isDark) {
+  const icon = document.getElementById('darkIcon');
+  if (isDark) {
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  } else {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+
+/* ═══════════════════════════════
    VIEWS
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(`view-${name}`).classList.add('active');
-  if (name === 'list') renderList();
+  document.getElementById('fab').style.display = name === 'list' ? '' : 'none';
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (name === 'list') document.getElementById('nav-list').classList.add('active');
+
+  if (name === 'list') {
+    document.getElementById('topBarTitle').textContent = 'Jernih';
+    document.getElementById('topBarSub').textContent = 'Ruang berpikir jernih';
+  }
 }
 
-/* ════════════════════════════════════════════════
+function goList() {
+  showView('list');
+  renderList();
+}
+
+/* ═══════════════════════════════
    LIST
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  activeFilter = f;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   renderList();
 }
 
 function renderList() {
-  const container = document.getElementById('problem-list');
-  let list = [...problems].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
-  if (currentFilter !== 'semua') list = list.filter(p => p.stage === currentFilter);
-
   // Stats
-  const statsEl = document.getElementById('stats-row');
-  const total = problems.length;
-  const jernih = problems.filter(p => p.stage === 'jernih').length;
-  const aktif  = problems.filter(p => p.stage !== 'jernih').length;
-  statsEl.innerHTML = `
-    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-box"><div class="stat-num">${aktif}</div><div class="stat-lbl">Aktif</div></div>
-    <div class="stat-box"><div class="stat-num">${jernih}</div><div class="stat-lbl">Jernih</div></div>
+  const total   = problems.length;
+  const jernih  = problems.filter(p => p.stage === 'jernih').length;
+  const aktif   = problems.filter(p => p.stage !== 'jernih').length;
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num">${aktif}</div><div class="stat-lbl">Aktif</div></div>
+    <div class="stat-card"><div class="stat-num">${jernih}</div><div class="stat-lbl">Jernih</div></div>
   `;
 
+  let list = [...problems].sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+  if (activeFilter !== 'semua') list = list.filter(p => p.stage === activeFilter);
+
+  const container = document.getElementById('problem-list');
   if (!list.length) {
-    container.innerHTML = `<div class="empty-state"><span class="big">—</span>${currentFilter === 'semua' ? 'Belum ada masalah tercatat.' : 'Tidak ada di kategori ini.'}</div>`;
+    container.innerHTML = `<div class="empty-state"><span class="empty-icon">📋</span><p>${activeFilter === 'semua' ? 'Belum ada masalah tercatat.<br>Ketuk + untuk mulai.' : 'Tidak ada di kategori ini.'}</p></div>`;
     return;
   }
 
   container.innerHTML = list.map(p => {
     const date = p.updatedAt ? new Date(p.updatedAt).toLocaleDateString('id-ID',{day:'numeric',month:'short'}) : '';
-    const stageName = { dump: 'Dump', analisis: 'Analisis', jernih: 'Jernih' }[p.stage] || 'Dump';
-    const stageClass = p.stage || 'dump';
-    const catBadge = { proyek:'badge-proyek', personal:'badge-personal', kerja:'badge-kerja', lainnya:'badge-lainnya' }[p.category] || 'badge-lainnya';
+    const stageLabel = { dump:'Dump', analisis:'Proses', jernih:'Jernih' }[p.stage] || 'Dump';
+    const catClass = `badge-${p.category || 'lainnya'}`;
     return `
       <div class="problem-card" onclick="openProblem('${p.id}')">
-        <div class="card-title">${escHtml(p.title || 'Tanpa judul')}</div>
+        <div class="card-title">${esc(p.title || 'Tanpa judul')}</div>
         <div class="card-meta">
-          <span class="badge ${catBadge}">${p.category || 'lainnya'}</span>
-          <span class="status-dot status-${stageClass}"></span>
-          <span class="card-stage">${stageName}</span>
+          <span class="badge ${catClass}">${p.category || 'lainnya'}</span>
+          <span class="status-pill status-${p.stage || 'dump'}">${stageLabel}</span>
           <span class="card-date">${date}</span>
         </div>
         <button class="card-delete" onclick="event.stopPropagation();deleteProblem('${p.id}')">✕</button>
@@ -822,50 +675,48 @@ function renderList() {
   }).join('');
 }
 
-/* ════════════════════════════════════════════════
-   PROBLEM CRUD
-════════════════════════════════════════════════ */
+/* ═══════════════════════════════
+   CRUD
+═══════════════════════════════ */
 function newProblem() {
   current = {
     id: Date.now().toString(),
-    title: '',
-    category: 'proyek',
-    dump: '',
-    fear: '',
-    segments: [],
-    ratings: {},
-    clarity: '',
+    title: '', category: 'proyek',
+    dump: '', fear: '',
+    segments: [], ratings: {}, clarity: '',
     stage: 'dump',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: Date.now(), updatedAt: Date.now(),
   };
-  loadIntoEditor();
+  loadEditor();
   goStage(0);
   showView('detail');
+  document.getElementById('topBarTitle').textContent = 'Masalah Baru';
+  document.getElementById('topBarSub').textContent = 'Draft';
 }
 
 function openProblem(id) {
   current = problems.find(p => p.id === id);
   if (!current) return;
-  loadIntoEditor();
-  const stageMap = { dump: 0, analisis: 1, jernih: 2 };
-  goStage(stageMap[current.stage] || 0);
+  loadEditor();
+  const map = { dump:0, analisis:1, jernih:2 };
+  goStage(map[current.stage] ?? 0);
   showView('detail');
+  document.getElementById('topBarTitle').textContent = current.title || 'Masalah';
+  document.getElementById('topBarSub').textContent = { dump:'Dump', analisis:'Sedang diproses', jernih:'Sudah jernih' }[current.stage] || 'Draft';
 }
 
-function loadIntoEditor() {
-  document.getElementById('f-title').value = current.title || '';
+function loadEditor() {
+  document.getElementById('f-title').value    = current.title || '';
   document.getElementById('f-category').value = current.category || 'proyek';
-  document.getElementById('f-dump').value = current.dump || '';
-  document.getElementById('f-fear').value = current.fear || '';
-  document.getElementById('f-clarity').value = current.clarity || '';
-
+  document.getElementById('f-dump').value     = current.dump || '';
+  document.getElementById('f-fear').value     = current.fear || '';
+  document.getElementById('f-clarity').value  = current.clarity || '';
   renderSegments();
-  renderRatings();
+  restoreRatings();
   updateVerdict();
 }
 
-function readFromEditor() {
+function readEditor() {
   current.title    = document.getElementById('f-title').value.trim();
   current.category = document.getElementById('f-category').value;
   current.dump     = document.getElementById('f-dump').value;
@@ -874,124 +725,104 @@ function readFromEditor() {
   current.updatedAt = Date.now();
 }
 
-function upsertCurrent() {
+function upsert() {
   const idx = problems.findIndex(p => p.id === current.id);
-  if (idx >= 0) problems[idx] = current;
-  else problems.push(current);
+  if (idx >= 0) problems[idx] = current; else problems.push(current);
 }
 
 async function saveDraft() {
-  readFromEditor();
+  readEditor();
   current.stage = 'dump';
-  upsertCurrent();
-  await dbSave();
+  upsert(); await dbSave();
   toast('Draf disimpan');
 }
 
 async function saveProblem() {
-  readFromEditor();
-  const r = current.ratings;
+  readEditor();
+  const r = current.ratings || {};
   const scores = [r.motif, r.realistis, r.jangka].filter(Boolean);
-  const hasJernih = scores.filter(s=>s==='jernih').length >= 2;
-  const hasPanik  = scores.filter(s=>s==='panik').length >= 2;
-  current.stage = hasJernih ? 'jernih' : hasPanik ? 'analisis' : 'analisis';
-  upsertCurrent();
-  await dbSave();
+  const jernihCount = scores.filter(s => s === 'jernih').length;
+  current.stage = jernihCount >= 2 ? 'jernih' : 'analisis';
+  upsert(); await dbSave();
   toast('Tersimpan ✓');
-  setTimeout(() => showView('list'), 600);
+  setTimeout(goList, 500);
 }
 
 async function deleteProblem(id) {
   if (!confirm('Hapus masalah ini?')) return;
   problems = problems.filter(p => p.id !== id);
-  await dbSave();
-  renderList();
+  await dbSave(); renderList();
 }
 
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
    STAGES
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 function goStage(n) {
-  document.querySelectorAll('.stage-btn').forEach((btn, i) => {
-    btn.classList.toggle('active', i === n);
-  });
-  document.querySelectorAll('.stage-panel').forEach((panel, i) => {
-    panel.classList.toggle('active', i === n);
-  });
-  if (n === 2) { renderRatings(); updateVerdict(); }
+  document.querySelectorAll('.stage-tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.stage-panel').forEach((p,i) => p.classList.toggle('active', i===n));
+  if (n === 2) { restoreRatings(); updateVerdict(); }
 }
 
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
    SEGMENTS
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 function renderSegments() {
   const list = document.getElementById('segment-list');
-  if (!current.segments || !current.segments.length) {
+  if (!current.segments) current.segments = [];
+  if (!current.segments.length) {
     list.innerHTML = '';
-    // Pre-populate from dump if empty
-    if (current.dump) addSegment(current.dump);
-    else addSegment();
+    addSegment(current.dump || '');
     return;
   }
-  list.innerHTML = current.segments.map((seg, i) => buildSegmentHTML(seg, i)).join('');
+  list.innerHTML = current.segments.map((seg, i) => segHTML(seg, i)).join('');
 }
 
-function buildSegmentHTML(seg, i) {
-  const emosiActive = seg.type === 'emosi' ? 'active' : '';
-  const faktaActive = seg.type === 'fakta' ? 'active' : '';
+function segHTML(seg, i) {
   return `
     <div class="segment-item" data-idx="${i}">
       <textarea class="segment-text" rows="2"
-        onchange="updateSegmentText(${i}, this.value)"
-        oninput="autoResize(this)"
-      >${escHtml(seg.text || '')}</textarea>
-      <div class="segment-type">
-        <button class="type-btn emosi ${emosiActive}" onclick="setSegmentType(${i},'emosi',this)">emosi</button>
-        <button class="type-btn fakta ${faktaActive}" onclick="setSegmentType(${i},'fakta',this)">fakta</button>
+        onchange="current.segments[${i}].text=this.value"
+        oninput="autoH(this)"
+      >${esc(seg.text||'')}</textarea>
+      <div class="seg-tags">
+        <button class="seg-tag-btn emosi ${seg.type==='emosi'?'active':''}" onclick="setSegType(${i},'emosi',this)">Emosi</button>
+        <button class="seg-tag-btn fakta ${seg.type==='fakta'?'active':''}" onclick="setSegType(${i},'fakta',this)">Fakta</button>
       </div>
-      <button class="segment-remove" onclick="removeSegment(${i})">×</button>
-    </div>
-  `;
+      <button class="seg-remove" onclick="removeSeg(${i})">×</button>
+    </div>`;
 }
 
 function addSegment(text='') {
   if (!current.segments) current.segments = [];
   current.segments.push({ text, type: null });
-  renderSegments();
+  document.getElementById('segment-list').innerHTML += segHTML(current.segments[current.segments.length-1], current.segments.length-1);
 }
 
-function updateSegmentText(i, val) {
-  if (current.segments[i]) current.segments[i].text = val;
-}
-
-function setSegmentType(i, type, btn) {
+function setSegType(i, type, btn) {
   current.segments[i].type = type;
   const item = btn.closest('.segment-item');
-  item.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+  item.querySelectorAll('.seg-tag-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
-function removeSegment(i) {
+function removeSeg(i) {
   current.segments.splice(i, 1);
   renderSegments();
 }
 
-function autoResize(el) {
-  el.style.height = 'auto';
-  el.style.height = el.scrollHeight + 'px';
-}
+function autoH(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
 
-/* ════════════════════════════════════════════════
-   RATINGS & VERDICT
-════════════════════════════════════════════════ */
-function renderRatings() {
+/* ═══════════════════════════════
+   RATINGS
+═══════════════════════════════ */
+function restoreRatings() {
   if (!current.ratings) current.ratings = {};
   ['motif','realistis','jangka'].forEach(q => {
     const val = current.ratings[q];
     if (!val) return;
     document.querySelectorAll(`[data-q="${q}"]`).forEach(btn => {
-      btn.classList.remove('selected-panik','selected-campur','selected-jernih');
-      if (btn.dataset.v === val) btn.classList.add(`selected-${val}`);
+      btn.classList.remove('sel-panik','sel-campur','sel-jernih');
+      if (btn.dataset.v === val) btn.classList.add(`sel-${val}`);
     });
   });
 }
@@ -999,65 +830,55 @@ function renderRatings() {
 function setRating(q, v, btn) {
   if (!current.ratings) current.ratings = {};
   current.ratings[q] = v;
-  document.querySelectorAll(`[data-q="${q}"]`).forEach(b => {
-    b.classList.remove('selected-panik','selected-campur','selected-jernih');
-  });
-  btn.classList.add(`selected-${v}`);
+  document.querySelectorAll(`[data-q="${q}"]`).forEach(b =>
+    b.classList.remove('sel-panik','sel-campur','sel-jernih'));
+  btn.classList.add(`sel-${v}`);
   updateVerdict();
 }
 
 function updateVerdict() {
-  const container = document.getElementById('verdict-container');
+  const box = document.getElementById('verdict-box');
   const r = current?.ratings || {};
   const scores = [r.motif, r.realistis, r.jangka].filter(Boolean);
-  if (scores.length < 3) { container.innerHTML = ''; return; }
+  if (scores.length < 3) { box.innerHTML = ''; return; }
 
-  const panikCount  = scores.filter(s => s === 'panik').length;
-  const campurCount = scores.filter(s => s === 'campur').length;
-  const jernihCount = scores.filter(s => s === 'jernih').length;
+  const panik  = scores.filter(s=>s==='panik').length;
+  const jernih = scores.filter(s=>s==='jernih').length;
 
   let cls, title, text;
-
-  if (panikCount >= 2) {
-    cls = 'panik';
-    title = 'Hati-hati — keputusan ini dibuat dalam tekanan.';
-    text = 'Sebagian besar jawabanmu menunjukkan bahwa keputusan ini muncul dari rasa tertekan, bukan dari penilaian yang jernih. Sebelum lanjut, coba tunda dulu. Tidur, jalan-jalan, atau ngobrol sama orang yang dipercaya. Keputusan yang dibuat saat panik seringkali perlu direvisi.';
-  } else if (jernihCount >= 2) {
-    cls = 'jernih';
-    title = 'Kamu sudah berpikir cukup jernih.';
-    text = 'Sebagian besar jawabanmu menunjukkan keputusan ini lahir dari pikiran yang tenang dan realistis. Lanjutkan — tapi tetap catat risiko dan milestonenya.';
+  if (panik >= 2) {
+    cls = 'panik'; title = 'Hati-hati — keputusan ini muncul dari tekanan.';
+    text = 'Sebagian besar jawabanmu menunjukkan keputusan ini lahir dari rasa tertekan, bukan dari penilaian yang jernih. Coba tunda dulu. Tidur, jalan-jalan, atau ngobrol sama orang yang dipercaya. Keputusan yang dibuat saat panik seringkali perlu direvisi.';
+  } else if (jernih >= 2) {
+    cls = 'jernih'; title = 'Kamu sudah berpikir cukup jernih.';
+    text = 'Keputusan ini kelihatannya lahir dari pikiran yang tenang dan realistis. Lanjutkan — tapi tetap catat risiko dan milestone-nya.';
   } else {
-    cls = 'campur';
-    title = 'Ada campuran emosi dan logika di sini.';
-    text = 'Normal. Tapi perlu waspada — pastikan bagian yang "emosi" tidak mendominasi eksekusi. Coba tuliskan satu langkah konkret yang paling realistis, tanpa tekanan, dan mulai dari situ.';
+    cls = 'campur'; title = 'Ada campuran emosi dan logika di sini.';
+    text = 'Normal. Tapi perlu waspada — pastikan bagian yang "emosi" tidak mendominasi eksekusi. Coba tulis satu langkah konkret yang paling realistis, dan mulai dari situ.';
   }
 
-  container.innerHTML = `
-    <div class="verdict-box ${cls}">
-      <div class="verdict-title">${title}</div>
-      <div class="verdict-text">${text}</div>
-    </div>
-  `;
+  box.innerHTML = `<div class="verdict ${cls}"><div class="verdict-title">${title}</div><div class="verdict-text">${text}</div></div>`;
 }
 
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
    UTILS
-════════════════════════════════════════════════ */
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+═══════════════════════════════ */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2200);
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-/* ════════════════════════════════════════════════
+/* ═══════════════════════════════
    INIT
-════════════════════════════════════════════════ */
+═══════════════════════════════ */
 (async () => {
+  const dark = localStorage.getItem('jernih_dark') === '1';
+  if (dark) { document.body.classList.add('dark'); document.getElementById('themeColorMeta').content = '#0F0F0F'; }
+  updateDarkIcon(dark);
   await dbLoad();
   renderList();
 })();
