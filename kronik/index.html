@@ -276,6 +276,10 @@ body::after {
 .toc-preview { font-size: 9px; color: var(--ink-light); font-style: italic; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
 .toc-empty { font-size: 11px; font-style: italic; color: var(--ink-light); text-align: center; padding: 20px 0; line-height: 1.8; }
 
+.toc-item.pinned { background: rgba(200,150,60,0.07); }
+.toc-item.pinned:hover { background: rgba(200,150,60,0.12); }
+.toc-pin { font-size: 10px; flex-shrink: 0; margin-left: 3px; line-height: 1; }
+
 .spread-open-btn {
   margin: 0 12px 14px 40px; position: relative; z-index: 3;
   background: rgba(140,80,30,0.1); border: 1px solid rgba(160,100,40,0.25);
@@ -371,13 +375,13 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
   background: transparent; border: none; outline: none;
   font-family: 'Playfair Display', serif; font-size: 11px; font-style: italic;
   color: rgba(92,61,30,0.55); letter-spacing: 1px;
-  width: 100%; padding: 0; height: 32px; line-height: 32px;
+  width: 100%; padding: 0; height: 26px; line-height: 26px; margin-top: -2px;
   user-select: text;
 }
 .entry-title-input {
   background: transparent; border: none; outline: none;
-  font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 700;
-  color: var(--ink); width: 100%; padding: 0; height: 32px; line-height: 32px;
+  font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700;
+  color: var(--ink); width: 100%; padding: 0; height: 34px; line-height: 34px;
   user-select: text;
 }
 .entry-title-input::placeholder { color: rgba(100,70,40,0.22); font-weight: 400; font-style: italic; }
@@ -446,17 +450,6 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
 .quest-log-empty { font-size: 11px; color: rgba(100,70,40,0.3); font-style: italic; padding: 4px 0; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-
-.rpg-toast {
-  position: fixed; bottom: 76px; left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background: var(--rpg-parchment2); border: 1px solid var(--gold-dim);
-  color: var(--gold); font-family: 'Cinzel', serif;
-  font-size: 10px; letter-spacing: 2px;
-  padding: 8px 20px; opacity: 0;
-  transition: all 0.3s; pointer-events: none; z-index: 500; white-space: nowrap;
-}
-.rpg-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* Settings divider */
 .settings-divider { height: 1px; background: rgba(160,120,70,0.15); margin: 2px 0; }
@@ -681,7 +674,6 @@ textarea::placeholder { color: rgba(100,70,40,0.28); font-style: italic; }
   </div>
 </div>
 
-<div class="rpg-toast" id="rpgToast"></div>
 
 <script src="/shared/ecosystem-db.js"></script>
 <script>
@@ -770,13 +762,17 @@ function normalizeJournalEntry(entry, fallbackOrder = 0) {
     completedAt,
     archivedAt: entry?.archivedAt || null,
     isArchived: isArchivedRecord(entry),
+    pinned: entry?.pinned === true,
   };
 }
 
 function normalizeJournalEntries(list) {
   return (Array.isArray(list) ? list : [])
     .map((entry, idx) => normalizeJournalEntry(entry, idx))
-    .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return (b.date || '').localeCompare(a.date || '');
+    });
 }
 
 function getVisibleEntries(list = entries) {
@@ -785,61 +781,6 @@ function getVisibleEntries(list = entries) {
 
 function getEntryByDate(dateStr, list = entries) {
   return getVisibleEntries(list).find(entry => entry.date === dateStr) || null;
-}
-
-function normalizeDailyOsHabit(habit) {
-  const normalized = { ...(habit || {}) };
-  normalized.createdAt = toIsoString(normalized.createdAt || normalized.addedAt, null);
-  normalized.updatedAt = toIsoString(normalized.updatedAt || normalized.modifiedAt || normalized.createdAt, normalized.createdAt);
-  normalized.completedAt = normalized.completedAt ? toIsoString(normalized.completedAt, null) : null;
-  normalized.archivedAt = normalized.archivedAt || null;
-  normalized.isArchived = isArchivedRecord(normalized);
-  return normalized;
-}
-
-function normalizeDailyOsTodo(todo) {
-  const normalized = { ...(todo || {}) };
-  normalized.createdAt = toIsoString(normalized.createdAt || normalized.addedAt, null);
-  normalized.updatedAt = toIsoString(normalized.updatedAt || normalized.modifiedAt || normalized.createdAt, normalized.createdAt);
-  // completedAt hanya diisi dari field yang memang mencatat waktu selesai
-  // TIDAK fallback ke updatedAt — updatedAt bisa berubah kapan saja tanpa todo selesai
-  normalized.completedAt = normalized.completedAt
-    ? toIsoString(normalized.completedAt, null)
-    : (normalized.done ? toIsoString(normalized.doneAt || normalized.finishedAt, null) : null);
-  normalized.archivedAt = normalized.archivedAt || null;
-  normalized.isArchived = isArchivedRecord(normalized);
-  return normalized;
-}
-
-function getActiveHabits(data) {
-  return (data?.habits || []).map(normalizeDailyOsHabit).filter(habit => !habit.isArchived);
-}
-
-function getActiveTodos(data) {
-  return (data?.todos || []).map(normalizeDailyOsTodo).filter(todo => !todo.isArchived);
-}
-
-function getHabitCompletionsOnDate(habit, dateStr) {
-  const history = habit?.history || {};
-  const dayValue = history?.[dateStr];
-  if (Array.isArray(dayValue)) return dayValue.length;
-  if (typeof dayValue === 'number') return dayValue;
-  if (dayValue) return 1;
-  return 0;
-}
-
-function isTodoCompletedOnDate(todo, dateStr) {
-  if (!todo) return false;
-  const completedAt = todo.completedAt || todo.doneAt || todo.finishedAt || null;
-  // Harus ada completedAt untuk bisa cek tanggal
-  // Fallback todo.done === true tanpa tanggal dihapus — terlalu broad,
-  // menyebabkan semua todo yang pernah done dianggap selesai di hari manapun
-  if (!completedAt) return false;
-  return completedAt.slice(0, 10) === dateStr;
-}
-
-function getYesterdayCompletedTodos(data, dateStr) {
-  return getActiveTodos(data).filter(todo => isTodoCompletedOnDate(todo, dateStr));
 }
 
 function getTodayJournal(list = entries) {
@@ -1005,20 +946,52 @@ function jRenderSpread() {
     const moodStatus = entry.mood?.status || null;
     const moodM = moodStatus ? MOOD_LIST.find(m => m.status === moodStatus) : null;
     const li = document.createElement('li');
-    li.className = 'toc-item' + (selectedIds.has(entry.id) ? ' selected' : '');
+    li.className = 'toc-item' + (selectedIds.has(entry.id) ? ' selected' : '') + (entry.pinned ? ' pinned' : '');
     if (moodStatus) li.dataset.mood = moodStatus;
     li.dataset.id = entry.id;
     const moodBadge = moodM ? '<span class="toc-mood" title="' + moodStatus + '">' + moodM.svg + '</span>' : '';
+    const pinBadge = entry.pinned ? '<span class="toc-pin" title="Disematkan">📌</span>' : '';
     li.innerHTML = `
       <div class="toc-checkbox"></div>
       <span class="toc-num">${i+1}</span>
       <span class="toc-date">${dateStr}</span>
       <span class="toc-dots"></span>
-      <span class="toc-preview">${label}</span>` + moodBadge;
+      <span class="toc-preview">${label}</span>` + pinBadge + moodBadge;
     li.onclick = () => { if (selectMode) toggleSelectItem(entry.id); else jGoFullscreen(entry.id); };
+
+    // Long-press untuk toggle pin (nonaktif saat select mode)
+    let lpTimer = null;
+    let lpTriggered = false;
+    const lpStart = () => {
+      if (selectMode) return;
+      lpTriggered = false;
+      lpTimer = setTimeout(() => {
+        lpTriggered = true;
+        if (navigator.vibrate) navigator.vibrate(15);
+        togglePinEntry(entry.id);
+      }, 500);
+    };
+    const lpCancel = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+    li.addEventListener('pointerdown', lpStart);
+    li.addEventListener('pointerup', lpCancel);
+    li.addEventListener('pointermove', lpCancel);
+    li.addEventListener('pointerleave', lpCancel);
+    li.addEventListener('pointercancel', lpCancel);
+    // Cegah klik (buka lembaran) langsung setelah long-press berhasil trigger pin
+    li.addEventListener('click', (e) => { if (lpTriggered) { e.stopPropagation(); e.preventDefault(); lpTriggered = false; } }, true);
+
     list.appendChild(li);
   });
   if (selectMode) list.classList.add('select-mode');
+}
+
+function togglePinEntry(id) {
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx < 0) return;
+  entries[idx].pinned = !entries[idx].pinned;
+  entries[idx].updatedAt = new Date().toISOString();
+  dbPutEntry(entries[idx]);
+  jRenderSpread();
 }
 
 function jGoFullscreen(id) {
@@ -1160,8 +1133,8 @@ function jBuildPage(oldEl, inAnim, outAnim) {
         </div>
       </div>
       <div class="page-header-fields">
-        <input class="entry-date-input" id="entry-date" type="date" value="${entry.date || todayStr()}" />
         <input class="entry-title-input" id="entry-title" type="text" placeholder="Judul lembaran..." value="${entry.title||''}" />
+        <input class="entry-date-input" id="entry-date" type="date" value="${entry.date || todayStr()}" />
       </div>
       <textarea id="entry-ta" placeholder="Tulis sesuatu...">${entry.content||''}</textarea>
       ${renderQuestLog(entry.habits_log || [])}
@@ -1385,13 +1358,6 @@ function importData(event) {
 }
 
 
-function showRpgToast(msg) {
-  const t = document.getElementById('rpgToast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
 /* ════════════════════════════════════════════════════════════════════
    MOOD SYSTEM
 ════════════════════════════════════════════════════════════════════ */
@@ -1588,18 +1554,6 @@ async function detectMoodAI() {
   }
 }
 
-/* ════════════════════════════════════════════════════════════════════
-   DAILYOS BRIDGE — read dailyos_db directly from IndexedDB
-════════════════════════════════════════════════════════════════════ */
-async function readDailyOsData() {
-  return EcosystemDB.getDailyOsData({
-    getActiveHabits,
-    getActiveTodos,
-  });
-}
-
-let _dosDataCache = null;
-
 // ── Unified habitCompleted handler (window event + BroadcastChannel) ──
 async function _onHabitCompleted(detail) {
   // Append to today's habits_log
@@ -1651,187 +1605,6 @@ try {
   _bc.onmessage = (e) => { if (e.data?.type === 'habitCompleted') _onHabitCompleted(e.data); };
 } catch(e) { /* BroadcastChannel tidak tersedia */ }
 
-/* ════════════════════════════════════════════════════════════════════
-   FITUR 1 — AUTO JOURNAL (boot-time, untuk kemarin)
-   Logic:
-   - Jurnal dibuat untuk tanggal KEMARIN
-   - Hanya dibuat jika hari ini sudah melewati tanggal data Daily OS terakhir
-   - Entry bertanggal kemarin, bukan hari ini
-════════════════════════════════════════════════════════════════════ */
-
-// Helper: dapat string YYYY-MM-DD untuk N hari lalu
-function dateStrOffset(offsetDays) {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
-async function ajBootGenerate() {
-  try {
-    // 1. Tanggal kemarin = target jurnal yang akan dibuat
-    const yesterdayStr = dateStrOffset(-1);
-    const todayDateStr = todayStr();
-
-    // 2. Cek apakah sudah ada auto entry untuk kemarin → skip jika sudah ada
-    const existing = getVisibleEntries(entries).find(en => en.date === yesterdayStr && en.source === 'auto');
-    if (existing) {
-      console.log('[AutoJournal] Entry kemarin sudah ada, skip.');
-      return;
-    }
-
-    // 3. Baca data dari dailyos_db (fallback ke cache jika gagal)
-    let dosData;
-    try { dosData = await readDailyOsData(); _dosDataCache = dosData; }
-    catch(e) { dosData = _dosDataCache; }
-    if (!dosData) { console.warn('[AutoJournal] Tidak ada dosData, skip.'); return; }
-
-    // 4. Pastikan ada data aktivitas dari kemarin (minimal ada habit/todo yang tercatat)
-    const activeHabits = getActiveHabits(dosData);
-    const hasAnyDataYesterday = activeHabits.some(h => {
-      const history = h?.history || {};
-      return Object.keys(history).some(k => k === yesterdayStr);
-    }) || getActiveTodos(dosData).some(t => isTodoCompletedOnDate(t, yesterdayStr));
-
-    // Jika tidak ada data sama sekali untuk kemarin, tetap lanjut (buat jurnal kosong)
-    // tapi skip jika dosData tidak mengandung tanggal >= kemarin (data terlalu lama)
-    const allHistoryDates = activeHabits.flatMap(h => Object.keys(h?.history || {}));
-    const latestDataDate = allHistoryDates.sort().reverse()[0] || null;
-    if (latestDataDate && latestDataDate < yesterdayStr) {
-      // Data Daily OS belum mencakup kemarin, skip
-      console.log('[AutoJournal] Data Daily OS belum ada untuk kemarin, skip.');
-      return;
-    }
-
-    // 5. Hitung progres habit KEMARIN
-    const habitDetails = activeHabits.map(h => {
-      const totalItems = (h.subTasks && h.subTasks.length > 0) ? h.subTasks.length : 1;
-      const doneItems  = getHabitCompletionsOnDate(h, yesterdayStr);
-      const pct        = Math.round((doneItems / totalItems) * 100);
-      return { name: h.name, category: h.category || '', totalItems, doneItems, pct };
-    });
-
-    const habitsDone    = habitDetails.filter(h => h.doneItems >= h.totalItems);
-    const habitsPartial = habitDetails.filter(h => h.doneItems > 0 && h.doneItems < h.totalItems);
-    const habitsNotDone = habitDetails.filter(h => h.doneItems === 0);
-
-    // 6. Filter todos: selesai kemarin
-    const allActiveTodos = getActiveTodos(dosData);
-    const todosDone = allActiveTodos.filter(t => isTodoCompletedOnDate(t, yesterdayStr)).map(t => t.title);
-
-    // "Belum selesai" = hanya todo yang MEMANG seharusnya dikerjakan kemarin atau sebelumnya:
-    //   - priority 'urgent' (hari ini/urgent), ATAU
-    //   - punya deadline <= kemarin (sudah jatuh tempo)
-    // Todo dengan deadline besok/minggu depan atau priority 'soon'/'normal' tanpa deadline
-    // TIDAK dianggap terlewat — belum waktunya
-    const todosNotDone = allActiveTodos.filter(t => {
-      if (t.done) return false;
-      const isPastDue = t.deadline && t.deadline <= yesterdayStr;
-      const isUrgent  = t.priority === 'urgent';
-      return isPastDue || isUrgent;
-    }).map(t => {
-      const overdueSuffix = (t.deadline && t.deadline < yesterdayStr) ? ' [overdue]' : '';
-      return t.title + overdueSuffix;
-    });
-
-    // Todo yang disimpan untuk nanti — sebagai konteks positif (user punya rencana)
-    const todosFuture = allActiveTodos.filter(t => {
-      if (t.done) return false;
-      const isPastDue = t.deadline && t.deadline <= yesterdayStr;
-      const isUrgent  = t.priority === 'urgent';
-      return !isPastDue && !isUrgent;
-    }).map(t => t.title);
-
-    // 7. Hitung XP kemarin
-    let yesterdayXP = 0;
-    activeHabits.forEach(h => { yesterdayXP += getHabitCompletionsOnDate(h, yesterdayStr) * 10; });
-
-    console.log('[AutoJournal] Data kemarin:', { yesterdayStr, habitsDone, habitsPartial, habitsNotDone, todosDone, todosNotDone, yesterdayXP });
-
-    // 8. Susun prompt
-    const doneList     = habitsDone.map(h => h.name).join(', ') || '-';
-    const partialList  = habitsPartial.map(h => `${h.name} (${h.doneItems}/${h.totalItems} aktivitas)`).join(', ') || '-';
-    const missedList   = habitsNotDone.map(h => h.name).join(', ') || '-';
-    const todoDoneList   = todosDone.join(', ') || '-';
-    const todoMissList   = todosNotDone.join(', ') || '-';
-    const todoFutureList = todosFuture.join(', ') || '-';
-
-    const hasActivity = habitsDone.length > 0 || habitsPartial.length > 0 || todosDone.length > 0;
-
-    let prompt;
-    if (!hasActivity && activeHabits.length === 0 && todosDone.length === 0) {
-      prompt = `Tulis entri jurnal pribadi singkat dalam Bahasa Indonesia untuk hari tanpa aktivitas tercatat (tanggal ${yesterdayStr}). Jujur dan reflektif, 1-2 paragraf. Jangan sebut nama AI. Tulis seolah orang ini yang menulis sendiri.`;
-    } else {
-      prompt = `Kamu adalah asisten jurnal pribadi yang JUJUR dan KRITIS. Tulis entri jurnal harian dalam Bahasa Indonesia (3-4 paragraf) berdasarkan data berikut. Jangan sebut nama AI. Tulis seolah orang ini yang menulis sendiri — natural dan personal.
-
-Tanggal: ${yesterdayStr}
-XP kemarin: ${yesterdayXP}
-
-HABIT SELESAI PENUH: ${doneList}
-HABIT SEBAGIAN: ${partialList}
-HABIT TIDAK DIKERJAKAN: ${missedList}
-TODO SELESAI KEMARIN: ${todoDoneList}
-TODO TERLEWAT/OVERDUE (seharusnya selesai kemarin atau urgent): ${todoMissList}
-TODO DIRENCANAKAN UNTUK BESOK/NANTI (belum waktunya, jangan dikritik): ${todoFutureList}
-
-INSTRUKSI PENTING:
-- Tulis untuk tanggal ${yesterdayStr} (kemarin), bukan hari ini
-- Hanya kritik todo yang ada di "TODO TERLEWAT/OVERDUE" — todo yang "DIRENCANAKAN UNTUK BESOK/NANTI" JANGAN dikritik karena memang belum waktunya
-- Jika ada habit yang TIDAK dikerjakan, kritik dengan jujur — tanyakan kenapa belum dilakukan
-- Jika habit hanya dikerjakan sebagian, sebutkan dan refleksikan kenapa tidak sampai selesai
-- Boleh apresiasi yang sudah dikerjakan, tapi jangan menutupi kekurangan dengan pujian kosong
-- Jika todo future list ada isinya, boleh sebut sebagai rencana ke depan — ini hal positif
-- Jika semua selesai, boleh positif — tapi tetap reflektif
-- Gunakan sudut pandang orang pertama (aku/saya)
-- JANGAN hanya menulis hal-hal positif jika ada yang terlewat`;
-    }
-
-    showRpgToast('Sedang menulis jurnal kemarin... ✦');
-
-    // 9. Kirim ke Groq worker
-    const res = await fetch('https://dailyos-ai.mywisnu238.workers.dev', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    console.log('[AutoJournal] Raw response:', data);
-
-    const text = (data?.text || '').trim();
-    if (!text) { console.warn('[AutoJournal] Teks kosong, tidak jadi simpan.'); return; }
-
-    // 10. Simpan entry bertanggal KEMARIN
-    const now = new Date().toISOString();
-    const autoEntry = normalizeJournalEntry({
-      id: genId(),
-      date: yesterdayStr,
-      title: 'Jurnal Harian',
-      content: text,
-      order: 0,
-      mood: null,
-      habits_log: [],
-      source: 'auto',
-      generatedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    entries.push(autoEntry);
-    // Re-sort newest-first
-    entries.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    entries.forEach((x, i) => { x.order = i; });
-
-    await dbPutEntry(autoEntry);
-    jRenderSpread();
-
-    showRpgToast('Jurnal kemarin telah ditulis ✦');
-    console.log('[AutoJournal] Entry kemarin berhasil disimpan:', yesterdayStr);
-  } catch(err) {
-    console.warn('[AutoJournal] Boot generate gagal:', err);
-  }
-}
 
 /* ════════════════════════════════════════════════════════════════════
    BOOT — open IDB, migrate localStorage if needed, then init UI
@@ -1885,9 +1658,6 @@ INSTRUKSI PENTING:
     } else {
       entries = normalizeJournalEntries(idbEntries);
     }
-
-    // ── Auto Journal: generate jurnal kemarin saat boot ──
-    ajBootGenerate(); // fire-and-forget, tidak block render
 
   } catch(err) {
     console.error('Kronik boot error:', err);
