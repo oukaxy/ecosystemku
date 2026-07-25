@@ -1274,120 +1274,6 @@
     .btn-confirm-rekom.visible { display: block; }
     .btn-confirm-rekom:hover { opacity: 0.85; }
 
-    /* ── CHECK-IN MODAL ── */
-    .checkin-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      z-index: 9000;
-      align-items: center; justify-content: center;
-      pointer-events: none;
-    }
-    .checkin-overlay.open { display: flex; pointer-events: auto; }
-    .checkin-sheet {
-      background: #1a1a2e; border: 1px solid rgba(99,102,241,0.25);
-      border-radius: 20px; padding: 20px 16px 16px;
-      width: min(340px, 94vw);
-      max-height: 86vh; overflow-y: auto;
-      pointer-events: auto;
-    }
-    .checkin-title {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      letter-spacing: 3px; color: rgba(200,200,255,0.6);
-      text-align: center; margin-bottom: 4px;
-    }
-    .checkin-day-label {
-      font-size: 20px; font-weight: 700; text-align: center;
-      color: #f0f0ff; margin-bottom: 10px;
-    }
-    .checkin-grid {
-      display: grid; grid-template-columns: repeat(7, 1fr);
-      gap: 4px; margin-bottom: 14px;
-    }
-    .checkin-cell {
-      aspect-ratio: 1; border-radius: 6px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      font-size: 8px; font-family: 'DM Mono', monospace;
-      border: 1px solid var(--border);
-      background: var(--bg-3); color: var(--text-3);
-      position: relative; gap: 1px;
-    }
-    .checkin-cell.claimed {
-      background: rgba(99,102,241,0.18);
-      border-color: #6366f1; color: #6366f1;
-    }
-    .checkin-cell.claimed .checkin-cell-reward svg { stroke: #6366f1; }
-    .checkin-cell.claimed .checkin-cell-val { color: #6366f1; opacity: 0.7; }
-    .checkin-cell.today {
-      border-color: #6366f1; background: #6366f1;
-      color: #fff; font-weight: 700;
-    }
-    .checkin-cell.today.claimed { background: #4f46e5; opacity: 0.85; }
-    .checkin-cell.today .checkin-cell-reward svg { stroke: #fff; }
-    .checkin-cell-day { font-size: 7px; opacity: 0.6; }
-    .checkin-cell-reward { display:flex; align-items:center; justify-content:center; line-height:1; }
-    .checkin-cell-reward svg { width: 12px; height: 12px; }
-    .checkin-cell-val { font-size: 7px; font-weight: 600; }
-    .checkin-claim-box { text-align: center; margin-bottom: 12px; }
-    .checkin-reward-preview { display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom: 8px; }
-    .checkin-reward-preview svg { width: 34px; height: 34px; stroke: #67e8f9; }
-    .checkin-reward-text {
-      font-family: 'DM Mono', monospace; font-size: 11px;
-      color: rgba(200,200,255,0.7); letter-spacing: 1px;
-    }
-    .btn-checkin-claim {
-      width: 100%; padding: 13px; border-radius: 12px;
-      background: #6366f1; color: #fff;
-      border: none; font-family: 'DM Mono', monospace;
-      font-size: 12px; letter-spacing: 2px; cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .btn-checkin-claim:hover { background: #4f52d4; }
-    .btn-checkin-claim:disabled {
-      opacity: 1; cursor: not-allowed;
-      background: #3a3a4a !important;
-      color: rgba(255,255,255,0.4) !important;
-    }
-    .checkin-streak-row {
-      display: flex; justify-content: center; gap: 16px;
-      font-family: 'DM Mono', monospace; font-size: 10px;
-      color: rgba(200,200,255,0.5); margin-bottom: 12px;
-    }
-    .checkin-streak-val { color: #f0f0ff; font-weight: 700; }
-    .btn-checkin-close {
-      width: 100%; padding: 10px; border-radius: 10px;
-      background: none; border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(200,200,255,0.5); font-family: 'DM Mono', monospace;
-      font-size: 11px; cursor: pointer; margin-top: 8px;
-      transition: all 0.2s;
-    }
-    .btn-checkin-close:hover { border-color: rgba(255,255,255,0.3); color: #f0f0ff; }
-
-    /* ── TOMBOL KE KRONIK ── */
-    .btn-goto-kronik {
-      display: flex; align-items: center; gap: 8px;
-      width: 100%; padding: 12px 14px; border-radius: 10px;
-      background: rgba(var(--accent-rgb,99,102,241),0.08);
-      border: 1px solid rgba(var(--accent-rgb,99,102,241),0.2);
-      color: var(--text-2); font-family: 'DM Mono', monospace;
-      font-size: 11px; letter-spacing: 1px; cursor: pointer;
-      transition: all 0.2s; text-decoration: none; margin-bottom: 8px;
-    }
-    .btn-goto-kronik:hover {
-      background: rgba(var(--accent-rgb,99,102,241),0.15);
-      border-color: var(--accent); color: var(--text);
-    }
-    .btn-goto-kronik-icon { font-size: 18px; }
-    .btn-goto-kronik-info { text-align: left; }
-    .btn-goto-kronik-title { font-weight: 700; display: block; }
-    .btn-goto-kronik-sub { font-size: 9px; opacity: 0.6; margin-top: 1px; display: block; }
-    .crystal-badge {
-      margin-left: auto; background: rgba(103,232,249,0.15);
-      border: 1px solid rgba(103,232,249,0.3); border-radius: 6px;
-      padding: 3px 7px; font-size: 10px; color: #67e8f9;
-    }
   </style>
 </head>
 <body>
@@ -1603,66 +1489,6 @@
     </div>
   </div>
 
-  <!-- INTEGRASI KRONIK -->
-  <div class="section-title" style="margin-bottom:12px;margin-top:24px">Integrasi & Navigasi</div>
-  <a href="/kronik/" class="btn-goto-kronik" id="btnGotoKronik">
-    <span class="btn-goto-kronik-icon">📖</span>
-    <span class="btn-goto-kronik-info">
-      <span class="btn-goto-kronik-title">BUKA KRONIK</span>
-      <span class="btn-goto-kronik-sub">Journal · RPG Profile · Gacha</span>
-    </span>
-    <span class="crystal-badge" id="crystalBadge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 0</span>
-  </a>
-
-  <!-- GUIDE -->
-  <div class="section-title" style="margin-bottom:12px;margin-top:24px">Panduan & Crystal</div>
-  <div class="settings-group">
-    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px">
-      <div class="setting-info">
-        <strong>💎 Apa itu Crystal?</strong>
-        <p>Currency untuk Gacha di Kronik. Kumpulkan crystal dengan aktif di Daily OS, lalu pull hero di tab Gacha Kronik.</p>
-      </div>
-    </div>
-    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;border-top:1px solid var(--border);padding-top:12px">
-      <strong style="font-size:13px">Cara Dapat Crystal:</strong>
-      <div style="font-size:12px;color:var(--text-2);line-height:2;">
-        🌅 Check-in harian di Daily OS<br>
-        💎 Setiap <b>100 XP</b> → +100 Crystal<br>
-        🔥 Streak <b>7 hari</b> satu habit → +100 Crystal<br>
-        ✅ Semua todo selesai hari ini → +50 Crystal<br>
-        ⚡ Todo <b>urgent</b> selesai → +20 Crystal<br>
-        📚 Milestone journal di Kronik → bonus Crystal<br>
-        ⬆️ Level up di Kronik → Free Pack
-      </div>
-    </div>
-    <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:6px;border-top:1px solid var(--border);padding-top:12px">
-      <strong style="font-size:13px">Harga Pull Gacha:</strong>
-      <div style="font-size:12px;color:var(--text-2);line-height:2;">
-        🎴 Pull × 1 → 80 Crystal<br>
-        🎴 Pull × 3 → 240 Crystal<br>
-        🎁 Free Pack → dari Level Up Kronik
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- CHECK-IN MODAL -->
-<div class="checkin-overlay" id="checkinOverlay">
-  <div class="checkin-sheet">
-    <div class="checkin-title">DAILY CHECK-IN</div>
-    <div class="checkin-day-label" id="checkinDayLabel">Hari 1</div>
-    <div class="checkin-streak-row">
-      <span>Streak: <span class="checkin-streak-val" id="checkinStreak">0</span> hari</span>
-      <span>Total login: <span class="checkin-streak-val" id="checkinTotal">0</span> hari</span>
-    </div>
-    <div class="checkin-grid" id="checkinGrid"></div>
-    <div class="checkin-claim-box">
-      <div class="checkin-reward-preview" id="checkinRewardEmoji"></div>
-      <div class="checkin-reward-text" id="checkinRewardText">+50 Crystal</div>
-    </div>
-    <button class="btn-checkin-claim" id="btnCheckinClaim" onclick="window.checkinClaim && window.checkinClaim()">CLAIM REWARD</button>
-    <button class="btn-checkin-close" onclick="checkinClose()">Tutup</button>
-  </div>
 </div>
 
 <!-- AI View -->
@@ -2077,7 +1903,6 @@
     todos:  makeStore('todos'),
     kv: {
       dailyos:  makeKvStore('dailyos:'),
-      kronik:   makeKvStore('kronik:'),
       finances: makeKvStore('finances:'),
       get:    (key)        => makeKvStore('').get(key),
       set:    (key, value) => makeKvStore('').set(key, value),
@@ -2185,7 +2010,7 @@ function save() {
   // Habits & todos → IndexedDB
   const p1 = idbSet('habits', 'dailyos_habits', habits).catch(e => console.error('[DailyOS] save habits failed:', e));
   const p2 = idbSet('todos',  'dailyos_todos',  todos).catch(e => console.error('[DailyOS] save todos failed:', e));
-  // XP → IndexedDB (supaya Kronik baca nilai yang sama) + localStorage sebagai cache ringan
+  // XP → IndexedDB + localStorage sebagai cache ringan
   const p3 = EcosystemDB.kv.dailyos.set('totalPoints', totalPoints).catch(e => console.error('[DailyOS] save totalPoints failed:', e));
   localStorage.setItem('dailyos_xp', totalPoints.toString());
   return Promise.all([p1, p2, p3]);
@@ -2212,46 +2037,6 @@ function recalculateXP() {
     });
   });
   return total;
-}
-
-// ===== DAILY SNAPSHOT (untuk integrasi Kronik) =====
-function getDailySnapshot() {
-  const today = getToday();
-
-  // Habits yang completed hari ini
-  const completedHabits = [];
-  habits.forEach(h => {
-    if (h.archived) return;
-    const log = h.history?.[today] || [];
-    if (log.length === 0) return;
-    log.forEach(entry => {
-      completedHabits.push({
-        name:        h.name,
-        category:    h.category || 'General',
-        completedAt: typeof entry === 'object' && entry.completedAt
-                       ? entry.completedAt
-                       : today + 'T00:00:00.000Z'
-      });
-    });
-  });
-
-  // Todos yang done hari ini (berdasarkan completedAt)
-  const doneTodos = todos
-    .filter(t => t.done && t.completedAt && t.completedAt.startsWith(today))
-    .map(t => ({ title: t.title, priority: t.priority || 'normal' }));
-
-  // XP hari ini: hitung dari habit log hari ini saja
-  let todayXP = 0;
-  habits.forEach(h => {
-    todayXP += ((h.history?.[today] || []).length) * 10;
-  });
-
-  return {
-    date:     today,
-    habits:   completedHabits,
-    todos:    doneTodos,
-    totalXP:  todayXP
-  };
 }
 
 // ===== DATE =====
@@ -2454,13 +2239,6 @@ window.toggleCheck = function(idx, subId, el) {
       isMainTask:    subId === 'main'
     };
     window.dispatchEvent(new CustomEvent('habitCompleted', { detail: _habitDetail }));
-
-    // ── BROADCASTCHANNEL: notify Kronik & other tabs ──
-    try {
-      const bc = new BroadcastChannel('dailyos_events');
-      bc.postMessage({ type: 'habitCompleted', ..._habitDetail });
-      bc.close();
-    } catch(e) { /* BroadcastChannel tidak tersedia di env ini */ }
   }
   save(); updateXP();
 };
@@ -3509,27 +3287,11 @@ async function exportData() {
     if (raw) coachMemory = JSON.parse(raw);
   } catch {}
 
-  // Ambil data gacha/checkin dari DB
-  let gachaData = {};
-  try {
-    const [checkinLastDate, checkinStreak, checkinTotal,
-           xpLastGranted, crystals, freePacks] = await Promise.all([
-      gDOSGet('checkinLastDate'), gDOSGet('checkinStreak'),
-      gDOSGet('checkinTotal'),   gDOSGet('xpLastGranted'),
-      gDOSGet('crystals'),       gDOSGet('freePacks'),
-    ]);
-    gachaData = {
-      checkinLastDate, checkinStreak, checkinTotal,
-      xpLastGranted, crystals, freePacks,
-    };
-  } catch(e) {}
-
   const data = {
     version: 3,
     habits,
     todos,
     totalPoints,
-    gacha: gachaData,
     coachMemory: coachMemory || undefined,
     exportedAt: new Date().toISOString()
   };
@@ -3713,21 +3475,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Restore XP
         totalPoints = typeof data.totalPoints === 'number' ? data.totalPoints : 0;
 
-        // Restore gacha/checkin data kalau ada
-        if (data.gacha) {
-          const g = data.gacha;
-          const ops = [];
-          if (g.checkinLastDate)      ops.push(gDOSSet('checkinLastDate', g.checkinLastDate));
-          if (g.checkinStreak != null) ops.push(gDOSSet('checkinStreak',  g.checkinStreak));
-          if (g.checkinTotal  != null) ops.push(gDOSSet('checkinTotal',   g.checkinTotal));
-          if (g.xpLastGranted != null) ops.push(gDOSSet('xpLastGranted',  g.xpLastGranted));
-          if (g.crystals      != null) ops.push(gDOSSet('crystals',       g.crystals));
-          if (g.freePacks     != null) ops.push(gDOSSet('freePacks',      g.freePacks));
-          if (ops.length > 0) await Promise.all(ops);
-          _gachaLastGrantedXP = g.xpLastGranted ?? 0;
-          updateCrystalBadge();
-        }
-
         // Restore coach memory kalau ada
         if (data.coachMemory && typeof data.coachMemory === 'object') {
           localStorage.setItem('dailyos_coach_memory', JSON.stringify(data.coachMemory));
@@ -3740,8 +3487,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderHabits();
         renderTodos();
         updateXP();
-        const gachaMsg = data.gacha ? '\nData check-in & crystal juga direstore.' : '';
-        showAlert(`Berhasil direstore!\n${habits.length} habit, ${todos.length} task.${gachaMsg}`, 'success', 'Berhasil');
+        showAlert(`Berhasil direstore!\n${habits.length} habit, ${todos.length} task.`, 'success', 'Berhasil');
       } catch (err) {
         showAlert(`Gagal: ${err.message}`, 'error', 'Restore Gagal');
       }
@@ -3763,16 +3509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // ── Gacha boot (setelah load() selesai, totalPoints sudah ready) ──
-  setTimeout(async () => {
-    try {
-      await checkinInit();
-      await updateCrystalBadge();
-      if (totalPoints > 0) {
-        await gachaMaybeGrantCrystalFromXP(totalPoints);
-      }
-    } catch(e) { console.warn('[DailyOS Gacha]', e); }
-  }, 800);
 });
 
 // ===== PWA: SERVICE WORKER REGISTRATION =====
@@ -4585,333 +4321,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 });
-
-/* ════════════════════════════════════════════════════════════════════
-   GACHA CRYSTAL SYSTEM — Daily OS side
-   Semua crystal disimpan ke EcosystemDB.kv.gacha (shared dengan Kronik)
-════════════════════════════════════════════════════════════════════ */
-
-// ── 30-hari check-in reward table ──
-/* ── SVG icons (Lucide-style, stroke currentColor) ── */
-const SVG_CRYSTAL = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-const SVG_GIFT    = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`;
-const SVG_CHECK   = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-const SVG_CRYSTAL_LG = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
-const SVG_GIFT_LG    = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>`;
-
-const CHECKIN_REWARDS = [
-  { crystal:  30 },                        // Hari 1
-  { crystal:  40 },                        // Hari 2
-  { crystal:  50 },                        // Hari 3
-  { crystal:  40 },                        // Hari 4
-  { crystal:  60 },                        // Hari 5
-  { crystal:  50 },                        // Hari 6
-  { crystal: 150, freePack: 1 },           // Hari 7  ✦ Free Pack
-  { crystal:  50 },                        // Hari 8
-  { crystal:  60 },                        // Hari 9
-  { crystal:  70 },                        // Hari 10
-  { crystal:  60 },                        // Hari 11
-  { crystal:  80 },                        // Hari 12
-  { crystal:  70 },                        // Hari 13
-  { crystal: 200, freePack: 1 },           // Hari 14 ✦ Free Pack
-  { crystal:  80 },                        // Hari 15
-  { crystal:  90 },                        // Hari 16
-  { crystal: 100 },                        // Hari 17
-  { crystal:  90 },                        // Hari 18
-  { crystal: 120 },                        // Hari 19
-  { crystal: 100 },                        // Hari 20
-  { crystal: 300, freePack: 2 },           // Hari 21 ✦✦ 2 Free Pack
-  { crystal: 100 },                        // Hari 22
-  { crystal: 120 },                        // Hari 23
-  { crystal: 150 },                        // Hari 24
-  { crystal: 120 },                        // Hari 25
-  { crystal: 160 },                        // Hari 26
-  { crystal: 180 },                        // Hari 27
-  { crystal: 200 },                        // Hari 28
-  { crystal: 250 },                        // Hari 29
-  { crystal: 500, freePack: 3 },           // Hari 30 ✦✦✦ Grand Reward
-];
-
-function todayStrDOS() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-async function gDOSGet(key) {
-  try { return await EcosystemDB.kv.gacha.get(key); } catch(e) { return null; }
-}
-async function gDOSSet(key, val) {
-  try { await EcosystemDB.kv.gacha.set(key, val); } catch(e) {}
-}
-
-/* ── Update crystal badge di settings ── */
-async function updateCrystalBadge() {
-  try {
-    const crystals = (await gDOSGet('crystals')) ?? 0;
-    const el = document.getElementById('crystalBadge');
-    if (el) el.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${crystals.toLocaleString()}`;
-  } catch(e) {}
-}
-
-/* ── Grant crystal helper ── */
-async function grantCrystalDOS(amount, reason) {
-  try {
-    await EcosystemDB.grantCrystals(amount, reason);
-    updateCrystalBadge();
-  } catch(e) {}
-}
-
-/* ── Grant free pack helper ── */
-async function grantFreePackDOS(count, reason) {
-  try {
-    for (let i = 0; i < count; i++) {
-      await EcosystemDB.grantFreePack(reason);
-    }
-  } catch(e) {}
-}
-
-/* ────────────────────────────────────────────────────────────────
-   CHECK-IN SYSTEM
-──────────────────────────────────────────────────────────────── */
-async function checkinInit() {
-  const today        = todayStrDOS();
-  const lastCheckin  = (await gDOSGet('checkinLastDate')) ?? null;
-  const streak       = (await gDOSGet('checkinStreak'))   ?? 0;
-  const totalDays    = (await gDOSGet('checkinTotal'))    ?? 0;
-  const claimedToday = lastCheckin === today;
-
-  // Kalau sudah claim hari ini, tidak perlu tampil modal
-  if (claimedToday) {
-    updateCrystalBadge();
-    return;
-  }
-
-  // Kalau sudah pernah ditutup di sesi ini (sessionStorage), skip
-  // Modal akan muncul lagi saat reload/buka app baru
-  if (sessionStorage.getItem('checkin_dismissed') === today) {
-    return;
-  }
-
-  const cycleDay = (totalDays % 30) + 1;
-  renderCheckinModal(cycleDay, streak, totalDays, claimedToday);
-  setTimeout(() => {
-    document.getElementById('checkinOverlay').classList.add('open');
-  }, 800);
-}
-
-function renderCheckinModal(cycleDay, streak, totalDays, claimedToday) {
-  document.getElementById('checkinDayLabel').textContent = `Hari ke-${cycleDay}`;
-  document.getElementById('checkinStreak').textContent   = streak;
-  document.getElementById('checkinTotal').textContent    = totalDays;
-
-  // Grid 30 hari
-  const grid = document.getElementById('checkinGrid');
-  grid.innerHTML = '';
-  for (let i = 0; i < 30; i++) {
-    const dayNum  = i + 1;
-    const reward  = CHECKIN_REWARDS[i];
-    const isPast  = dayNum < cycleDay;
-    const isToday = dayNum === cycleDay;
-
-    const cell = document.createElement('div');
-    const isTodayClaimed = isToday && claimedToday;
-    cell.className = 'checkin-cell'
-      + (isPast || isTodayClaimed ? ' claimed' : '')
-      + (isToday ? ' today' : '');
-
-    const emoji = reward.freePack ? SVG_GIFT : SVG_CRYSTAL;
-    const rewardIcon = isPast || isTodayClaimed ? SVG_CHECK : emoji;
-    const valText = reward.freePack ? `+${reward.freePack}pk` : `+${reward.crystal}`;
-    cell.innerHTML = `
-      <span class="checkin-cell-day">${dayNum}</span>
-      <span class="checkin-cell-reward">${rewardIcon}</span>
-      <span class="checkin-cell-val">${isPast || isTodayClaimed ? '' : valText}</span>`;
-    grid.appendChild(cell);
-  }
-
-  // Reward preview hari ini
-  const todayReward = CHECKIN_REWARDS[cycleDay - 1];
-  document.getElementById('checkinRewardEmoji').innerHTML =
-    todayReward.freePack ? SVG_GIFT_LG + SVG_CRYSTAL_LG : SVG_CRYSTAL_LG;
-  document.getElementById('checkinRewardText').textContent =
-    `+${todayReward.crystal} Crystal` + (todayReward.freePack ? ` + ${todayReward.freePack} Free Pack` : '');
-
-  const btnClaim = document.getElementById('btnCheckinClaim');
-  btnClaim.disabled = claimedToday;
-  btnClaim.textContent = claimedToday ? '✅ Sudah Diklaim' : 'CLAIM REWARD';
-  btnClaim.onclick = checkinClaim;
-}
-
-async function checkinClaim() {
-  const today       = todayStrDOS();
-  const lastCheckin = (await gDOSGet('checkinLastDate')) ?? null;
-  if (lastCheckin === today) return;
-
-  // Disable tombol langsung biar tidak double-click
-  const btnClaim = document.getElementById('btnCheckinClaim');
-  btnClaim.disabled = true;
-  btnClaim.textContent = '⏳ Mengklaim...';
-
-  // Hitung streak
-  let streak    = (await gDOSGet('checkinStreak'))  ?? 0;
-  let totalDays = (await gDOSGet('checkinTotal'))   ?? 0;
-
-  if (lastCheckin) {
-    const last    = new Date(lastCheckin);
-    const now     = new Date(today);
-    const diffDay = Math.round((now - last) / 86400000);
-    if (diffDay === 1) streak++;
-    else if (diffDay > 1) streak = 1;
-  } else {
-    streak = 1;
-  }
-  totalDays++;
-
-  const cycleDay = totalDays % 30 === 0 ? 30 : totalDays % 30;
-  const reward   = CHECKIN_REWARDS[cycleDay - 1];
-
-  // Simpan state
-  await Promise.all([
-    gDOSSet('checkinLastDate', today),
-    gDOSSet('checkinStreak',   streak),
-    gDOSSet('checkinTotal',    totalDays),
-  ]);
-
-  // Grant rewards
-  await grantCrystalDOS(reward.crystal, `Check-in hari ke-${cycleDay}`);
-  if (reward.freePack) {
-    await grantFreePackDOS(reward.freePack, `Check-in hari ke-${cycleDay}`);
-  }
-
-  // Update UI — re-render modal dengan state claimed
-  renderCheckinModal(cycleDay, streak, totalDays, true);
-
-  // Toast
-  const msg = reward.freePack
-    ? `🎁 Check-in Hari ${cycleDay}! +${reward.crystal} Crystal + ${reward.freePack} Free Pack`
-    : `💎 Check-in Hari ${cycleDay}! +${reward.crystal} Crystal`;
-  showToast(msg, 'success');
-
-  // Auto tutup setelah 2 detik
-  setTimeout(() => checkinClose(), 2000);
-}
-
-function checkinClose() {
-  // Simpan flag di sessionStorage — modal tidak muncul lagi di sesi ini
-  // tapi akan muncul lagi kalau reload/buka app baru (sampai diklaim)
-  sessionStorage.setItem('checkin_dismissed', todayStrDOS());
-  document.getElementById('checkinOverlay').classList.remove('open');
-}
-
-/* ────────────────────────────────────────────────────────────────
-   XP → CRYSTAL (tiap 100 XP akumulasi)
-──────────────────────────────────────────────────────────────── */
-let _gachaLastGrantedXP = null;
-
-async function gachaMaybeGrantCrystalFromXP(newTotalPoints) {
-  if (_gachaLastGrantedXP === null) {
-    _gachaLastGrantedXP = (await gDOSGet('xpLastGranted')) ?? 0;
-  }
-  const prevTier = Math.floor(_gachaLastGrantedXP / 100);
-  const newTier  = Math.floor(newTotalPoints / 100);
-  if (newTier > prevTier) {
-    const gained = (newTier - prevTier) * 100;
-    _gachaLastGrantedXP = newTotalPoints;
-    await gDOSSet('xpLastGranted', newTotalPoints);
-    await grantCrystalDOS(gained, `XP milestone: ${newTotalPoints} XP`);
-    showToast(`💎 +${gained} Crystal dari ${newTier * 100} XP!`);
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────
-   STREAK 7 HARI → +100 CRYSTAL
-──────────────────────────────────────────────────────────────── */
-async function gachaMaybeGrantStreak7(habit) {
-  const streak = habit.streak ?? 0;
-  if (streak <= 0 || streak % 7 !== 0) return;
-  const key  = `streak7:${habit.id}`;
-  const tier = Math.floor(streak / 7);
-  const last = (await gDOSGet(key)) ?? 0;
-  if (tier > last) {
-    await gDOSSet(key, tier);
-    await grantCrystalDOS(100, `Streak 7 hari: ${habit.name}`);
-    showToast(`🔥 +100 Crystal — ${habit.name} streak ${streak} hari!`);
-  }
-}
-
-/* ────────────────────────────────────────────────────────────────
-   SEMUA TODO SELESAI → +50 CRYSTAL (sekali per hari)
-──────────────────────────────────────────────────────────────── */
-async function gachaMaybeGrantAllTodoDone() {
-  const activeTodos = todos.filter(t => !t.done);
-  const totalTodos  = todos.length;
-  if (totalTodos === 0 || activeTodos.length > 0) return;
-
-  const today = todayStrDOS();
-  const last  = (await gDOSGet('allTodoDoneDate')) ?? null;
-  if (last === today) return;
-
-  await gDOSSet('allTodoDoneDate', today);
-  await grantCrystalDOS(50, 'Semua todo selesai hari ini');
-  showToast('✅ +50 Crystal — Semua Todo Selesai!');
-}
-
-/* ────────────────────────────────────────────────────────────────
-   TODO URGENT SELESAI → +20 CRYSTAL
-──────────────────────────────────────────────────────────────── */
-async function gachaMaybeGrantUrgentTodo(todo) {
-  if (!todo.done) return;
-  if ((todo.priority ?? 'normal') !== 'urgent') return;
-  const key  = `urgentTodo:${todo.id}`;
-  const done = (await gDOSGet(key)) ?? false;
-  if (done) return;
-  await gDOSSet(key, true);
-  await grantCrystalDOS(20, `Urgent todo: ${todo.title}`);
-  showToast(`⚡ +20 Crystal — Todo Urgent Selesai!`);
-}
-
-/* ────────────────────────────────────────────────────────────────
-   HOOK KE toggleCheck (habit) — streak 7 hari
-──────────────────────────────────────────────────────────────── */
-const _origToggleCheck = window.toggleCheck;
-window.toggleCheck = function(idx, subId, el) {
-  _origToggleCheck(idx, subId, el);
-  // Cek streak setelah toggle (hanya saat check, bukan uncheck)
-  const h = habits[idx];
-  if (h && el.classList.contains('checked')) {
-    const today = getToday();
-    // Hitung streak sederhana dari history
-    let streak = 0;
-    let d = new Date();
-    while (true) {
-      const key = d.toISOString().slice(0,10);
-      if (h.history && h.history[key] && h.history[key].length > 0) {
-        streak++;
-        d.setDate(d.getDate() - 1);
-      } else break;
-    }
-    h.streak = streak;
-    gachaMaybeGrantStreak7(h).catch(() => {});
-  }
-  // Cek XP
-  gachaMaybeGrantCrystalFromXP(totalPoints).catch(() => {});
-};
-
-/* ────────────────────────────────────────────────────────────────
-   HOOK KE toggleTodo — urgent & all-done check
-──────────────────────────────────────────────────────────────── */
-const _origToggleTodo = window.toggleTodo;
-window.toggleTodo = function(id, el) {
-  _origToggleTodo(id, el);
-  const t = todos.find(x => x.id === id);
-  if (t) gachaMaybeGrantUrgentTodo(t).catch(() => {});
-  gachaMaybeGrantAllTodoDone().catch(() => {});
-};
-
-/* ────────────────────────────────────────────────────────────────
-   BOOT — dipindah ke main DOMContentLoaded
-──────────────────────────────────────────────────────────────── */
-window.checkinClaim = checkinClaim;
-window.checkinClose = checkinClose;
 
 </script>
 </body>
