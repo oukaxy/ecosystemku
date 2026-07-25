@@ -271,9 +271,9 @@ body::after {
 .toc-item:hover { background: rgba(160,100,40,0.06); }
 .toc-item:last-child { border-bottom: none; }
 .toc-num { font-size: 9px; color: var(--ink-light); min-width: 20px; font-style: italic; flex-shrink: 0; }
-.toc-date { font-family: 'Playfair Display', serif; font-size: 11px; font-style: italic; color: var(--ink); flex-shrink: 0; min-width: 80px; }
+.toc-preview { font-family: 'Playfair Display', serif; font-size: 12px; color: var(--ink); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 1; }
 .toc-dots { flex: 1; border-bottom: 1px dotted rgba(160,120,70,0.3); margin: 0 5px; position: relative; top: -3px; }
-.toc-preview { font-size: 9px; color: var(--ink-light); font-style: italic; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+.toc-date { font-size: 9px; font-style: italic; color: var(--ink-light); flex-shrink: 0; white-space: nowrap; }
 .toc-empty { font-size: 11px; font-style: italic; color: var(--ink-light); text-align: center; padding: 20px 0; line-height: 1.8; }
 
 .toc-item.pinned { background: rgba(200,150,60,0.07); }
@@ -954,9 +954,9 @@ function jRenderSpread() {
     li.innerHTML = `
       <div class="toc-checkbox"></div>
       <span class="toc-num">${i+1}</span>
-      <span class="toc-date">${dateStr}</span>
+      <span class="toc-preview">${label}</span>
       <span class="toc-dots"></span>
-      <span class="toc-preview">${label}</span>` + pinBadge + moodBadge;
+      <span class="toc-date">${dateStr}</span>` + pinBadge + moodBadge;
     li.onclick = () => { if (selectMode) toggleSelectItem(entry.id); else jGoFullscreen(entry.id); };
 
     // Long-press untuk toggle pin (nonaktif saat select mode)
