@@ -5,9 +5,8 @@
  * ║  Single IndexedDB untuk semua apps:                          ║
  * ║    • IdeKu        → domain: ideas                           ║
  * ║    • Daily OS     → domain: habits, todos                    ║
- * ║    • Kronik       → domain: journal_entries, kv              ║
  * ║    • CuciMoney+   → domain: finances (kv-based)              ║
- * ║    • Gacha        → kv.gacha namespace (crystals, pity, …)  ║
+ * ║    • Kronik       → domain: journal (journal_entries)        ║
  * ╚══════════════════════════════════════════════════════════════╝
  *
  * CARA PAKAI:
@@ -71,9 +70,8 @@ const EcosystemDB = (() => {
           store.createIndex('order', 'order', { unique: false });
         }
 
-        /* ── kv (Kronik misc + CuciMoney+ finances) ────────────── */
+        /* ── kv (CuciMoney+ finances) ────────────────────────────── */
         // Dibagi per-namespace via prefix key:
-        //   kronik:*        → Kronik RPG profile cache, dll
         //   finances:*      → CuciMoney+ db, budgets, masterBudgets
         if (!d.objectStoreNames.contains('kv')) {
           d.createObjectStore('kv');
@@ -202,13 +200,12 @@ const EcosystemDB = (() => {
     getAll:   ()            => getAll('journal_entries'),
     put:      (entry)       => put('journal_entries', entry),
     delete:   (id)          => remove('journal_entries', id),
-    putAll:   (arr, clear)  => putAll('journal_entries', arr, clear),
+    putAll:   (arr, cf)     => putAll('journal_entries', arr, cf),
   };
 
   /* ═══════════════════════════════════════════════════════════════
-     DOMAIN: KV STORE  (Kronik misc + CuciMoney+)
+     DOMAIN: KV STORE  (CuciMoney+)
      Semua key diberi namespace prefix agar tidak bentrok:
-       kronik:{key}     → pakai kv.kronik.get/set
        finances:{key}   → pakai kv.finances.get/set
   ═══════════════════════════════════════════════════════════════ */
   const kv = {
@@ -230,16 +227,6 @@ const EcosystemDB = (() => {
     },
 
     /**
-     * Namespace Kronik → prefix 'kronik:'
-     * Contoh: kv.kronik.get('rpg_profile') membaca key 'kronik:rpg_profile'
-     */
-    kronik: {
-      get:    (key)        => get('kv', `kronik:${key}`).then(r => r ?? null),
-      set:    (key, value) => put('kv', value, `kronik:${key}`),
-      delete: (key)        => remove('kv', `kronik:${key}`),
-    },
-
-    /**
      * Namespace CuciMoney+ → prefix 'finances:'
      * Contoh: kv.finances.get('db'), kv.finances.set('budgets', [...])
      */
@@ -247,21 +234,6 @@ const EcosystemDB = (() => {
       get:    (key)        => get('kv', `finances:${key}`).then(r => r ?? null),
       set:    (key, value) => put('kv', value, `finances:${key}`),
       delete: (key)        => remove('kv', `finances:${key}`),
-    },
-
-    /**
-     * Namespace Gacha (Kronik) → prefix 'gacha:'
-     * Keys yang dipakai:
-     *   gacha:crystals   → jumlah crystal (number)
-     *   gacha:pity       → pity counter saat ini (number)
-     *   gacha:pulls      → total pull sepanjang masa (number)
-     *   gacha:collection → array { id, count } hero yang sudah dimiliki
-     *   gacha:freePacks  → jumlah free pack belum diklaim (number)
-     */
-    gacha: {
-      get:    (key)        => get('kv', `gacha:${key}`).then(r => r ?? null),
-      set:    (key, value) => put('kv', value, `gacha:${key}`),
-      delete: (key)        => remove('kv', `gacha:${key}`),
     },
   };
 
@@ -288,7 +260,6 @@ const EcosystemDB = (() => {
 
   /**
    * Baca habits + todos aktif dari ecosystem_db
-   * (Pengganti Kronik → readDailyOsData() yang buka dailyos_db manual)
    */
   async function getDailyOsData(helpers = {}) {
     const { getActiveHabits, getActiveTodos } = helpers;
@@ -318,45 +289,6 @@ const EcosystemDB = (() => {
     };
   }
 
-  /**
-   * Tambah crystal ke gacha wallet.
-   * Dipanggil oleh Daily OS setiap 100 XP.
-   * @param {number} amount  - Jumlah crystal yang ditambahkan
-   * @param {string} [reason] - Alasan (untuk log, opsional)
-   * @returns {Promise<number>} - Total crystal sekarang
-   */
-  async function grantCrystals(amount, reason = '') {
-    const current = (await get('kv', 'gacha:crystals')) ?? 0;
-    const next    = current + amount;
-    await put('kv', next, 'gacha:crystals');
-    // Catat log sederhana (last 20 grants)
-    if (reason) {
-      const log = (await get('kv', 'gacha:crystal_log')) ?? [];
-      log.unshift({ amount, reason, at: new Date().toISOString() });
-      if (log.length > 20) log.length = 20;
-      await put('kv', log, 'gacha:crystal_log');
-    }
-    return next;
-  }
-
-  /**
-   * Tambah free pack ke gacha wallet.
-   * Dipanggil oleh Kronik setiap level up.
-   * @returns {Promise<number>} - Jumlah free pack sekarang
-   */
-  async function grantFreePack(reason = '') {
-    const current = (await get('kv', 'gacha:freePacks')) ?? 0;
-    const next    = current + 1;
-    await put('kv', next, 'gacha:freePacks');
-    if (reason) {
-      const log = (await get('kv', 'gacha:crystal_log')) ?? [];
-      log.unshift({ amount: 0, freePack: true, reason, at: new Date().toISOString() });
-      if (log.length > 20) log.length = 20;
-      await put('kv', log, 'gacha:crystal_log');
-    }
-    return next;
-  }
-
   /* ── Public API ─────────────────────────────────────────────── */
   return {
     open,
@@ -371,8 +303,6 @@ const EcosystemDB = (() => {
     /* Cross-app helpers */
     getIdeasInProgress,
     getDailyOsData,
-    grantCrystals,
-    grantFreePack,
 
     /* Generic (kalau perlu langsung) */
     getAll,
