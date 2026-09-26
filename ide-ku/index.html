@@ -2166,6 +2166,9 @@ function openItemModal(id) {
           <button class="btn-del" onclick="askDelete(event,${idea.id},'${titleAttr}')" title="Hapus">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
           </button>
+          <button class="btn-edit" onclick="closeItemModal()" title="Tutup" style="margin-left:2px;padding-left:8px;border-left:1px solid var(--border)">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+          </button>
         </div>
       </div>
 
@@ -2210,6 +2213,8 @@ function setFilterStatus(s) { filterStatus = (filterStatus === s) ? null : s; re
 function setFilterCat(c) { filterCat = c; render(); }
 function setFilterType(type) {
   filterType = type;
+  filterCat = "Semua";
+  renderCatDash();
   renderList();
 }
 
