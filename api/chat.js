@@ -1,45 +1,45 @@
-// api/chat.js
+
+ // api/chat.js
 // Vercel Serverless Function — Liro Assistant
-// Provider : Groq  (llama-3.3-70b-versatile)
+// Provider : Sumopod (glm-5.3-flash)
 // Request  : POST { messages, context: { systemPrompt, expression, userName, ecosystem } }
 // Response : { text, model, usage }
 
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile';
-const MAX_TOKENS   = 300;
-const MAX_MESSAGES = 10;   // sesuai trim di index.html
+const SUMOPOD_API_URL = 'https://ai.sumopod.com/v1/chat/completions';
+const SUMOPOD_MODEL = 'glm-5.3-flash';
+const MAX_TOKENS = 300;
+const MAX_MESSAGES = 10; // sesuai trim di index.html
 
 export default async function handler(req, res) {
-  // ── OPTIONS preflight ─────────────────────────────────────────────
-  // (CORS header sudah di-set vercel.json, tapi tetap handle OPTIONS)
+  // OPTIONS preflight
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST')    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-  // ── Validasi API key ──────────────────────────────────────────────
-  const groqKey = process.env.GROQ_API_KEY;
-  if (!groqKey) {
-    console.error('[chat] GROQ_API_KEY tidak ditemukan');
+  // Validasi API key
+  const sumopodKey = process.env.SUMOPOD_API_KEY;
+  if (!sumopodKey) {
+    console.error('[chat] SUMOPOD_API_KEY tidak ditemukan');
     return res.status(500).json({ error: 'Server configuration error' });
   }
 
-  // ── Parse body ────────────────────────────────────────────────────
+  // Parse body
   const { messages, context } = req.body ?? {};
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'messages array diperlukan' });
   }
 
-  // ── Bangun system prompt ──────────────────────────────────────────
-  // index.html sudah membangun finalSystemPrompt lengkap (dengan context
-  // ekosistem) dan mengirimnya via context.systemPrompt — pakai langsung.
-  // Fallback ke buildDefaultSystemPrompt() kalau context tidak ada.
-  const systemPrompt = context?.systemPrompt || buildDefaultSystemPrompt(context);
+  // Bangun system prompt
+  const systemPrompt =
+    context?.systemPrompt || buildDefaultSystemPrompt(context);
 
-  // ── Sanitasi messages ─────────────────────────────────────────────
+  // Sanitasi messages
   const sanitized = messages
     .filter(m => m?.role && typeof m.content === 'string')
     .map(m => ({
-      role:    m.role === 'assistant' ? 'assistant' : 'user',
+      role: m.role === 'assistant' ? 'assistant' : 'user',
       content: m.content.slice(0, 4000),
     }))
     .slice(-MAX_MESSAGES);
@@ -48,49 +48,59 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Tidak ada pesan valid' });
   }
 
-  // ── Call Groq ─────────────────────────────────────────────────────
+  // Call Sumopod
   try {
-    const groqRes = await fetch(GROQ_API_URL, {
-      method:  'POST',
+    const sumopodRes = await fetch(SUMOPOD_API_URL, {
+      method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'Authorization': `Bearer ${groqKey}`,
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${sumopodKey}`,
       },
       body: JSON.stringify({
-        model: GROQ_MODEL,
+        model: SUMOPOD_MODEL,
         messages: [
           { role: 'system', content: systemPrompt },
           ...sanitized,
         ],
         temperature: 0.75,
-        max_tokens:  MAX_TOKENS,
-        stream:      false,
+        max_tokens: MAX_TOKENS,
+        stream: false,
       }),
     });
 
-    if (!groqRes.ok) {
-      const errBody = await groqRes.text().catch(() => '');
-      console.error(`[chat] Groq ${groqRes.status}:`, errBody);
+    if (!sumopodRes.ok) {
+      const errBody = await sumopodRes.text().catch(() => '');
+      console.error(
+        `[chat] Sumopod ${sumopodRes.status}:`,
+        errBody
+      );
 
-      if (groqRes.status === 429) {
-        return res.status(429).json({ error: 'Rate limit Groq, coba lagi sebentar' });
+      if (sumopodRes.status === 429) {
+        return res.status(429).json({
+          error: 'Rate limit Sumopod, coba lagi sebentar',
+        });
       }
-      return res.status(502).json({ error: `AI provider error (${groqRes.status})` });
+
+      return res.status(502).json({
+        error: `AI provider error (${sumopodRes.status})`,
+      });
     }
 
-    const data = await groqRes.json();
+    const data = await sumopodRes.json();
     const text = data.choices?.[0]?.message?.content ?? '';
 
     if (!text) {
-      console.error('[chat] Respons Groq kosong:', JSON.stringify(data));
+      console.error(
+        '[chat] Respons Sumopod kosong:',
+        JSON.stringify(data)
+      );
       return res.status(502).json({ error: 'Respons AI kosong' });
     }
 
-    // index.html membaca: data?.text || data?.message || data?.content
-    // → kita return { text } agar masuk branch pertama
+    // Return format yang dibaca index.html
     return res.status(200).json({
       text,
-      model: GROQ_MODEL,
+      model: SUMOPOD_MODEL,
       usage: data.usage ?? null,
     });
 
@@ -100,10 +110,7 @@ export default async function handler(req, res) {
   }
 }
 
-// ── Fallback system prompt ────────────────────────────────────────────
-// Dipakai hanya kalau client tidak mengirim context.systemPrompt.
-// Normalnya index.html selalu mengirim systemPrompt yang sudah di-inject
-// dengan data ekosistem via loadEcosystemContext().
+// Fallback system prompt
 function buildDefaultSystemPrompt(context) {
   const ecosystemBlock = context?.ecosystem
     ? `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${
