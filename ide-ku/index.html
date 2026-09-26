@@ -194,8 +194,21 @@
       margin: 0 -16px;
     }
     .autohide-search-filters {
-      padding-top: 14px;
+      padding-top: 10px;
     }
+    .search-row {
+      display: flex; align-items: center; gap: 8px;
+      padding-top: 14px; margin-bottom: 10px;
+    }
+    .search-row .search-wrap { flex: 1; margin-bottom: 0; }
+    .btn-viewmode-icon {
+      width: 38px; height: 38px; flex-shrink: 0;
+      border-radius: 10px; background: var(--surface);
+      border: 1px solid var(--border); color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.12s;
+    }
+    .btn-viewmode-icon:hover { color: var(--text); border-color: var(--text-muted); }
 
     /* ── Form Fields (shared) ── */
     @keyframes fadeDown {
@@ -367,11 +380,21 @@
       background: var(--surface); border: 1px solid var(--border);
       border-radius: 10px;
     }
+    .cat-dash-title-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px; gap: 8px;
+    }
     .cat-dash-title {
       font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
       text-transform: uppercase; color: var(--text-faint);
-      margin-bottom: 10px;
     }
+    .cat-dash-clear {
+      font-size: 10.5px; font-weight: 600; color: var(--text);
+      background: var(--input-bg); border: 1px solid var(--border);
+      border-radius: 999px; padding: 3px 9px; cursor: pointer;
+      font-family: 'Inter', sans-serif; white-space: nowrap; flex-shrink: 0;
+    }
+    .cat-dash-clear:hover { border-color: var(--text-muted); }
     .cat-dash-bars { display: flex; flex-direction: column; gap: 7px; }
     .cat-dash-row {
       display: flex; align-items: center; gap: 8px;
@@ -396,9 +419,6 @@
     }
     .cat-dash-row.active .cat-dash-name { color: var(--text); font-weight: 700; }
 
-    /* ── View mode toggle ── */
-    .viewmode-row { display: flex; gap: 5px; margin-bottom: 10px; }
-
     /* ── Category Groups ── */
     .cat-group { margin-bottom: 14px; }
     .cat-group-header {
@@ -416,6 +436,41 @@
 
     /* ── Category color accent on card ── */
     .card-cat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+
+    /* ── Grid View ── */
+    .grid-wrap {
+      column-count: 2; column-gap: 9px;
+    }
+    @media (min-width: 480px) {
+      .grid-wrap { column-count: 3; }
+    }
+    .grid-card {
+      break-inside: avoid; margin-bottom: 9px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 11px; cursor: pointer;
+      width: 100%; box-sizing: border-box;
+      transition: border-color 0.15s, transform 0.15s;
+      animation: fadeIn 0.14s ease;
+    }
+    .grid-card:hover { border-color: var(--text-muted); transform: translateY(-1px); }
+    .grid-card.done { opacity: 0.45; }
+    .grid-card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+    .grid-card-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .grid-card-icon svg { width: 15px; height: 15px; }
+    .grid-card-btns { display: flex; gap: 2px; flex-shrink: 0; }
+    .grid-card-btns .btn-edit, .grid-card-btns .btn-del { width: 22px; height: 22px; border-radius: 6px; }
+    .grid-card-title {
+      font-size: 12.5px; font-weight: 600; color: var(--text); line-height: 1.4;
+      margin-bottom: 6px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .grid-card-title.done { text-decoration: line-through; color: var(--text-muted); font-weight: 400; }
+    .grid-card-cat { font-size: 10px; font-weight: 700; letter-spacing: 0.1px; margin-bottom: 4px; }
+    .grid-card-price { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .grid-card-foot { display: flex; align-items: center; gap: 5px; font-size: 10.5px; flex-wrap: wrap; }
 
     /* ── Cards ── */
     .card {
@@ -1056,30 +1111,30 @@
         <div class="stats" id="stats"></div>
       </div>
     </div>
-    <div class="autohide-bar-inner">
-      <div class="autohide-search-filters">
-        <!-- Search -->
-        <div class="search-wrap">
-          <span class="search-icon">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <circle cx="6.5" cy="6.5" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
-            </svg>
-          </span>
-          <input class="search-input" id="search-input" placeholder="Cari ide..." oninput="onSearch(this.value)" />
-          <button class="search-clear" id="search-clear" onclick="clearSearch()">
-            <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
-            </svg>
-          </button>
+      <div class="autohide-bar-inner">
+        <!-- Search + view mode -->
+        <div class="search-row">
+          <div class="search-wrap">
+            <span class="search-icon">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <circle cx="6.5" cy="6.5" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/>
+              </svg>
+            </span>
+            <input class="search-input" id="search-input" placeholder="Cari ide..." oninput="onSearch(this.value)" />
+            <button class="search-clear" id="search-clear" onclick="clearSearch()">
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/>
+              </svg>
+            </button>
+          </div>
+          <button class="btn-viewmode-icon" id="btn-viewmode" onclick="cycleViewMode()"></button>
         </div>
 
-        <!-- View mode toggle -->
-        <div class="viewmode-row" id="viewmode-row"></div>
-
-        <!-- Filters -->
-        <div class="filters-wrap">
-          <div class="filters-group" id="filters-status"></div>
-          <div class="filters-group" id="filters-cat"></div>
+        <!-- Filters: type + status only. Category is filtered via the dashboard below. -->
+        <div class="autohide-search-filters">
+          <div class="filters-wrap">
+            <div class="filters-group" id="filters-status"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1087,8 +1142,7 @@
 
   <!-- Content -->
   <div class="content">
-    <!-- Category distribution dashboard -->
-    <div class="cat-dash" id="cat-dash"></div>
+    <!-- Category distribution dashboard -->    <div class="cat-dash" id="cat-dash"></div>
     <!-- List -->
     <div id="list"></div>
   </div>
@@ -1445,7 +1499,35 @@ function catColor(cat) {
   return CAT_PALETTE[Math.abs(hash) % CAT_PALETTE.length];
 }
 
-// ── View mode: "group" (per kategori) atau "flat" (list biasa) ──
+// ── Category icons (curated for defaults, deterministic fallback for custom) ──
+const CATEGORY_ICONS = {
+  "dev": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/></svg>`,
+  "bisnis": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>`,
+  "konten": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8L13 21H9"/></svg>`,
+  "belajar": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg>`,
+  "kreatif": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.477 2 2 6.477 2 12c0 5.523 4.477 10 10 10a2 2 0 002-2v-1a2 2 0 012-2h2a2 2 0 002-2c0-5.523-4.477-10-10-10z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/></svg>`,
+  "personal": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></svg>`,
+  "belanja": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+};
+const GENERIC_CAT_ICONS = [
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L11 3.83A2 2 0 009.59 3.24L3 3v6.59a2 2 0 00.59 1.41l9.58 9.58a2 2 0 002.82 0l4.6-4.6a2 2 0 000-2.82z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor" stroke="none"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.75V17h8v-2.25A7 7 0 0012 2z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="0.6" fill="currentColor" stroke="none"/></svg>`,
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`,
+];
+function catIcon(category) {
+  const key = (category || "").trim().toLowerCase();
+  if (CATEGORY_ICONS[key]) return CATEGORY_ICONS[key];
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
+  return GENERIC_CAT_ICONS[Math.abs(hash) % GENERIC_CAT_ICONS.length];
+}
+
+// ── View mode: "group" (per kategori) / "flat" (list) / "grid" (2-3 kolom) ──
 let viewMode = localStorage.getItem("ideku-viewmode") || "group";
 let collapsedCats = new Set(JSON.parse(localStorage.getItem("ideku-collapsed") || "[]"));
 function saveCollapsed() { localStorage.setItem("ideku-collapsed", JSON.stringify([...collapsedCats])); }
@@ -1460,13 +1542,22 @@ function setViewMode(mode) {
   renderViewModeToggle();
   renderList();
 }
+function cycleViewMode() {
+  const order = ["group", "flat", "grid"];
+  const next = order[(order.indexOf(viewMode) + 1) % order.length];
+  setViewMode(next);
+}
 function renderViewModeToggle() {
-  const el = document.getElementById("viewmode-row");
-  if (!el) return;
-  el.innerHTML = `
-    <button class="f-btn${viewMode === "group" ? " on" : ""}" onclick="setViewMode('group')">▤ Per kategori</button>
-    <button class="f-btn${viewMode === "flat" ? " on" : ""}" onclick="setViewMode('flat')">☰ List</button>
-  `;
+  const btn = document.getElementById("btn-viewmode");
+  if (!btn) return;
+  const icons = {
+    group: `<svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4l2-1.5h2l1 1h6v7.5a1 1 0 01-1 1H2a1 1 0 01-1-1V4z"/></svg>`,
+    flat: `<svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><line x1="1" y1="3" x2="13" y2="3"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="1" y1="11" x2="13" y2="11"/></svg>`,
+    grid: `<svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="1" width="5" height="5" rx="1"/><rect x="1" y="8" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/></svg>`
+  };
+  const labels = { group: "Per kategori", flat: "List", grid: "Grid" };
+  btn.innerHTML = icons[viewMode];
+  btn.title = `Tampilan: ${labels[viewMode]} — tap untuk ganti`;
 }
 
 function saveCategories() {
@@ -1667,14 +1758,9 @@ function renderFilters() {
   const statusBtns = STATUSES.map(s =>
     `<button class="f-btn${filterStatus === s ? " on" : ""}" onclick="setFilterStatus('${s}')">${s}</button>`
   ).join("");
-  const catBtns = ["Semua", ...CATEGORIES].map(c =>
-    `<button class="f-btn${filterCat === c ? " on" : ""}" onclick="setFilterCat('${c}')">${c}</button>`
-  ).join("");
 
   document.getElementById("filters-status").innerHTML =
     `${typePills}<span class="filters-label" style="min-width:auto">Status</span>${statusBtns}`;
-  document.getElementById("filters-cat").innerHTML =
-    `<span class="filters-label">Tag</span>${catBtns}`;
 
   // Remove separate type row if it exists
   const typeWrap = document.getElementById("filters-type");
@@ -1690,12 +1776,15 @@ function renderCatDash() {
   const counts = {};
   scoped.forEach(i => { const c = i.category || "Lainnya"; counts[c] = (counts[c] || 0) + 1; });
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  if (entries.length <= 1) { el.style.display = "none"; el.innerHTML = ""; return; }
+  if (entries.length <= 1 && filterCat === "Semua") { el.style.display = "none"; el.innerHTML = ""; return; }
 
   el.style.display = "block";
   const max = entries[0][1];
   el.innerHTML = `
-    <div class="cat-dash-title">Sebaran kategori · ${scoped.length} item</div>
+    <div class="cat-dash-title-row">
+      <span class="cat-dash-title">Sebaran kategori · ${scoped.length} item</span>
+      ${filterCat !== "Semua" ? `<button class="cat-dash-clear" onclick="setFilterCat('Semua')">${escHtml(filterCat)} ✕</button>` : ""}
+    </div>
     <div class="cat-dash-bars">
       ${entries.map(([cat, count]) => {
         const color = catColor(cat);
@@ -1927,6 +2016,70 @@ function renderList() {
           ${bodyContent}
         </div>
       </div>`;
+  }
+
+  function renderGridCardHtml(idea) {
+    const done = idea.status === "Selesai";
+    const priColor = PRI_COLOR[idea.priority] || "#aaa";
+    const catColorVal = catColor(idea.category);
+    const titleHtml = escHtml(idea.title);
+    const titleAttr = escAttr(idea.title);
+    const categoryHtml = escHtml(idea.category || "-");
+    const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : "";
+    const statusActions = STATUSES.map(s =>
+      `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}')">${s}</button>`
+    ).join("");
+    const priActions = PRIORITIES.map(p =>
+      `<button class="act-btn${idea.priority === p ? " on-p" : ""}"
+        style="${idea.priority === p ? `color:${PRI_COLOR[p]};border-color:${PRI_COLOR[p]}44` : ""}"
+        onclick="updatePriority(${idea.id},'${p}')">${p}</button>`
+    ).join("");
+
+    return `
+      <div class="grid-card${done ? " done" : ""}" id="card-${idea.id}" style="border-top:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
+        <div class="grid-card-head">
+          <div class="grid-card-icon" style="background:${catColorVal}1e;color:${catColorVal}">${catIcon(idea.category)}</div>
+          <div class="grid-card-btns" onclick="event.stopPropagation()">
+            <button class="btn-edit" onclick="openEdit(event,${idea.id})" title="Edit">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+            </button>
+            <button class="btn-del" onclick="askDelete(event,${idea.id},'${titleAttr}')" title="Hapus">
+              <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="grid-card-title${done ? " done" : ""}">${titleHtml}</div>
+        <div class="grid-card-cat" style="color:${catColorVal}">${categoryHtml}</div>
+        ${priceText ? `<div class="grid-card-price">${priceText}</div>` : ""}
+        <div class="grid-card-foot">
+          <span class="meta-dot" style="background:${STATUS_DOT[idea.status]}"></span>
+          <span class="meta-t">${idea.status}</span>
+          <span class="meta-sep">·</span>
+          <span class="meta-pri" style="color:${priColor}">${idea.priority}</span>
+        </div>
+        <div class="card-body" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
+          ${idea.notes ? `<p class="card-notes">${escHtml(idea.notes)}</p>` : ""}
+          <div class="card-actions">
+            <div class="act-row">
+              <span class="act-label">Status</span>
+              <div class="act-btns">${statusActions}</div>
+            </div>
+            <div class="act-row">
+              <span class="act-label">Prioritas</span>
+              <div class="act-btns">${priActions}</div>
+            </div>
+          </div>
+          <div class="card-ai-row">
+            <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
+            <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (viewMode === "grid") {
+    el.innerHTML = `<div class="grid-wrap">${filtered.map(renderGridCardHtml).join("")}</div>`;
+    return;
   }
 
   if (viewMode === "flat") {
