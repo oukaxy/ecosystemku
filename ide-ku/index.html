@@ -1849,14 +1849,6 @@ function renderList() {
     const done = idea.status === "Selesai";
     const priColor = PRI_COLOR[idea.priority] || "#aaa";
     const catColorVal = catColor(idea.category);
-    const statusActions = STATUSES.map(s =>
-      `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}')">${s}</button>`
-    ).join("");
-    const priActions = PRIORITIES.map(p =>
-      `<button class="act-btn${idea.priority === p ? " on-p" : ""}"
-        style="${idea.priority === p ? `color:${PRI_COLOR[p]};border-color:${PRI_COLOR[p]}44` : ""}"
-        onclick="updatePriority(${idea.id},'${p}')">${p}</button>`
-    ).join("");
 
     const titleHtml = escHtml(idea.title);
     const titleAttr = escAttr(idea.title);
@@ -1882,47 +1874,9 @@ function renderList() {
     const scoreIconColor = aiScore.label === "Layak" ? "#10b981" : aiScore.label === "Pertimbangkan" ? "#d97706" : "#ef4444";
     const scoreIcon = `<svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="${scoreIconColor}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="4.5" x2="7" y2="7.5"/><circle cx="7" cy="9.5" r="0.7" fill="${scoreIconColor}" stroke="none"/></svg>`;
 
-    let bodyContent = "";
-    if (idea.notes) {
-      bodyContent = `
-        <p class="card-notes">${escHtml(idea.notes)}</p>
-        <div class="card-actions">
-          <div class="act-row">
-            <span class="act-label">Status</span>
-            <div class="act-btns">${statusActions}</div>
-          </div>
-          <div class="act-row">
-            <span class="act-label">Prioritas</span>
-            <div class="act-btns">${priActions}</div>
-          </div>
-        </div>
-        <div class="card-ai-row">
-          <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
-          <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
-        </div>
-      `;
-    } else {
-      bodyContent = `
-        <div class="card-actions">
-          <div class="act-row">
-            <span class="act-label">Status</span>
-            <div class="act-btns">${statusActions}</div>
-          </div>
-          <div class="act-row">
-            <span class="act-label">Prioritas</span>
-            <div class="act-btns">${priActions}</div>
-          </div>
-        </div>
-        <div class="card-ai-row">
-          <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
-          <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
-        </div>
-      `;
-    }
-
     if (idea.type === "Wishlist") {
       return `
-        <div class="card wishlist-type${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
+        <div class="card wishlist-type${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="openItemModal(${idea.id})">
 
           <div class="wishlist-main">
             <div class="wishlist-image-wrap">
@@ -1961,25 +1915,11 @@ function renderList() {
             </button>
           </div>
 
-          <div class="card-body wishlist-type" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
-            ${idea.notes ? `<p class="card-notes" style="margin-bottom:10px">${escHtml(idea.notes)}</p>` : ""}
-            <div class="card-actions">
-              <div class="act-row">
-                <span class="act-label">Status</span>
-                <div class="act-btns">${statusActions}</div>
-              </div>
-              <div class="act-row">
-                <span class="act-label">Prioritas</span>
-                <div class="act-btns">${priActions}</div>
-              </div>
-            </div>
-          </div>
-
         </div>`;
     }
 
     return `
-      <div class="card${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
+      <div class="card${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="openItemModal(${idea.id})">
         <div class="card-top">
           <div style="flex:1">
             <div class="card-title${done ? " done" : ""}">
@@ -2012,9 +1952,6 @@ function renderList() {
             </button>
           </div>
         </div>
-        <div class="card-body" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
-          ${bodyContent}
-        </div>
       </div>`;
   }
 
@@ -2026,17 +1963,9 @@ function renderList() {
     const titleAttr = escAttr(idea.title);
     const categoryHtml = escHtml(idea.category || "-");
     const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : "";
-    const statusActions = STATUSES.map(s =>
-      `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}')">${s}</button>`
-    ).join("");
-    const priActions = PRIORITIES.map(p =>
-      `<button class="act-btn${idea.priority === p ? " on-p" : ""}"
-        style="${idea.priority === p ? `color:${PRI_COLOR[p]};border-color:${PRI_COLOR[p]}44` : ""}"
-        onclick="updatePriority(${idea.id},'${p}')">${p}</button>`
-    ).join("");
 
     return `
-      <div class="grid-card${done ? " done" : ""}" id="card-${idea.id}" style="border-top:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
+      <div class="grid-card${done ? " done" : ""}" id="card-${idea.id}" style="border-top:3px solid ${catColorVal}" onclick="openItemModal(${idea.id})">
         <div class="grid-card-head">
           <div class="grid-card-icon" style="background:${catColorVal}1e;color:${catColorVal}">${catIcon(idea.category)}</div>
           <div class="grid-card-btns" onclick="event.stopPropagation()">
@@ -2056,23 +1985,6 @@ function renderList() {
           <span class="meta-t">${idea.status}</span>
           <span class="meta-sep">·</span>
           <span class="meta-pri" style="color:${priColor}">${idea.priority}</span>
-        </div>
-        <div class="card-body" id="body-${idea.id}" style="display:none" onclick="event.stopPropagation()">
-          ${idea.notes ? `<p class="card-notes">${escHtml(idea.notes)}</p>` : ""}
-          <div class="card-actions">
-            <div class="act-row">
-              <span class="act-label">Status</span>
-              <div class="act-btns">${statusActions}</div>
-            </div>
-            <div class="act-row">
-              <span class="act-label">Prioritas</span>
-              <div class="act-btns">${priActions}</div>
-            </div>
-          </div>
-          <div class="card-ai-row">
-            <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
-            <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
-          </div>
         </div>
       </div>`;
   }
@@ -2206,10 +2118,78 @@ function submitIdea() {
   });
 }
 
-function toggleCard(id) {
-  const body = document.getElementById(`body-${id}`);
-  if (!body) return;
-  body.style.display = body.style.display === "none" ? "block" : "none";
+// ── Item detail modal (bottom sheet) ──
+function closeItemModal() {
+  const el = document.getElementById("item-modal-overlay");
+  if (el) el.remove();
+}
+
+function openItemModal(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  closeItemModal();
+
+  const catColorVal = catColor(idea.category);
+  const titleHtml = escHtml(idea.title);
+  const titleAttr = escAttr(idea.title);
+  const categoryHtml = escHtml(idea.category || "-");
+  const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : null;
+
+  const statusActions = STATUSES.map(s =>
+    `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}');openItemModal(${idea.id})">${s}</button>`
+  ).join("");
+  const priActions = PRIORITIES.map(p =>
+    `<button class="act-btn${idea.priority === p ? " on-p" : ""}"
+      style="${idea.priority === p ? `color:${PRI_COLOR[p]};border-color:${PRI_COLOR[p]}44` : ""}"
+      onclick="updatePriority(${idea.id},'${p}');openItemModal(${idea.id})">${p}</button>`
+  ).join("");
+
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.id = "item-modal-overlay";
+  overlay.onclick = (e) => { if (e.target === overlay) closeItemModal(); };
+
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:400px">
+      <div class="modal-handle"></div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:${idea.notes ? 14 : 18}px">
+        <div style="flex:1;min-width:0">
+          <div class="modal-title" style="margin-bottom:4px;word-break:break-word">${titleHtml}</div>
+          <div style="font-size:12px;color:var(--text-sub);display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            <span class="card-cat-dot" style="background:${catColorVal}"></span>${categoryHtml}${priceText ? ` · ${priceText}` : ""}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn-edit" onclick="openEdit(event,${idea.id})" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5l2 2L4 12H2v-2L9.5 2.5z"/></svg>
+          </button>
+          <button class="btn-del" onclick="askDelete(event,${idea.id},'${titleAttr}')" title="Hapus">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      ${idea.notes ? `<p class="card-notes" style="margin-bottom:16px">${escHtml(idea.notes)}</p>` : ""}
+
+      <div class="card-actions">
+        <div class="act-row">
+          <span class="act-label">Status</span>
+          <div class="act-btns">${statusActions}</div>
+        </div>
+        <div class="act-row">
+          <span class="act-label">Prioritas</span>
+          <div class="act-btns">${priActions}</div>
+        </div>
+      </div>
+
+      <div class="card-ai-row">
+        <button class="btn-ai" id="btn-perkaya-${idea.id}" onclick="perkayaIdea(${idea.id})">Perkaya Ide</button>
+        <button class="btn-ai" onclick="breakdownIdea(${idea.id})">Breakdown</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
 }
 
 function updateStatus(id, status) {
@@ -2287,6 +2267,7 @@ function confirmDelete() {
     ideas = ideas.filter(i => i.id !== pendingDeleteId);
     pendingDeleteId = null;
     document.getElementById("modal").style.display = "none";
+    closeItemModal();
     render();
   });
 }
@@ -2545,12 +2526,12 @@ async function savePerkaya() {
   _perkayaResult = null;
 
   render();
-  const body = document.getElementById(`body-${idea.id}`);
-  if (body) body.style.display = "block";
+  openItemModal(idea.id);
   showToast("Ide berhasil diperkaya");
 }
 function openEdit(e, id) {
   e.stopPropagation();
+  closeItemModal();
   const idea = ideas.find(i => i.id === id);
   if (!idea) return;
   editingId = id;
