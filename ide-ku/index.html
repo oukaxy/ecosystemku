@@ -361,6 +361,62 @@
     }
     .f-sep { display: none; }
 
+    /* ── Category Dashboard ── */
+    .cat-dash {
+      margin-bottom: 14px; padding: 12px 14px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .cat-dash-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+      text-transform: uppercase; color: var(--text-faint);
+      margin-bottom: 10px;
+    }
+    .cat-dash-bars { display: flex; flex-direction: column; gap: 7px; }
+    .cat-dash-row {
+      display: flex; align-items: center; gap: 8px;
+      background: none; border: none; padding: 2px 0;
+      cursor: pointer; font-family: 'Inter', sans-serif; width: 100%;
+      text-align: left;
+    }
+    .cat-dash-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .cat-dash-name {
+      font-size: 12px; color: var(--text); font-weight: 500;
+      width: 64px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cat-dash-track {
+      flex: 1; height: 6px; background: var(--input-bg);
+      border-radius: 4px; overflow: hidden;
+    }
+    .cat-dash-fill { display: block; height: 100%; border-radius: 4px; transition: width 0.2s; }
+    .cat-dash-count {
+      font-size: 11px; color: var(--text-faint); font-weight: 600;
+      width: 20px; text-align: right; flex-shrink: 0;
+    }
+    .cat-dash-row.active .cat-dash-name { color: var(--text); font-weight: 700; }
+
+    /* ── View mode toggle ── */
+    .viewmode-row { display: flex; gap: 5px; margin-bottom: 10px; }
+
+    /* ── Category Groups ── */
+    .cat-group { margin-bottom: 14px; }
+    .cat-group-header {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 9px 12px; margin-bottom: 7px;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+    }
+    .cat-group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cat-group-name { font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0; }
+    .cat-group-count { font-size: 11px; color: var(--text-faint); margin-left: auto; }
+    .cat-group-chevron { font-size: 12px; color: var(--text-faint); transition: transform 0.15s; }
+    .cat-group-chevron.collapsed { transform: rotate(-90deg); }
+    .cat-group-body { display: flex; flex-direction: column; }
+
+    /* ── Category color accent on card ── */
+    .card-cat-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+
     /* ── Cards ── */
     .card {
       background: var(--surface); border: 1px solid var(--border);
@@ -1017,6 +1073,9 @@
           </button>
         </div>
 
+        <!-- View mode toggle -->
+        <div class="viewmode-row" id="viewmode-row"></div>
+
         <!-- Filters -->
         <div class="filters-wrap">
           <div class="filters-group" id="filters-status"></div>
@@ -1028,6 +1087,8 @@
 
   <!-- Content -->
   <div class="content">
+    <!-- Category distribution dashboard -->
+    <div class="cat-dash" id="cat-dash"></div>
     <!-- List -->
     <div id="list"></div>
   </div>
@@ -1375,6 +1436,39 @@ const TYPE_ICON = {
 const STATUS_DOT = { "Belum": "#d1d5db", "Proses": "#f59e0b", "Selesai": "#10b981" };
 const PRI_COLOR  = { "Penting": "#ef4444", "Nanti": "#f59e0b", "Kapan-kapan": "#10b981" };
 
+// ── Category colors (auto-assigned, stable per category name) ──
+const CAT_PALETTE = ["#6366f1","#ec4899","#f59e0b","#10b981","#06b6d4","#8b5cf6","#ef4444","#14b8a6","#f97316","#84cc16","#3b82f6","#d946ef"];
+function catColor(cat) {
+  const name = cat || "Lainnya";
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return CAT_PALETTE[Math.abs(hash) % CAT_PALETTE.length];
+}
+
+// ── View mode: "group" (per kategori) atau "flat" (list biasa) ──
+let viewMode = localStorage.getItem("ideku-viewmode") || "group";
+let collapsedCats = new Set(JSON.parse(localStorage.getItem("ideku-collapsed") || "[]"));
+function saveCollapsed() { localStorage.setItem("ideku-collapsed", JSON.stringify([...collapsedCats])); }
+function toggleCatCollapse(cat) {
+  if (collapsedCats.has(cat)) collapsedCats.delete(cat); else collapsedCats.add(cat);
+  saveCollapsed();
+  renderList();
+}
+function setViewMode(mode) {
+  viewMode = mode;
+  localStorage.setItem("ideku-viewmode", mode);
+  renderViewModeToggle();
+  renderList();
+}
+function renderViewModeToggle() {
+  const el = document.getElementById("viewmode-row");
+  if (!el) return;
+  el.innerHTML = `
+    <button class="f-btn${viewMode === "group" ? " on" : ""}" onclick="setViewMode('group')">▤ Per kategori</button>
+    <button class="f-btn${viewMode === "flat" ? " on" : ""}" onclick="setViewMode('flat')">☰ List</button>
+  `;
+}
+
 function saveCategories() {
   localStorage.setItem("ideku-categories", JSON.stringify(CATEGORIES));
 }
@@ -1587,6 +1681,37 @@ function renderFilters() {
   if (typeWrap) typeWrap.remove();
 }
 
+function renderCatDash() {
+  const el = document.getElementById("cat-dash");
+  if (!el) return;
+  const scoped = ideas.filter(i => i.type === filterType);
+  if (scoped.length === 0) { el.style.display = "none"; el.innerHTML = ""; return; }
+
+  const counts = {};
+  scoped.forEach(i => { const c = i.category || "Lainnya"; counts[c] = (counts[c] || 0) + 1; });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (entries.length <= 1) { el.style.display = "none"; el.innerHTML = ""; return; }
+
+  el.style.display = "block";
+  const max = entries[0][1];
+  el.innerHTML = `
+    <div class="cat-dash-title">Sebaran kategori · ${scoped.length} item</div>
+    <div class="cat-dash-bars">
+      ${entries.map(([cat, count]) => {
+        const color = catColor(cat);
+        const pct = Math.max(6, Math.round((count / max) * 100));
+        const active = filterCat === cat;
+        return `
+          <button class="cat-dash-row${active ? " active" : ""}" onclick="setFilterCat('${escAttr(cat)}')">
+            <span class="cat-dash-dot" style="background:${color}"></span>
+            <span class="cat-dash-name" title="${escAttr(cat)}">${escHtml(cat)}</span>
+            <span class="cat-dash-track"><span class="cat-dash-fill" style="width:${pct}%;background:${color}"></span></span>
+            <span class="cat-dash-count">${count}</span>
+          </button>`;
+      }).join("")}
+    </div>`;
+}
+
 function renderList() {
   const q = searchQuery.toLowerCase();
   let filtered = ideas.filter(i =>
@@ -1631,9 +1756,10 @@ function renderList() {
     return;
   }
 
-  el.innerHTML = filtered.map(idea => {
+  function renderCardHtml(idea) {
     const done = idea.status === "Selesai";
     const priColor = PRI_COLOR[idea.priority] || "#aaa";
+    const catColorVal = catColor(idea.category);
     const statusActions = STATUSES.map(s =>
       `<button class="act-btn${idea.status === s ? " on-s" : ""}" onclick="updateStatus(${idea.id},'${s}')">${s}</button>`
     ).join("");
@@ -1707,7 +1833,7 @@ function renderList() {
 
     if (idea.type === "Wishlist") {
       return `
-        <div class="card wishlist-type${done ? " done" : ""}" id="card-${idea.id}" onclick="toggleCard(${idea.id})">
+        <div class="card wishlist-type${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
 
           <div class="wishlist-main">
             <div class="wishlist-image-wrap">
@@ -1764,7 +1890,7 @@ function renderList() {
     }
 
     return `
-      <div class="card${done ? " done" : ""}" id="card-${idea.id}" onclick="toggleCard(${idea.id})">
+      <div class="card${done ? " done" : ""}" id="card-${idea.id}" style="border-left:3px solid ${catColorVal}" onclick="toggleCard(${idea.id})">
         <div class="card-top">
           <div style="flex:1">
             <div class="card-title${done ? " done" : ""}">
@@ -1777,6 +1903,7 @@ function renderList() {
               <span class="meta-dot" style="background:${STATUS_DOT[idea.status]}"></span>
               <span class="meta-t">${idea.status}</span>
               <span class="meta-sep">·</span>
+              <span class="card-cat-dot" style="background:${catColorVal}"></span>
               <span class="meta-t">${categoryHtml}</span>
               <span class="meta-sep">·</span>
               <span class="meta-pri" style="color:${priColor}">${idea.priority}</span>
@@ -1800,12 +1927,46 @@ function renderList() {
           ${bodyContent}
         </div>
       </div>`;
+  }
+
+  if (viewMode === "flat") {
+    el.innerHTML = filtered.map(renderCardHtml).join("");
+    return;
+  }
+
+  // ── Grouped by category ──
+  const groups = {};
+  filtered.forEach(i => {
+    const c = i.category || "Lainnya";
+    (groups[c] = groups[c] || []).push(i);
+  });
+  const catOrder = Object.keys(groups).sort((a, b) => groups[b].length - groups[a].length);
+
+  el.innerHTML = catOrder.map(cat => {
+    const items = groups[cat];
+    const color = catColor(cat);
+    const collapsed = collapsedCats.has(cat);
+    const doneCount = items.filter(i => i.status === "Selesai").length;
+    return `
+      <div class="cat-group">
+        <button class="cat-group-header" style="border-left:3px solid ${color}" onclick="toggleCatCollapse('${escAttr(cat)}')">
+          <span class="cat-group-dot" style="background:${color}"></span>
+          <span class="cat-group-name">${escHtml(cat)}</span>
+          <span class="cat-group-count">${items.length} item${doneCount ? ` · ${doneCount} selesai` : ""}</span>
+          <span class="cat-group-chevron${collapsed ? " collapsed" : ""}">⌄</span>
+        </button>
+        <div class="cat-group-body" style="display:${collapsed ? "none" : "flex"}">
+          ${items.map(renderCardHtml).join("")}
+        </div>
+      </div>`;
   }).join("");
 }
 
 function render() {
   renderStats();
   renderFilters();
+  renderCatDash();
+  renderViewModeToggle();
   renderList();
 }
 
