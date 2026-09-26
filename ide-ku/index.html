@@ -1163,6 +1163,13 @@
     </svg>
     Export JSON
   </button>
+  <button class="menu-btn" onclick="exportAsDocument()">
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.5 1.5h5L11 4.5v8a1 1 0 01-1 1H3.5a1 1 0 01-1-1v-10a1 1 0 011-1z"/>
+      <path d="M8.5 1.5v3h3"/><line x1="4" y1="7.5" x2="9" y2="7.5"/><line x1="4" y1="9.7" x2="9" y2="9.7"/><line x1="4" y1="11.9" x2="7" y2="11.9"/>
+    </svg>
+    Export sebagai Dokumen
+  </button>
   <button class="menu-btn" onclick="triggerImport()">
     <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <path d="M7 9V2M4 5l3-3 3 3"/><path d="M2 11h10"/>
@@ -2785,6 +2792,161 @@ function exportIdeas() {
   a.click();
   URL.revokeObjectURL(url);
   showToast(`${ideas.length} ide berhasil diekspor`);
+}
+
+// ── Export sebagai Dokumen (HTML rapi, siap print/PDF) ──
+function exportAsDocument() {
+  menuOpen = false;
+  document.getElementById("menu-dropdown").style.display = "none";
+  if (ideas.length === 0) { showToast("Tidak ada ide untuk diekspor."); return; }
+
+  const genDate = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+
+  function buildSection(type, label) {
+    const items = ideas.filter(i => i.type === type).sort((a, b) => b.id - a.id);
+    if (items.length === 0) return "";
+
+    // Distribusi kategori (persentase)
+    const counts = {};
+    items.forEach(i => { const c = i.category || "Lainnya"; counts[c] = (counts[c] || 0) + 1; });
+    const catEntries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+
+    const catRowsHtml = catEntries.map(([cat, count]) => {
+      const pct = Math.round((count / items.length) * 100);
+      const color = catColor(cat);
+      return `
+        <div class="doc-cat-row">
+          <span class="doc-cat-dot" style="background:${color}"></span>
+          <span class="doc-cat-name">${escHtml(cat)}</span>
+          <span class="doc-cat-track"><span class="doc-cat-fill" style="width:${pct}%;background:${color}"></span></span>
+          <span class="doc-cat-pct">${pct}% <span class="doc-cat-count">(${count})</span></span>
+        </div>`;
+    }).join("");
+
+    const itemsHtml = items.map((idea, idx) => {
+      const priceText = idea.price ? `Rp ${Number(idea.price).toLocaleString('id-ID')}` : null;
+      return `
+        <div class="doc-item">
+          <div class="doc-item-head">
+            <span class="doc-item-num">${idx + 1}.</span>
+            <span class="doc-item-title">${escHtml(idea.title)}</span>
+            <span class="doc-item-status doc-status-${escAttr(idea.status)}">${escHtml(idea.status)}</span>
+          </div>
+          <div class="doc-item-meta">
+            <span><b>Kategori:</b> ${escHtml(idea.category || "-")}</span>
+            <span><b>Prioritas:</b> ${escHtml(idea.priority)}</span>
+            ${priceText ? `<span><b>Harga:</b> ${priceText}</span>` : ""}
+            <span><b>Dibuat:</b> ${fmtDate(idea.id)}</span>
+          </div>
+          ${idea.notes ? `<div class="doc-item-notes">${escHtml(idea.notes)}</div>` : `<div class="doc-item-notes doc-item-notes-empty">Tidak ada deskripsi.</div>`}
+        </div>`;
+    }).join("");
+
+    return `
+      <section class="doc-section">
+        <h2 class="doc-section-title">${label} <span class="doc-section-count">· ${items.length} item</span></h2>
+        <div class="doc-cat-dist">
+          <div class="doc-cat-dist-title">Sebaran Kategori</div>
+          ${catRowsHtml}
+        </div>
+        <div class="doc-items">${itemsHtml}</div>
+      </section>`;
+  }
+
+  const ideaSection = buildSection("Idea", "Ide");
+  const wishlistSection = buildSection("Wishlist", "Wishlist");
+  const totalCount = ideas.length;
+  const doneCount = ideas.filter(i => i.status === "Selesai").length;
+
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ideku — Laporan ${genDate}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f5f5f5; color: #111; padding: 32px 16px 60px; -webkit-font-smoothing: antialiased; }
+  .doc-wrap { max-width: 720px; margin: 0 auto; background: #fff; border-radius: 14px; padding: 40px 36px; box-shadow: 0 2px 24px rgba(0,0,0,0.06); }
+  .doc-header { border-bottom: 2px solid #111; padding-bottom: 18px; margin-bottom: 28px; }
+  .doc-brand { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #999; margin-bottom: 6px; }
+  .doc-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .doc-sub { font-size: 13px; color: #888; }
+  .doc-summary { display: flex; gap: 10px; margin: 20px 0 32px; flex-wrap: wrap; }
+  .doc-summary-item { flex: 1; min-width: 110px; background: #f7f7f7; border-radius: 10px; padding: 12px 14px; }
+  .doc-summary-num { font-size: 20px; font-weight: 800; }
+  .doc-summary-label { font-size: 11px; color: #999; margin-top: 2px; }
+  .doc-section { margin-bottom: 40px; }
+  .doc-section-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+  .doc-section-count { font-size: 12px; font-weight: 500; color: #999; }
+  .doc-cat-dist { background: #fafafa; border: 1px solid #eee; border-radius: 10px; padding: 16px 18px; margin-bottom: 24px; }
+  .doc-cat-dist-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; margin-bottom: 12px; }
+  .doc-cat-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 12.5px; }
+  .doc-cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .doc-cat-name { width: 110px; flex-shrink: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .doc-cat-track { flex: 1; height: 7px; background: #eee; border-radius: 4px; overflow: hidden; }
+  .doc-cat-fill { display: block; height: 100%; border-radius: 4px; }
+  .doc-cat-pct { width: 90px; flex-shrink: 0; text-align: right; font-weight: 700; font-size: 12px; }
+  .doc-cat-count { font-weight: 400; color: #999; }
+  .doc-item { border: 1px solid #eee; border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; page-break-inside: avoid; }
+  .doc-item-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .doc-item-num { color: #bbb; font-weight: 700; font-size: 13px; }
+  .doc-item-title { font-size: 14.5px; font-weight: 700; flex: 1; }
+  .doc-item-status { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .doc-status-Belum { background: #f3f4f6; color: #6b7280; }
+  .doc-status-Proses { background: #fef3c7; color: #b45309; }
+  .doc-status-Selesai { background: #d1fae5; color: #047857; }
+  .doc-item-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: #777; margin-bottom: 8px; }
+  .doc-item-notes { font-size: 12.5px; line-height: 1.6; color: #444; background: #fafafa; border-radius: 8px; padding: 10px 12px; }
+  .doc-item-notes-empty { color: #bbb; font-style: italic; }
+  .doc-actions { text-align: center; margin: 28px auto 0; max-width: 720px; }
+  .doc-print-btn { background: #111; color: #fff; border: none; padding: 11px 22px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .doc-print-btn:hover { opacity: 0.85; }
+  .doc-footer { text-align: center; font-size: 11px; color: #bbb; margin-top: 32px; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .doc-wrap { box-shadow: none; border-radius: 0; padding: 0; max-width: 100%; }
+    .doc-actions { display: none; }
+    .doc-item { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <div class="doc-wrap">
+    <div class="doc-header">
+      <div class="doc-brand">Ideku</div>
+      <div class="doc-title">Laporan Ide &amp; Wishlist</div>
+      <div class="doc-sub">Dibuat pada ${genDate}</div>
+    </div>
+
+    <div class="doc-summary">
+      <div class="doc-summary-item"><div class="doc-summary-num">${totalCount}</div><div class="doc-summary-label">Total item</div></div>
+      <div class="doc-summary-item"><div class="doc-summary-num">${ideas.filter(i=>i.type==="Idea").length}</div><div class="doc-summary-label">Ide</div></div>
+      <div class="doc-summary-item"><div class="doc-summary-num">${ideas.filter(i=>i.type==="Wishlist").length}</div><div class="doc-summary-label">Wishlist</div></div>
+      <div class="doc-summary-item"><div class="doc-summary-num">${doneCount}</div><div class="doc-summary-label">Selesai</div></div>
+    </div>
+
+    ${ideaSection}
+    ${wishlistSection}
+  </div>
+
+  <div class="doc-actions">
+    <button class="doc-print-btn" onclick="window.print()">Print / Simpan sebagai PDF</button>
+  </div>
+  <div class="doc-footer">Diekspor otomatis dari aplikasi Ideku</div>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `ideku-laporan-${date}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Dokumen berhasil diekspor");
 }
 
 // ── Import ──
