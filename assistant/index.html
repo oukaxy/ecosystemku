@@ -1199,14 +1199,18 @@
       return null;
     }
 
+    const safe = (fn) => {
+      try { return fn(); } catch (e) { console.warn('[Context] safe() error:', e); return Promise.resolve(null); }
+    };
+
     const [nameRes, habitsRes, todosRes, ideasRes, financesRes, journalRes] =
       await Promise.allSettled([
-        EcosystemDB.kv.kronik.get('profile_name'),
-        EcosystemDB.habits.getAll(),
-        EcosystemDB.todos.getAll(),
-        EcosystemDB.ideas.getAll(),
-        EcosystemDB.kv.finances.get('db'),
-        EcosystemDB.journal.getAll(),
+        safe(() => EcosystemDB.kv?.get?.('profile_name')),
+        safe(() => EcosystemDB.habits?.getAll?.()),
+        safe(() => EcosystemDB.todos?.getAll?.()),
+        safe(() => EcosystemDB.ideas?.getAll?.()),
+        safe(() => EcosystemDB.kv?.finances?.get?.('db')),
+        safe(() => EcosystemDB.journal?.getAll?.()),
       ]);
 
     const val = (res) => res.status === 'fulfilled' ? res.value : null;
@@ -2656,7 +2660,7 @@
     let name = null;
     try {
       if (typeof EcosystemDB !== 'undefined') {
-        name = await EcosystemDB.kv.kronik.get('profile_name');
+        name = await EcosystemDB.kv?.get?.('profile_name');
       }
     } catch (_) {}
 
