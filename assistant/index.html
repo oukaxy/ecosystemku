@@ -2843,6 +2843,52 @@
     });
   }
 
+  // Local finance bridge: deterministic command + explicit confirmation before writing.
+  async function handleFinanceCommand(text) {
+    const lead = text.match(/^\s*catat\s+(pengeluaran|pemasukan)\s+([\d.,]+)(.*)$/i);
+    if (!lead) return false;
+    const direction = lead[1].toLowerCase() === 'pemasukan' ? 'in' : 'out';
+    const amountText = lead[2].replace(/[.,](?=\d{3}(?:\D|$))/g, '').replace(',', '.');
+    const amount = Number(amountText);
+    const fields = {};
+    for (const part of lead[3].split('|')) {
+      const m = part.trim().match(/^(buku|akun|kategori|catatan|tanggal)\s*:\s*(.+)$/i);
+      if (m) fields[m[1].toLowerCase()] = m[2].trim();
+    }
+    if (!Number.isFinite(amount) || amount <= 0 || !fields.buku || !fields.akun || !fields.kategori) {
+      appendMessage('assistant', 'Format catat transaksi belum lengkap. Pakai: `catat pengeluaran 25000 | buku: Personal | akun: Dompet | kategori: Makanan | catatan: makan siang | tanggal: 2026-09-27`. Untuk pemasukan, ganti “pengeluaran” menjadi “pemasukan”.');
+      return true;
+    }
+    try {
+      await EcosystemDB.open();
+      const data = await EcosystemDB.kv.finances.get('db');
+      if (!data || !Array.isArray(data.transactions)) throw new Error('Data CuciMoney+ belum ditemukan di database bersama.');
+      const book = data.books?.find(x => String(x.name).toLowerCase() === fields.buku.toLowerCase());
+      if (!book) throw new Error(`Buku “${fields.buku}” tidak ditemukan. Nama buku harus sama persis.`);
+      const account = data.accounts?.find(x => String(x.name).toLowerCase() === fields.akun.toLowerCase() && (book.accountIds || []).some(id => String(id) === String(x.id)));
+      if (!account) throw new Error(`Akun “${fields.akun}” tidak ditemukan di buku “${book.name}”.`);
+      const category = data.categories?.find(x => String(x.name).toLowerCase() === fields.kategori.toLowerCase() && (x.type === 'both' || x.type === (direction === 'in' ? 'income' : 'expense')));
+      if (!category) throw new Error(`Kategori “${fields.kategori}” tidak ditemukan atau tidak cocok dengan jenis transaksi.`);
+      const date = fields.tanggal || new Date().toLocaleDateString('en-CA');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + 'T00:00:00'))) throw new Error('Tanggal harus berformat YYYY-MM-DD.');
+      const title = fields.catatan || category.name;
+      const pretty = amount.toLocaleString('id-ID');
+      const confirmText = `Simpan transaksi ini ke CuciMoney+?\n\n${direction === 'in' ? 'Pemasukan' : 'Pengeluaran'}: Rp ${pretty}\nBuku: ${book.name}\nAkun: ${account.name}\nKategori: ${category.name}\nCatatan: ${title}\nTanggal: ${date}`;
+      if (!window.confirm(confirmText)) {
+        appendMessage('assistant', 'Oke, transaksi dibatalkan. Belum ada perubahan di CuciMoney+.');
+        return true;
+      }
+      const trx = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), bookId: book.id, title, amount, direction, category_id: category.id, account_id: account.id, date, member_id: data.members?.[0]?.id || 'm1', createdAt: Date.now() };
+      data.transactions.unshift(trx);
+      account.balance = Number(account.balance || 0) + (direction === 'in' ? amount : -amount);
+      await EcosystemDB.kv.finances.set('db', data);
+      appendMessage('assistant', `Transaksi tersimpan di CuciMoney+ ✓\n${direction === 'in' ? 'Pemasukan' : 'Pengeluaran'} Rp ${pretty} · ${title}\n${book.name} / ${account.name} · ${date}`);
+    } catch (err) {
+      appendMessage('assistant', `Belum bisa menyimpan transaksi: ${err.message || 'terjadi kesalahan'}`);
+    }
+    return true;
+  }
+
   async function handleSend() {
     const text = msgInput.value.trim();
     if (!text || isThinking) return;
@@ -2851,6 +2897,7 @@
     msgInput.style.height = 'auto';
     appendMessage('user', text);
     chatHistory.push({ role: 'user', content: text });
+    if (await handleFinanceCommand(text)) return;
     await sendToAPI();
   }
 
