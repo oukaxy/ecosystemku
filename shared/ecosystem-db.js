@@ -81,6 +81,12 @@ const EcosystemDB = (() => {
       req.onsuccess  = (e) => { _db = e.target.result; resolve(_db); };
       req.onerror    = (e) => reject(e.target.error);
       req.onblocked  = ()  => reject(new Error('ecosystem_db blocked — tutup tab lain dulu'));
+
+      // Kalau tab lain meminta upgrade versi, lepas koneksi ini agar tidak blocked
+      req.onversionchange = (e) => {
+        _db = null;
+        e.target.close();
+      };
     });
   }
 
@@ -95,6 +101,8 @@ const EcosystemDB = (() => {
       const req = tx.objectStore(storeName).getAll();
       req.onsuccess = (e) => resolve(e.target.result || []);
       req.onerror   = (e) => reject(e.target.error);
+      tx.onerror    = (e) => reject(e.target.error);
+      tx.onabort    = (e) => reject(e.target.error);
     }));
   }
 
@@ -105,6 +113,8 @@ const EcosystemDB = (() => {
       const req = tx.objectStore(storeName).get(key);
       req.onsuccess = (e) => resolve(e.target.result ?? null);
       req.onerror   = (e) => reject(e.target.error);
+      tx.onerror    = (e) => reject(e.target.error);
+      tx.onabort    = (e) => reject(e.target.error);
     }));
   }
 
@@ -127,8 +137,10 @@ const EcosystemDB = (() => {
     return open().then(db => new Promise((resolve, reject) => {
       const tx  = db.transaction(storeName, 'readwrite');
       const req = tx.objectStore(storeName).delete(key);
-      req.onsuccess = () => resolve();
       req.onerror   = (e) => reject(e.target.error);
+      tx.oncomplete = () => resolve();   // tunggu transaction benar-benar commit
+      tx.onerror    = (e) => reject(e.target.error);
+      tx.onabort    = (e) => reject(e.target.error);
     }));
   }
 
@@ -289,6 +301,42 @@ const EcosystemDB = (() => {
     };
   }
 
+  /* ═══════════════════════════════════════════════════════════════
+     BACKUP / RESTORE LINTAS APP
+     Export semua object store sekaligus ke satu objek JSON —
+     berguna untuk backup seluruh ekosistem atau pindah perangkat.
+  ═══════════════════════════════════════════════════════════════ */
+
+  const ALL_STORES = ['ideas', 'habits', 'todos', 'journal_entries', 'kv'];
+
+  /**
+   * Export seluruh isi DB.
+   * @returns {Promise<Object>} payload — simpan sebagai JSON untuk backup
+   */
+  async function exportAll() {
+    const payload = { _app: 'ecosystemku', _version: DB_VERSION, _exportedAt: new Date().toISOString() };
+    for (const store of ALL_STORES) {
+      payload[store] = await getAll(store);
+    }
+    return payload;
+  }
+
+  /**
+   * Restore dari payload exportAll().
+   * @param {Object} payload  hasil exportAll()
+   * @param {boolean} merge   true = gabung dengan data ada, false = bersihkan dulu (default)
+   */
+  async function importAll(payload, merge = false) {
+    if (!payload || payload._app !== 'ecosystemku') {
+      throw new Error('Payload backup ecosystemku tidak valid');
+    }
+    for (const store of ALL_STORES) {
+      const records = payload[store];
+      if (!Array.isArray(records)) continue;
+      await putAll(store, records, !merge);
+    }
+  }
+
   /* ── Public API ─────────────────────────────────────────────── */
   return {
     open,
@@ -303,6 +351,10 @@ const EcosystemDB = (() => {
     /* Cross-app helpers */
     getIdeasInProgress,
     getDailyOsData,
+
+    /* Backup / restore lintas app */
+    exportAll,
+    importAll,
 
     /* Generic (kalau perlu langsung) */
     getAll,
