@@ -1,8 +1,8 @@
 {
   "id": "/assistant/",
-  "name": "Liro Assistant",
-  "short_name": "Liro",
-  "description": "Asisten virtual pribadi dengan Live2D — ngobrol, produktivitas, dan ekosistem app kamu.",
+  "name": "Rem Assistant",
+  "short_name": "Rem",
+  "description": "Rem — asisten virtual pribadi dengan Live2D untuk ngobrol, produktivitas, dan ekosistem app kamu.",
   "lang": "id",
   "start_url": "/assistant/",
   "scope": "/assistant/",
@@ -10,7 +10,10 @@
   "orientation": "portrait",
   "background_color": "#080c12",
   "theme_color": "#080c12",
-  "categories": ["productivity", "utilities"],
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "icon-192.png",

@@ -7,9 +7,9 @@
 <link rel="manifest" href="./manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Liro">
+<meta name="apple-mobile-web-app-title" content="Rem">
 <link rel="apple-touch-icon" href="./icon-192.png">
-<title>Liro Assistant</title>
+<title>Rem Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -1032,20 +1032,12 @@
       <div class="idle-bubble-inner"></div>
     </div>
 
-    <!-- Character selector -->
-    <div id="char-selector">
-      <button class="char-btn active" data-char="liro" data-name="Liro" title="Liro">
-        <span class="char-initial">L</span>
-      </button>
-      <button class="char-btn" data-char="rem" data-name="Rem" title="Rem">
-        <span class="char-initial">R</span>
-      </button>
-    </div>
+    <!-- Rem adalah satu-satunya karakter assistant -->
 
     <!-- Name tag -->
     <div id="model-tag">
       <span class="dot"></span>
-      <span class="name">Liro</span>
+      <span class="name">Rem</span>
       <span class="status">· idle</span>
     </div>
   </div>
@@ -1153,7 +1145,7 @@
 
 <script>
 /* ================================================================
-   LIVE2D ASSISTANT — MULTI CHARACTER SYSTEM
+   LIVE2D ASSISTANT — REM
    ================================================================ */
 
 (async () => {
@@ -1163,8 +1155,8 @@
   const DEBUG      = false;
 
   /* ── Character registry ──────────────────────────────────────── */
-  // Daftar karakter yang tersedia — sesuaikan kalau tambah karakter baru
-  const CHARACTERS = ['liro', 'rem'];
+  // Rem adalah satu-satunya karakter yang tersedia.
+  const CHARACTERS = ['rem'];
 
   // Cache config per karakter
   const charConfigCache = {};
@@ -1184,7 +1176,8 @@
   }
 
   // Karakter aktif saat ini
-  let currentCharId = localStorage.getItem('assistant_char') || 'liro';
+  let currentCharId = 'rem';
+  localStorage.setItem('assistant_char', 'rem');
   let currentChar   = null;   // config object yang sudah di-load
 
   /* ── Ecosystem context loader ────────────────────────────────── */
@@ -1530,7 +1523,10 @@
   let analyser      = null;
   let fftBuf        = null;
   let isSpeaking    = false;
-  let isMuted       = localStorage.getItem('liro_muted') === 'true';
+  const MUTE_STORAGE_KEY = 'rem_muted';
+  // Migrasi preferensi mute lama agar pengaturan pengguna tetap terjaga.
+  const savedMute = localStorage.getItem(MUTE_STORAGE_KEY) ?? localStorage.getItem('liro_muted');
+  let isMuted       = savedMute === 'true';
   let currentSource = null;
 
   /* ── PixiJS App ─────────────────────────────────────────────── */
@@ -1880,7 +1876,7 @@
   const idleBubbleEl    = document.getElementById('idle-bubble');
   const idleBubbleInner = idleBubbleEl.querySelector('.idle-bubble-inner');
 
-  const AUDIO_BASE_DEFAULT = './characters/liro/audio/';
+  const AUDIO_BASE_DEFAULT = './characters/rem/audio/';
 
   // Bubble texts per zona — Liro
   const BUBBLE_IDLE_LIRO = [
@@ -2539,7 +2535,7 @@
   };
 
   function renderExprBar(charId) {
-    const pills = EXPR_CONFIG[charId] || EXPR_CONFIG['liro'];
+    const pills = EXPR_CONFIG[charId] || EXPR_CONFIG['rem'];
     exprBar.innerHTML = pills.map(p =>
       `<button class="expr-pill${p.expr === 'none' ? ' active' : ''}" data-expr="${p.expr}">${p.emoji} ${p.label}</button>`
     ).join('');
@@ -2827,7 +2823,7 @@
 
     muteBtn.addEventListener('click', () => {
       isMuted = !isMuted;
-      localStorage.setItem('liro_muted', isMuted);
+      localStorage.setItem(MUTE_STORAGE_KEY, isMuted);
       muteBtn.textContent = isMuted ? '🔇' : '🔊';
       muteBtn.classList.toggle('muted', isMuted);
       muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara';
@@ -3052,9 +3048,9 @@
   ================================================================ */
   currentChar = await loadCharConfig(currentCharId);
   if (!currentChar) {
-    // Fallback ke liro kalau config gagal load
-    currentCharId = 'liro';
-    currentChar   = await loadCharConfig('liro');
+    // Rem adalah satu-satunya karakter assistant
+    currentCharId = 'rem';
+    currentChar   = await loadCharConfig('rem');
   }
 
   updateCharBtns(currentCharId);
