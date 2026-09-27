@@ -803,7 +803,7 @@
             margin-bottom: 0.6rem;
         }
         .cat-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr);
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 0.5rem;
         }
         .cat-grid-item {
@@ -813,6 +813,7 @@
             padding: 0.6rem 0.3rem;
             display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
             cursor: pointer; transition: 0.2s;
+            min-width: 0;
         }
         .cat-grid-item:active { background: var(--bg-hover); }
         .cat-grid-item.selected-out { border-color: var(--expense); background: var(--expense-dim); }
@@ -6147,8 +6148,13 @@ function resetTrxForm() {
 
 function setTrxType(type) {
     state.trxType = type;
-    // Jangan reset kategori saat sedang edit transaksi (kategori sudah di-set oleh editTransaction)
-    if (!state.editingTrxId) {
+    // Reset kategori jika tidak cocok dengan tipe baru. Saat edit, kategori
+    // dari editTransaction tetap dipakai selama masih cocok dengan tipe ini.
+    const curCat = getCategory(state.trxCategoryId);
+    const catOk = curCat && (curCat.type === 'both' ||
+        (type === 'in' && curCat.type === 'income') ||
+        (type === 'out' && curCat.type === 'expense'));
+    if (!catOk) {
         state.trxCategoryId = null;
     }
     
@@ -7323,7 +7329,14 @@ function saveTrxFromKeyboard() {
     }
     // Use category name as default title if user left the note empty
     const cat = getCategory(catId);
-    const desc = (state.trxDesc || '').trim() || (cat?.name || 'Transaksi');
+    let desc = (state.trxDesc || '').trim();
+    if (state.editingTrxId && desc) {
+        // Saat edit: jika judul lama adalah judul-otomatis dari kategori lama,
+        // ikuti kategori baru agar label & ikon konsisten setelah edit
+        const oldCat = getCategory(getTransaction(state.editingTrxId)?.category_id);
+        if (oldCat && desc === oldCat.name) desc = '';
+    }
+    if (!desc) desc = cat?.name || 'Transaksi';
 
     const newTrx = {
         id: state.editingTrxId || generateId(),
