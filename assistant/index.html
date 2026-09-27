@@ -2233,28 +2233,28 @@
     PARAM_EYE_R_SMILE:    { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
     PARAM_EYE_L_SMILE:    { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
     PARAM_EYE_FORM:       { current: 0, target: 0, fadeIn: 0.05, fadeOut: 0.04 },
-    PARAM_CHEEK_01:       { current: 1, target: 1, fadeIn: 0.04, fadeOut: 0.03 },
+    PARAM_CHEEK_01:       { current: 0, target: 0, fadeIn: 0.04, fadeOut: 0.03 },
     PARAM_TEAR_01:        { current: 0, target: 0, fadeIn: 0.03, fadeOut: 0.02 },
   };
 
   // Mapping ekspresi → nilai target — dari data motion3.json asli
   const REM_FACE_MAP = {
-    none:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    happy:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    smile:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  1,    PARAM_BROW_L_FORM:  1,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    appeal:  { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  1,    PARAM_EYE_L_SMILE:  1,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    proud:   { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    shame:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    none:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    happy:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    smile:   { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  1,    PARAM_BROW_L_FORM:  1,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    appeal:  { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  1,    PARAM_EYE_L_SMILE:  1,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    proud:   { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    shame:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
     sad:     { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE: -1,    PARAM_EYE_L_SMILE: -1,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
     cry:     { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE: -1,    PARAM_EYE_L_SMILE: -1,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 1 },
-    angry:   { PARAM_MOUTH_FORM_01: -1,    PARAM_BROW_R_FORM: -1,    PARAM_BROW_L_FORM: -1,    PARAM_EYE_R_SMILE: -0.7,  PARAM_EYE_L_SMILE: -0.7,  PARAM_EYE_FORM: -0.6, PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    upset:   { PARAM_MOUTH_FORM_01: -2,    PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE: -0.5,  PARAM_EYE_L_SMILE: -0.5,  PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    serious: { PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM: -1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    surprise:{ PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.7,  PARAM_BROW_L_FORM: -0.7,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    doubt:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    puzzle:  { PARAM_MOUTH_FORM_01: -0.5,  PARAM_BROW_R_FORM: -0.6,  PARAM_BROW_L_FORM: -0.6,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    navi:    { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0.8,  PARAM_BROW_L_FORM:  0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
-    idle:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 1,   PARAM_TEAR_01: 0 },
+    angry:   { PARAM_MOUTH_FORM_01: -1,    PARAM_BROW_R_FORM: -1,    PARAM_BROW_L_FORM: -1,    PARAM_EYE_R_SMILE: -0.7,  PARAM_EYE_L_SMILE: -0.7,  PARAM_EYE_FORM: -0.6, PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    upset:   { PARAM_MOUTH_FORM_01: -2,    PARAM_BROW_R_FORM: -0.8,  PARAM_BROW_L_FORM: -0.8,  PARAM_EYE_R_SMILE: -0.5,  PARAM_EYE_L_SMILE: -0.5,  PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    serious: { PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM: -1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    surprise:{ PARAM_MOUTH_FORM_01: -0.6,  PARAM_BROW_R_FORM: -0.7,  PARAM_BROW_L_FORM: -0.7,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    doubt:   { PARAM_MOUTH_FORM_01: -0.8,  PARAM_BROW_R_FORM: -0.5,  PARAM_BROW_L_FORM: -0.5,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    puzzle:  { PARAM_MOUTH_FORM_01: -0.5,  PARAM_BROW_R_FORM: -0.6,  PARAM_BROW_L_FORM: -0.6,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  1,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    navi:    { PARAM_MOUTH_FORM_01:  1,    PARAM_BROW_R_FORM:  0.8,  PARAM_BROW_L_FORM:  0.8,  PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
+    idle:    { PARAM_MOUTH_FORM_01:  0,    PARAM_BROW_R_FORM:  0,    PARAM_BROW_L_FORM:  0,    PARAM_EYE_R_SMILE:  0,    PARAM_EYE_L_SMILE:  0,    PARAM_EYE_FORM:  0,   PARAM_CHEEK_01: 0,   PARAM_TEAR_01: 0 },
   };
 
   function setRemFace(exprName) {
@@ -2283,10 +2283,12 @@
 
     // Rem — smooth fade via remFaceParams
     for (const [paramId, s] of Object.entries(remFaceParams)) {
-      if (s.current === s.target) continue;
-      const speed = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
-      s.current += (s.target - s.current) * speed;
-      if (Math.abs(s.current - s.target) < 0.001) s.current = s.target;
+      if (s.current !== s.target) {
+        const speed = Math.abs(s.target) > Math.abs(s.current) ? s.fadeIn : s.fadeOut;
+        s.current += (s.target - s.current) * speed;
+        if (Math.abs(s.current - s.target) < 0.001) s.current = s.target;
+      }
+      // Re-apply every frame after the motion engine so facial expression owns these params.
       setCoreParam(paramId, s.current);
     }
   }
