@@ -1224,26 +1224,30 @@
 
     const lines = [];
 
+    /* ── Profil ───────────────────────────────────────────── */
     if (userName) lines.push(`Nama pengguna: ${userName}`);
 
+    /* ── Habits ───────────────────────────────────────────── */
     const activeHabits = habits.filter(h => !h.archived && !h.deleted);
     if (activeHabits.length) {
       const list = activeHabits.slice(0, 10).map(h => h.name || h.title || '?').join(', ');
       lines.push(`Habit aktif (${activeHabits.length}): ${list}`);
     }
 
+    /* ── Todos ────────────────────────────────────────────── */
     const openTodos = todos.filter(t => !t.done && !t.completed && !t.deleted);
     if (openTodos.length) {
       const list = openTodos.slice(0, 8).map(t => t.text || t.title || '?').join(', ');
       lines.push(`Todo belum selesai (${openTodos.length}): ${list}`);
     }
 
+    /* ── Ide & Wishlist ───────────────────────────────────── */
     const allIdeas    = ideas.filter(i => i.type === 'Idea' || (!i.type && i.status));
     const allWishlist = ideas.filter(i => i.type === 'Wishlist');
 
     if (allIdeas.length) {
-      const belum = allIdeas.filter(i => i.status === 'Belum').length;
-      const proses = allIdeas.filter(i => i.status === 'Proses').length;
+      const belum   = allIdeas.filter(i => i.status === 'Belum').length;
+      const proses  = allIdeas.filter(i => i.status === 'Proses').length;
       const selesai = allIdeas.filter(i => i.status === 'Selesai').length;
       const activeList = allIdeas.filter(i => i.status === 'Proses').slice(0, 5)
         .map(i => `"${i.title || i.name || '?'}"`).join(', ');
@@ -1253,8 +1257,8 @@
     }
 
     if (allWishlist.length) {
-      const belum = allWishlist.filter(i => i.status === 'Belum').length;
-      const proses = allWishlist.filter(i => i.status === 'Proses').length;
+      const belum   = allWishlist.filter(i => i.status === 'Belum').length;
+      const proses  = allWishlist.filter(i => i.status === 'Proses').length;
       const selesai = allWishlist.filter(i => i.status === 'Selesai').length;
       const wishList = allWishlist.filter(i => i.status !== 'Selesai').slice(0, 10)
         .map(i => {
@@ -1267,50 +1271,146 @@
       lines.push(wishLine);
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       FINANCE — FIXED
+       ─────────────────────────────────────────────────────────
+       Bug sebelumnya:
+         1. Transfer pair (2 record per transfer) ikut dihitung
+            sebagai income DAN expense → double count.
+         2. Fallback `t.amount > 0` bikin expense kehitung income
+            (CuciMoney+ selalu simpan amount POSITIF).
+         3. `new Date("YYYY-MM-DD")` di-parse UTC → geser 1 hari
+            di WIB, transaksi tanggal 1 bisa bocor ke bulan lalu.
+       Solusi:
+         • Skip semua record dengan `transferPair`.
+         • Deteksi income/expense EKSKLUSIF dari field `direction`.
+         • Parse tanggal sebagai LOCAL date (split manual).
+    ═══════════════════════════════════════════════════════════ */
     if (finances) {
       try {
-        const fmt = (n) => 'Rp ' + n.toLocaleString('id-ID');
-        const db  = finances;
-        const txs = Array.isArray(db) ? db : Array.isArray(db.transactions) ? db.transactions : null;
-        if (txs && txs.length) {
-          const now = new Date();
-          const month = now.getMonth(), year = now.getFullYear();
-          const thisMo = txs.filter(t => {
-            const d = new Date(t.date || t.createdAt || 0);
-            return d.getMonth() === month && d.getFullYear() === year;
+        const fmt = (n) => 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+
+        // Normalisasi struktur — finances bisa berupa:
+        //   • array transaksi langsung
+        //   • { transactions, accounts, ... }
+        //   • { db: { transactions, accounts, ... } }
+        const fin = finances;
+        const rawTx = Array.isArray(fin)
+          ? fin
+          : Array.isArray(fin?.transactions)
+            ? fin.transactions
+            : Array.isArray(fin?.db?.transactions)
+              ? fin.db.transactions
+              : null;
+
+        const rawAcc = Array.isArray(fin?.accounts)
+          ? fin.accounts
+          : Array.isArray(fin?.db?.accounts)
+            ? fin.db.accounts
+            : null;
+
+        /* ── Helper: parse tanggal aman (local date) ── */
+        const parseLocalDate = (t) => {
+          const raw = t?.date || t?.tanggal || t?.createdAt || t?.timestamp || null;
+          if (!raw) return null;
+          // String "YYYY-MM-DD" → parse sebagai local date biar tidak geser timezone
+          if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(raw)) {
+            const [y, m, d] = raw.slice(0, 10).split('-').map(Number);
+            if (!y || !m || !d) return null;
+            return new Date(y, m - 1, d);
+          }
+          const dt = new Date(raw);
+          return isNaN(dt.getTime()) ? null : dt;
+        };
+
+        /* ── Klasifikasi eksklusif ── */
+        const isTransfer = (t) => !!t.transferPair;
+        const isIncome   = (t) => t.direction === 'in';
+        const isExpense  = (t) => t.direction === 'out';
+
+        if (rawTx && rawTx.length) {
+          const nonTransfer = rawTx.filter(t => !isTransfer(t));
+
+          const now   = new Date();
+          const month = now.getMonth();
+          const year  = now.getFullYear();
+
+          // Transaksi bulan ini (non-transfer)
+          const thisMo = nonTransfer.filter(t => {
+            const d = parseLocalDate(t);
+            return d && d.getMonth() === month && d.getFullYear() === year;
           });
-          const moIncome  = thisMo.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const moExpense = thisMo.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const allIncome  = txs.filter(t => t.direction === 'in'  || t.type === 'income'  || t.amount > 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          const allExpense = txs.filter(t => t.direction === 'out' || t.type === 'expense' || t.amount < 0).reduce((s, t) => s + Math.abs(t.amount || 0), 0);
-          lines.push(`Keuangan bulan ini: pemasukan ${fmt(moIncome)}, pengeluaran ${fmt(moExpense)} (total ${txs.length} transaksi, pemasukan ${fmt(allIncome)}, pengeluaran ${fmt(allExpense)})`);
-        }
-        const accounts = Array.isArray(db.accounts) ? db.accounts : null;
-        if (accounts && accounts.length) {
-          const aktif = accounts.filter(a => !a.deleted && !a.archived);
-          if (aktif.length) {
-            const totalAset   = aktif.filter(a => a.type !== 'debt' && a.type !== 'hutang').reduce((s, a) => s + (a.balance || 0), 0);
-            const totalHutang = aktif.filter(a => a.type === 'debt' || a.type === 'hutang').reduce((s, a) => s + (a.balance || 0), 0);
-            const asetBersih  = totalAset - totalHutang;
-            const aksList = aktif.filter(a => a.type !== 'debt' && a.type !== 'hutang').map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`).join(', ');
-            lines.push(`Akun keuangan: ${aksList}`);
-            lines.push(`Aset bersih: ${fmt(asetBersih)}${totalHutang > 0 ? ` (aset ${fmt(totalAset)}, hutang ${fmt(totalHutang)})` : ''}`);
+
+          const moIncome  = thisMo.filter(isIncome ).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+          const moExpense = thisMo.filter(isExpense).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+
+          const allIncome  = nonTransfer.filter(isIncome ).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+          const allExpense = nonTransfer.filter(isExpense).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
+
+          lines.push(
+            `Keuangan bulan ini: pemasukan ${fmt(moIncome)}, pengeluaran ${fmt(moExpense)} ` +
+            `(${thisMo.length} transaksi; all-time: pemasukan ${fmt(allIncome)}, pengeluaran ${fmt(allExpense)})`
+          );
+
+          // Info transfer bulan ini — cegah AI salah tafsir
+          const transferRecords = rawTx.filter(t => {
+            const d = parseLocalDate(t);
+            return d && d.getMonth() === month && d.getFullYear() === year && isTransfer(t);
+          });
+          if (transferRecords.length > 0) {
+            const transferCount = Math.round(transferRecords.length / 2); // 2 record per transfer
+            lines.push(`Catatan: ada ${transferCount} transfer antar akun bulan ini (bukan pemasukan/pengeluaran, tidak dihitung)`);
           }
         }
-      } catch (_) {}
+
+        /* ── Akun & aset ── */
+        if (rawAcc && rawAcc.length) {
+          const aktif = rawAcc.filter(a => !a.deleted && !a.archived);
+          if (aktif.length) {
+            const isDebt = (a) => a.type === 'debt' || a.type === 'hutang' || a.type === 'credit';
+            const assets = aktif.filter(a => !isDebt(a));
+            const debts  = aktif.filter(a =>  isDebt(a));
+
+            const totalAset   = assets.reduce((s, a) => s + (Number(a.balance) || 0), 0);
+            const totalHutang = debts .reduce((s, a) => s + Math.abs(Number(a.balance) || 0), 0);
+            const asetBersih  = totalAset - totalHutang;
+
+            const aksList = assets
+              .map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`)
+              .join(', ');
+            if (aksList) lines.push(`Akun keuangan: ${aksList}`);
+
+            lines.push(
+              `Aset bersih: ${fmt(asetBersih)}` +
+              (totalHutang > 0 ? ` (aset ${fmt(totalAset)}, hutang ${fmt(totalHutang)})` : '')
+            );
+          }
+        }
+      } catch (err) {
+        console.warn('[Context] finance parse error:', err);
+      }
     }
 
+    /* ── Journal ──────────────────────────────────────────── */
     if (journals.length) {
-      const sorted = [...journals].sort((a, b) => (b.date || b.id || 0) > (a.date || a.id || 0) ? 1 : -1);
+      const sorted = [...journals].sort((a, b) =>
+        (b.date || b.id || 0) > (a.date || a.id || 0) ? 1 : -1
+      );
       const list = sorted.slice(0, 3).map(j => {
-        const date    = j.date ? new Date(j.date).toLocaleDateString('id-ID', { day:'numeric', month:'short' }) : '?';
+        const date    = j.date
+          ? new Date(j.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+          : '?';
         const snippet = (j.content || j.text || '').slice(0, 60).replace(/\n/g, ' ');
         return `[${date}] "${snippet}${snippet.length >= 60 ? '…' : ''}"`;
       }).join(' | ');
       lines.push(`Jurnal terbaru: ${list}`);
     }
 
-    if (!lines.length) { _ecoCache = null; _ecoCacheAt = Date.now(); return null; }
+    if (!lines.length) {
+      _ecoCache   = null;
+      _ecoCacheAt = Date.now();
+      return null;
+    }
 
     _ecoCache   = { userName, summary: lines.join('\n') };
     _ecoCacheAt = Date.now();
@@ -2749,7 +2849,7 @@
       let finalSystemPrompt = basePrompt;
       if (ecosystemCtx?.summary) {
         const greeting = ecosystemCtx.userName ? `Nama pengguna adalah ${ecosystemCtx.userName}.` : '';
-        finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan.`;
+        finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan. Angka yang tertera adalah data AKURAT — jangan menghitung ulang atau menambah dari ingatan.`;
       }
 
       // Trim history — kirim max 10 pesan terakhir biar hemat token
