@@ -1,8 +1,8 @@
 // ============================================
-// CuciMoney+ — Service Worker v7
+// CuciMoney+ — Service Worker v8
 // ============================================
 
-const CACHE_NAME = 'cucimoney-v7';
+const CACHE_NAME = 'cucimoney-v8';
 const ASSETS = [
   './index.html',
   './manifest.json',

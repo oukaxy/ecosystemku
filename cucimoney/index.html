@@ -6256,10 +6256,8 @@ function renderWalletModalList() {
     // Hanya tampilkan akun yang terdaftar di buku aktif
     const currentBook = db.books.find(b => b.id === state.currentBookId);
     const bookAccIds = currentBook?.accountIds || [];
-    // Untuk transfer, tampilkan semua akun (termasuk akun baru yang belum masuk buku)
-    const bookAccounts = state.trxType === 'transfer'
-        ? db.accounts
-        : db.accounts.filter(a => bookAccIds.includes(a.id));
+    // Selalu tampilkan hanya akun yang terdaftar di buku aktif (termasuk untuk transfer)
+    const bookAccounts = db.accounts.filter(a => bookAccIds.includes(a.id));
 
     const activeId = state.accPickerTarget === 'to' ? state.trxToAccountId : state.trxAccountId;
 
@@ -6467,12 +6465,10 @@ function openAccountPicker(target) {
     const title = target === 'to' ? 'Akun Tujuan' : 'Pilih Akun';
     document.getElementById('acc-picker-title').textContent = title;
     let html = '';
-    // Filter accounts by current book (for transfer show all)
+    // Filter akun: hanya yang terdaftar di buku aktif (termasuk untuk transfer)
     const currentBook = db.books.find(b => b.id === state.currentBookId);
     const bookAccIds = currentBook?.accountIds || [];
-    const accounts = state.trxType === 'transfer'
-        ? db.accounts
-        : db.accounts.filter(a => bookAccIds.includes(a.id));
+    const accounts = db.accounts.filter(a => bookAccIds.includes(a.id));
     accounts.forEach(a => {
         const active = target === 'from' ? a.id == state.trxAccountId : a.id == state.trxToAccountId;
         html += `<div class="account-picker-item ${active ? 'selected' : ''}" onclick="selectAccountPicker('${a.id}')">
