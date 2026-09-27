@@ -1328,62 +1328,83 @@
         const isIncome   = (t) => t.direction === 'in';
         const isExpense  = (t) => t.direction === 'out';
 
+        const rawBooks = Array.isArray(fin?.books)
+          ? fin.books
+          : Array.isArray(fin?.db?.books)
+            ? fin.db.books
+            : [];
+
         if (rawTx && rawTx.length) {
           const nonTransfer = rawTx.filter(t => !isTransfer(t));
-
-          const now   = new Date();
+          const now = new Date();
           const month = now.getMonth();
-          const year  = now.getFullYear();
+          const year = now.getFullYear();
 
-          // Transaksi bulan ini (non-transfer)
-          const thisMo = nonTransfer.filter(t => {
-            const d = parseLocalDate(t);
-            return d && d.getMonth() === month && d.getFullYear() === year;
-          });
+          const summarizeBook = (book, txs) => {
+            const thisMo = txs.filter(t => {
+              const d = parseLocalDate(t);
+              return d && d.getMonth() === month && d.getFullYear() === year;
+            });
+            const sum = (items, predicate) => items.filter(predicate)
+              .reduce((total, t) => total + Math.abs(Number(t.amount) || 0), 0);
+            return {
+              moIncome: sum(thisMo, isIncome),
+              moExpense: sum(thisMo, isExpense),
+              allIncome: sum(txs, isIncome),
+              allExpense: sum(txs, isExpense),
+              txCount: thisMo.length,
+              transferCount: Math.round(rawTx.filter(t =>
+                String(t.bookId) === String(book.id) && isTransfer(t) && (() => {
+                  const d = parseLocalDate(t);
+                  return d && d.getMonth() === month && d.getFullYear() === year;
+                })()
+              ).length / 2)
+            };
+          };
 
-          const moIncome  = thisMo.filter(isIncome ).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
-          const moExpense = thisMo.filter(isExpense).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
-
-          const allIncome  = nonTransfer.filter(isIncome ).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
-          const allExpense = nonTransfer.filter(isExpense).reduce((s, t) => s + Math.abs(Number(t.amount) || 0), 0);
-
-          lines.push(
-            `Keuangan bulan ini: pemasukan ${fmt(moIncome)}, pengeluaran ${fmt(moExpense)} ` +
-            `(${thisMo.length} transaksi; all-time: pemasukan ${fmt(allIncome)}, pengeluaran ${fmt(allExpense)})`
-          );
-
-          // Info transfer bulan ini — cegah AI salah tafsir
-          const transferRecords = rawTx.filter(t => {
-            const d = parseLocalDate(t);
-            return d && d.getMonth() === month && d.getFullYear() === year && isTransfer(t);
-          });
-          if (transferRecords.length > 0) {
-            const transferCount = Math.round(transferRecords.length / 2); // 2 record per transfer
-            lines.push(`Catatan: ada ${transferCount} transfer antar akun bulan ini (bukan pemasukan/pengeluaran, tidak dihitung)`);
+          if (rawBooks.length) {
+            // Ringkasan selalu dipisahkan berdasarkan bookId; jangan agregasikan antar-buku.
+            rawBooks.forEach(book => {
+              const bookTx = nonTransfer.filter(t => String(t.bookId) === String(book.id));
+              const m = summarizeBook(book, bookTx);
+              lines.push(
+                `KEUANGAN BUKU "${book.name || `Buku ${book.id}`}" (bookId=${book.id}): ` +
+                `bulan ini pemasukan ${fmt(m.moIncome)}, pengeluaran ${fmt(m.moExpense)} ` +
+                `(${m.txCount} transaksi); sepanjang waktu pemasukan ${fmt(m.allIncome)}, ` +
+                `pengeluaran ${fmt(m.allExpense)}.`
+              );
+              if (m.transferCount > 0) {
+                lines.push(`Catatan buku "${book.name || book.id}": ${m.transferCount} transfer antar akun bulan ini tidak dihitung sebagai pemasukan/pengeluaran.`);
+              }
+            });
+          } else {
+            // Data lama tanpa daftar buku: tampilkan total hanya jika memang tidak ada bookId.
+            const legacyTx = nonTransfer.filter(t => t.bookId == null);
+            if (legacyTx.length) {
+              const m = summarizeBook({ id: 'legacy' }, legacyTx);
+              lines.push(`Keuangan (data lama tanpa buku): bulan ini pemasukan ${fmt(m.moIncome)}, pengeluaran ${fmt(m.moExpense)}; all-time pemasukan ${fmt(m.allIncome)}, pengeluaran ${fmt(m.allExpense)}.`);
+            }
           }
         }
 
-        /* ── Akun & aset ── */
+        /* ── Akun & aset per buku ── */
         if (rawAcc && rawAcc.length) {
-          const aktif = rawAcc.filter(a => !a.deleted && !a.archived);
-          if (aktif.length) {
-            const isDebt = (a) => a.type === 'debt' || a.type === 'hutang' || a.type === 'credit';
-            const assets = aktif.filter(a => !isDebt(a));
-            const debts  = aktif.filter(a =>  isDebt(a));
-
-            const totalAset   = assets.reduce((s, a) => s + (Number(a.balance) || 0), 0);
-            const totalHutang = debts .reduce((s, a) => s + Math.abs(Number(a.balance) || 0), 0);
-            const asetBersih  = totalAset - totalHutang;
-
-            const aksList = assets
-              .map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`)
-              .join(', ');
-            if (aksList) lines.push(`Akun keuangan: ${aksList}`);
-
-            lines.push(
-              `Aset bersih: ${fmt(asetBersih)}` +
-              (totalHutang > 0 ? ` (aset ${fmt(totalAset)}, hutang ${fmt(totalHutang)})` : '')
-            );
+          const rawBooksForAccounts = Array.isArray(fin?.books)
+            ? fin.books
+            : Array.isArray(fin?.db?.books) ? fin.db.books : [];
+          if (rawBooksForAccounts.length) {
+            rawBooksForAccounts.forEach(book => {
+              const accountIds = Array.isArray(book.accountIds) ? book.accountIds : [];
+              const aktif = rawAcc.filter(a => accountIds.some(id => String(id) === String(a.id)) && !a.deleted && !a.archived);
+              if (!aktif.length) return;
+              const isDebt = a => a.type === 'debt' || a.type === 'hutang' || a.type === 'credit';
+              const assets = aktif.filter(a => !isDebt(a));
+              const debts = aktif.filter(isDebt);
+              const totalAset = assets.reduce((sum, a) => sum + (Number(a.balance) || 0), 0);
+              const totalHutang = debts.reduce((sum, a) => sum + Math.abs(Number(a.balance) || 0), 0);
+              const names = assets.map(a => `${a.name || a.title || '?'} ${fmt(a.balance || 0)}`).join(', ');
+              lines.push(`Akun buku "${book.name || book.id}": ${names || 'tidak ada aset'}; aset bersih ${fmt(totalAset - totalHutang)}${totalHutang > 0 ? ` (aset ${fmt(totalAset)}, hutang ${fmt(totalHutang)})` : ''}.`);
+            });
           }
         }
       } catch (err) {
@@ -2849,7 +2870,7 @@
       let finalSystemPrompt = basePrompt;
       if (ecosystemCtx?.summary) {
         const greeting = ecosystemCtx.userName ? `Nama pengguna adalah ${ecosystemCtx.userName}.` : '';
-        finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan. Angka yang tertera adalah data AKURAT — jangan menghitung ulang atau menambah dari ingatan.`;
+        finalSystemPrompt += `\n\n---\nDATA PENGGUNA (dari ekosistem app):\n${greeting ? greeting + '\n' : ''}${ecosystemCtx.summary}\n\nGunakan data ini sebagai konteks percakapan bila relevan. Jangan sebutkan data ini secara eksplisit kecuali pengguna bertanya atau jelas relevan. Angka yang tertera adalah data AKURAT — jangan menghitung ulang atau menambah dari ingatan.\n\nATURAN PENTING KEUANGAN: Jika pengguna meminta ringkasan, total, analisis, atau informasi keuangan tetapi belum menyebut nama buku, tanyakan dulu buku mana yang dimaksud dan jangan berikan angka keuangan apa pun sebelum pengguna memilih. Jika nama buku sudah disebut, gunakan hanya bagian KEUANGAN BUKU dengan nama yang cocok persis; jangan pernah menggabungkan angka antar-buku. Jika nama buku tidak cocok atau ambigu, tanyakan klarifikasi. Jika pengguna sudah menyebut buku dan tujuan dengan jelas, jangan mengulang pertanyaan yang sudah terjawab.`;
       }
 
       // Trim history — kirim max 10 pesan terakhir biar hemat token
