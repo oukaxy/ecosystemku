@@ -4016,10 +4016,41 @@ function markSave() {
     _saveTimer = setTimeout(flushSave, 3000);
 }
 
-function flushSave() {
+async function flushSave() {
     if (!_savePending) return;
     _savePending = false;
-    idbSet('db', db).catch(e => console.warn('IDB save db:', e));
+    try {
+        // Tab lain (mis. Rem) bisa menulis ke DB bersama. Jangan sampai
+        // snapshot lama dari tab ini menimpa transaksi yang baru ditambahkan.
+        const latest = await idbGet('db');
+        let dbToSave = db;
+        if (latest && Array.isArray(latest.transactions) && Array.isArray(db.transactions)) {
+            const latestIds = new Set(latest.transactions.map(t => String(t.id)));
+            const localOnly = db.transactions.filter(t => !latestIds.has(String(t.id)));
+            dbToSave = { ...db, ...latest, transactions: [...localOnly, ...latest.transactions] };
+            // Pakai saldo terbaru dari DB bersama, lalu tambahkan efek transaksi
+            // lokal yang belum ada di sana agar tidak menggandakan transaksi Rem.
+            dbToSave.accounts = (latest.accounts || db.accounts || []).map(latestAccount => {
+                const localAccount = (db.accounts || []).find(a => String(a.id) === String(latestAccount.id));
+                const delta = localOnly.reduce((sum, t) => {
+                    if (String(t.account_id) !== String(latestAccount.id)) return sum;
+                    const amount = Number(t.amount) || 0;
+                    return sum + (t.direction === 'in' ? amount : -amount);
+                }, 0);
+                return { ...(localAccount || {}), ...latestAccount, balance: Number(latestAccount.balance || 0) + delta };
+            });
+            // Akun yang baru dibuat di tab lokal tetap dipertahankan.
+            for (const localAccount of (db.accounts || [])) {
+                if (!dbToSave.accounts.some(a => String(a.id) === String(localAccount.id))) dbToSave.accounts.push(localAccount);
+            }
+        }
+        await idbSet('db', dbToSave);
+        // Keep local memory aligned with merged shared data.
+        db = dbToSave;
+    } catch (e) {
+        console.warn('IDB save db:', e);
+        _savePending = true;
+    }
     idbSet('budgets', budgets).catch(e => console.warn('IDB save budgets:', e));
     idbSet('masterBudgets', masterBudgets).catch(e => console.warn('IDB save masterBudgets:', e));
     // Simpan preferensi UI yang harus persisten
