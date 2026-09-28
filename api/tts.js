@@ -4,6 +4,10 @@ const TTS_MODEL = 's2.1-pro-free';
 const DEFAULT_VOICE_ID = 'eb79df9571014449b42bcd869f86fe0a';
 const MAX_CHARS = 500;
 
+// Translator (Indonesia -> Jepang) via Sumopod
+const SUMOPOD_API_URL = 'https://ai.sumopod.com/v1/chat/completions';
+const SUMOPOD_MODEL = 'glm-5.3-flash';
+
 function cleanText(raw) {
   return raw
     .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -24,12 +28,59 @@ function truncate(text, max) {
     cut.lastIndexOf('.'),
     cut.lastIndexOf('?'),
     cut.lastIndexOf('!'),
-    cut.lastIndexOf(',')
+    cut.lastIndexOf(','),
+    cut.lastIndexOf('。'),
+    cut.lastIndexOf('？'),
+    cut.lastIndexOf('！'),
+    cut.lastIndexOf('、')
   );
 
   return lastPunct > max * 0.5
     ? cut.slice(0, lastPunct + 1)
     : cut + '…';
+}
+
+async function translateToJapanese(text) {
+  const key = process.env.SUMOPOD_API_KEY;
+  if (!key) return text;
+
+  try {
+    const r = await fetch(SUMOPOD_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: SUMOPOD_MODEL,
+        temperature: 0.3,
+        max_tokens: 400,
+        stream: false,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Kamu penerjemah untuk karakter anime Rem (maid yang sopan dan lembut). ' +
+              'Terjemahkan teks Indonesia dari user ke bahasa Jepang yang natural, ' +
+              'gaya sopan (desu/masu), memanggil lawan bicara "ご主人様". ' +
+              'Output HANYA terjemahan Jepang, tanpa romaji, tanpa penjelasan, tanpa tanda kutip.',
+          },
+          { role: 'user', content: text },
+        ],
+      }),
+    });
+
+    if (!r.ok) {
+      console.error('[tts] Translate error:', r.status);
+      return text; // fallback: pakai teks asli
+    }
+
+    const data = await r.json();
+    return data.choices?.[0]?.message?.content?.trim() || text;
+  } catch (err) {
+    console.error('[tts] Translate failed:', err);
+    return text; // fallback: pakai teks asli
+  }
 }
 
 export default async function handler(req, res) {
@@ -59,7 +110,9 @@ export default async function handler(req, res) {
     });
   }
 
-  const finalText = truncate(cleanText(text), MAX_CHARS);
+  const cleaned = cleanText(text);
+  const japanese = cleaned ? await translateToJapanese(cleaned) : '';
+  const finalText = truncate(japanese, MAX_CHARS);
 
   if (!finalText) {
     return res.status(400).json({
