@@ -2957,7 +2957,8 @@
 
       // Kirim voiceId karakter ke TTS
       const voiceId = currentChar?.tts?.voiceId || '';
-      playTTS(replyText, openUrl ? () => window.open(openUrl, '_blank') : null, voiceId);
+      const jaText  = (data?.tts || '').trim();
+      playTTS(jaText || replyText, openUrl ? () => window.open(openUrl, '_blank') : null, voiceId, !!jaText);
 
     } catch (err) {
       typingEl.remove();
@@ -3034,7 +3035,7 @@
     analyser.connect(audioCtx.destination);
   }
 
-  async function playTTS(text, onComplete = null, voiceId = '') {
+  async function playTTS(text, onComplete = null, voiceId = '', isJapanese = false) {
     if (!text) { onComplete?.(); return; }
     if (isMuted) {
       const delay = Math.min(Math.max(text.length * 35, 800), 3500);
@@ -3056,7 +3057,7 @@
       const res = await fetch('/api/tts', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ text, voiceId: voiceId || undefined }),
+        body:    JSON.stringify({ text, voiceId: voiceId || undefined, translated: isJapanese }),
       });
 
       if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
