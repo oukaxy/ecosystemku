@@ -1528,6 +1528,8 @@
   const savedMute = localStorage.getItem(MUTE_STORAGE_KEY) ?? localStorage.getItem('liro_muted');
   let isMuted       = savedMute === 'true';
   let currentSource = null;
+  let ttsSources    = [];   // semua source TTS yang sedang dijadwalkan/diputar
+  let ttsGen        = 0;    // token untuk membatalkan playback lama
 
   /* ── PixiJS App ─────────────────────────────────────────────── */
   const panel = document.getElementById('model-panel');
@@ -1768,6 +1770,7 @@
 
   async function switchCharacter(newId) {
     // Stop audio yang sedang main
+    stopAllTTS();
     if (currentSource) {
       try { currentSource.stop(); } catch (_) {}
       currentSource = null;
@@ -2830,7 +2833,8 @@
       muteBtn.classList.toggle('muted', isMuted);
       muteBtn.title = isMuted ? 'Suara mati — tap untuk nyalakan' : 'Mute suara';
 
-      if (isMuted && currentSource) {
+      if (isMuted && (currentSource || ttsSources.length)) {
+        stopAllTTS();
         try { currentSource.stop(); } catch (_) {}
         currentSource = null;
         isSpeaking    = false;
@@ -3035,6 +3039,32 @@
     analyser.connect(audioCtx.destination);
   }
 
+  /* ── TTS: potong per kalimat, fetch paralel, putar berurutan ── */
+  function stopAllTTS() {
+    ttsGen++;
+    ttsSources.forEach(src => { try { src.stop(); } catch (_) {} });
+    ttsSources = [];
+  }
+
+  function splitForTTS(text, minLen = 12, maxChunks = 4) {
+    const parts = text.match(/[^。！？!?.]+[。！？!?.]*/g) || [text];
+    const chunks = [];
+    let buf = '';
+    for (const part of parts) {
+      buf += part;
+      if (buf.trim().length >= minLen) { chunks.push(buf.trim()); buf = ''; }
+    }
+    if (buf.trim()) {
+      if (chunks.length) chunks[chunks.length - 1] += ' ' + buf.trim();
+      else chunks.push(buf.trim());
+    }
+    while (chunks.length > maxChunks) {
+      const last = chunks.pop();
+      chunks[chunks.length - 1] += ' ' + last;
+    }
+    return chunks;
+  }
+
   async function playTTS(text, onComplete = null, voiceId = '', isJapanese = false) {
     if (!text) { onComplete?.(); return; }
     if (isMuted) {
@@ -3044,48 +3074,77 @@
     }
 
     ensureAudioCtx();
-
+    stopAllTTS();
     if (currentSource) {
       try { currentSource.stop(); } catch (_) {}
       currentSource = null;
     }
 
+    const myGen = ttsGen;
+    const chunks = splitForTTS(text.slice(0, 500));
+
+    const finish = () => {
+      if (myGen !== ttsGen) return;
+      isSpeaking    = false;
+      currentSource = null;
+      ttsSources    = [];
+      smoothMouth   = 0;
+      setCoreParam(P.mouthY, 0);
+      setCoreParam(P.mouthF, 0);
+      document.getElementById('model-tag').classList.remove('speaking');
+      statusEl.textContent = '· idle';
+      onComplete?.();
+    };
+
     try {
       if (audioCtx.state === 'suspended') await audioCtx.resume();
       statusEl.textContent = '· berbicara…';
 
-      const res = await fetch('/api/tts', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ text, voiceId: voiceId || undefined, translated: isJapanese }),
-      });
+      // Kirim SEMUA potongan sekaligus (paralel)
+      const fetches = chunks.map(chunk =>
+        fetch('/api/tts', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ text: chunk, voiceId: voiceId || undefined, translated: isJapanese }),
+        }).then(r => {
+          if (!r.ok) throw new Error(`TTS HTTP ${r.status}`);
+          return r.arrayBuffer();
+        }).then(buf => audioCtx.decodeAudioData(buf))
+          .catch(err => { console.warn('[TTS] chunk gagal:', err); return null; })
+      );
 
-      if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
+      let nextTime = 0;
+      let lastSource = null;
 
-      const arrayBuf = await res.arrayBuffer();
-      const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
-      const source   = audioCtx.createBufferSource();
-      source.buffer  = audioBuf;
-      source.connect(analyser);
+      // Putar berurutan, tanpa jeda antar potongan
+      for (const p of fetches) {
+        const audioBuf = await p;
+        if (myGen !== ttsGen) return;     // dibatalkan
+        if (!audioBuf) continue;
 
-      isSpeaking    = true;
-      currentSource = source;
-      document.getElementById('model-tag').classList.add('speaking');
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuf;
+        source.connect(analyser);
 
-      source.start(0);
+        const startAt = Math.max(audioCtx.currentTime + 0.02, nextTime);
+        source.start(startAt);
+        nextTime = startAt + audioBuf.duration;
 
-      source.onended = () => {
-        isSpeaking    = false;
-        currentSource = null;
-        smoothMouth   = 0;
-        setCoreParam(P.mouthY, 0);
-        setCoreParam(P.mouthF, 0);
-        document.getElementById('model-tag').classList.remove('speaking');
-        statusEl.textContent = '· idle';
-        onComplete?.();
-      };
+        ttsSources.push(source);
+        lastSource    = source;
+        currentSource = source;
+        if (!isSpeaking) {
+          isSpeaking = true;
+          document.getElementById('model-tag').classList.add('speaking');
+        }
+      }
+
+      if (!lastSource) throw new Error('Semua potongan TTS gagal');
+      if (audioCtx.currentTime >= nextTime) finish();   // sudah selesai sebelum handler terpasang
+      else lastSource.onended = finish;
 
     } catch (err) {
+      if (myGen !== ttsGen) return;
       isSpeaking = false;
       console.warn('[TTS] Error:', err);
       statusEl.textContent = '· idle';
