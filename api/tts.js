@@ -4,7 +4,7 @@ const TTS_MODEL = 's2.1-pro-free';
 const DEFAULT_VOICE_ID = 'eb79df9571014449b42bcd869f86fe0a';
 const MAX_CHARS = 500;
 
-// Translator (Indonesia -> Jepang) via Sumopod
+// Cadangan terjemah (dipakai hanya bila chat tidak mengirim versi Jepang)
 const SUMOPOD_API_URL = 'https://ai.sumopod.com/v1/chat/completions';
 const SUMOPOD_MODEL = 'glm-5.3-flash';
 
@@ -18,6 +18,47 @@ function cleanText(raw) {
     .replace(/\n+/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+async function translateToJapanese(text) {
+  const key = process.env.SUMOPOD_API_KEY;
+  if (!key) return text;
+
+  try {
+    const r = await fetch(SUMOPOD_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify({
+        model: SUMOPOD_MODEL,
+        temperature: 0.3,
+        max_tokens: 800,
+        stream: false,
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Terjemahkan teks Indonesia ke bahasa Jepang natural gaya sopan, ' +
+              'memanggil lawan bicara "ご主人様". Output HANYA terjemahan Jepang, ' +
+              'tanpa romaji, tanpa penjelasan.',
+          },
+          { role: 'user', content: text },
+        ],
+      }),
+    });
+
+    if (!r.ok) {
+      console.error('[tts] Translate error:', r.status);
+      return text;
+    }
+    const data = await r.json();
+    return data.choices?.[0]?.message?.content?.trim() || text;
+  } catch (err) {
+    console.error('[tts] Translate failed:', err);
+    return text;
+  }
 }
 
 function truncate(text, max) {
@@ -40,49 +81,6 @@ function truncate(text, max) {
     : cut + '…';
 }
 
-async function translateToJapanese(text) {
-  const key = process.env.SUMOPOD_API_KEY;
-  if (!key) return text;
-
-  try {
-    const r = await fetch(SUMOPOD_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
-      },
-      body: JSON.stringify({
-        model: SUMOPOD_MODEL,
-        temperature: 0.3,
-        max_tokens: 400,
-        stream: false,
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Kamu penerjemah untuk karakter anime Rem (maid yang sopan dan lembut). ' +
-              'Terjemahkan teks Indonesia dari user ke bahasa Jepang yang natural, ' +
-              'gaya sopan (desu/masu), memanggil lawan bicara "ご主人様". ' +
-              'Output HANYA terjemahan Jepang, tanpa romaji, tanpa penjelasan, tanpa tanda kutip.',
-          },
-          { role: 'user', content: text },
-        ],
-      }),
-    });
-
-    if (!r.ok) {
-      console.error('[tts] Translate error:', r.status);
-      return text; // fallback: pakai teks asli
-    }
-
-    const data = await r.json();
-    return data.choices?.[0]?.message?.content?.trim() || text;
-  } catch (err) {
-    console.error('[tts] Translate failed:', err);
-    return text; // fallback: pakai teks asli
-  }
-}
-
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -102,7 +100,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const { text, voiceId } = req.body ?? {};
+  const { text, voiceId, translated } = req.body ?? {};
 
   if (!text || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({
@@ -111,7 +109,7 @@ export default async function handler(req, res) {
   }
 
   const cleaned = cleanText(text);
-  const japanese = cleaned ? await translateToJapanese(cleaned) : '';
+  const japanese = !cleaned ? '' : translated ? cleaned : await translateToJapanese(cleaned);
   const finalText = truncate(japanese, MAX_CHARS);
 
   if (!finalText) {

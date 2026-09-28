@@ -7,7 +7,7 @@
 
 const SUMOPOD_API_URL = 'https://ai.sumopod.com/v1/chat/completions';
 const SUMOPOD_MODEL = 'glm-5.3-flash';
-const MAX_TOKENS = 300;
+const MAX_TOKENS = 1000; // besar: model bisa memakai token untuk reasoning + output 2 bahasa
 const MAX_MESSAGES = 10; // sesuai trim di index.html
 
 export default async function handler(req, res) {
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: SUMOPOD_MODEL,
         messages: [
-          { role: 'system', content: systemPrompt },
+          { role: 'system', content: systemPrompt + JA_RULE },
           ...sanitized,
         ],
         temperature: 0.75,
@@ -87,7 +87,12 @@ export default async function handler(req, res) {
     }
 
     const data = await sumopodRes.json();
-    const text = data.choices?.[0]?.message?.content ?? '';
+    const full = data.choices?.[0]?.message?.content ?? '';
+
+    // Pisahkan teks Indonesia (UI) dan teks Jepang (TTS)
+    const m = full.match(/\[JA\]([\s\S]*?)\[\/JA\]/);
+    const tts = m ? m[1].trim() : '';
+    const text = full.replace(/\[JA\][\s\S]*?(\[\/JA\]|$)/g, '').trim();
 
     if (!text) {
       console.error(
@@ -97,9 +102,9 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Respons AI kosong' });
     }
 
-    // Return format yang dibaca index.html
     return res.status(200).json({
-      text,
+      text,   // Indonesia -> ditampilkan di chat
+      tts,    // Jepang -> hanya untuk TTS (bisa kosong)
       model: SUMOPOD_MODEL,
       usage: data.usage ?? null,
     });
@@ -109,6 +114,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+// Aturan tambahan: minta versi Jepang untuk TTS (tidak ditampilkan di UI)
+const JA_RULE = `
+
+ATURAN WAJIB (format output):
+1. Tulis jawabanmu dalam bahasa Indonesia seperti biasa.
+2. Di baris paling akhir, tambahkan terjemahan Jepang natural bergaya sopan dari jawaban itu, dibungkus [JA]...[/JA].
+3. Terjemahan Jepang tanpa romaji, tanpa markdown, tanpa emoji.
+Contoh: Halo, Tuan. Ada yang bisa Rem bantu? [JA]こんにちは、ご主人様。何かお手伝いできることはありますか？[/JA]`;
 
 // Fallback system prompt
 function buildDefaultSystemPrompt(context) {
