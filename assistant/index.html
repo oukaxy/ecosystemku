@@ -522,6 +522,7 @@
     border-radius: var(--radius-md);
     line-height: 1.6;
     font-size: 13.5px;
+    white-space: pre-wrap;
   }
 
   .msg.user .msg-bubble {
@@ -2859,50 +2860,330 @@
     });
   }
 
-  // Local finance bridge: deterministic command + explicit confirmation before writing.
-  async function handleFinanceCommand(text) {
-    const lead = text.match(/^\s*catat\s+(pengeluaran|pemasukan)\s+([\d.,]+)(.*)$/i);
-    if (!lead) return false;
-    const direction = lead[1].toLowerCase() === 'pemasukan' ? 'in' : 'out';
-    const amountText = lead[2].replace(/[.,](?=\d{3}(?:\D|$))/g, '').replace(',', '.');
-    const amount = Number(amountText);
-    const fields = {};
-    for (const part of lead[3].split('|')) {
-      const m = part.trim().match(/^(buku|akun|kategori|catatan|tanggal)\s*:\s*(.+)$/i);
-      if (m) fields[m[1].toLowerCase()] = m[2].trim();
+  // ══════════════════════════════════════════════════════════════════
+  // Finance bridge — deterministik (TANPA LLM), bahasa natural + tanya balik
+  //  • Mengerti kalimat bebas: "catat pengeluaran 5rb kategori minum di buku personal akun dana cash"
+  //  • Field yang kurang → ditanya satu per satu
+  //  • Nama yang mirip/salah ketik → dikonfirmasi ("Maksudmu Minuman?")
+  //  • Tetap ada dialog konfirmasi sebelum menulis ke CuciMoney+
+  // ══════════════════════════════════════════════════════════════════
+  let financePending = null;
+  const FIN_TTL = 5 * 60 * 1000;
+  const FIN_FILL = 'di|dengan|pada|pakai|menggunakan|ke|dari|untuk|nama|bernama|yaitu|yang|dan|ya|dong|deh|nih|tolong|aja|saja';
+
+  const finNorm = (v) => String(v ?? '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+
+  function finSim(a, b) {
+    if (a === b) return 1;
+    if (!a.length || !b.length) return 0;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      prev = cur;
     }
-    if (!Number.isFinite(amount) || amount <= 0 || !fields.buku || !fields.akun || !fields.kategori) {
-      appendMessage('assistant', 'Format catat transaksi belum lengkap. Pakai: `catat pengeluaran 25000 | buku: Personal | akun: Dompet | kategori: Makanan | catatan: makan siang | tanggal: 2026-09-27`. Untuk pemasukan, ganti “pengeluaran” menjadi “pemasukan”.');
+    return 1 - prev[b.length] / Math.max(a.length, b.length);
+  }
+
+  function finClean(v) {
+    let s = String(v || ''), p;
+    const lead = new RegExp('^(' + FIN_FILL + ')\\s+', 'i');
+    const trail = new RegExp('\\s+(' + FIN_FILL + ')$', 'i');
+    do {
+      p = s;
+      s = s.replace(/^[\s:=,;.|"'“”]+/, '').replace(lead, '')
+           .replace(/[\s,;.|:"'“”!?]+$/, '').replace(trail, '');
+    } while (s !== p);
+    return s;
+  }
+
+  function finAmount(str) {
+    const m = String(str).match(/(?:rp\.?\s*)?(?<![\p{L}\p{N}.,])(\d+(?:[.,]\d+)*)(?:\s*(rb|ribu|k|jt|juta))?(?![\p{L}\p{N}])/iu);
+    if (!m) return null;
+    let num = m[1];
+    if (/^\d{1,3}(\.\d{3})+$/.test(num)) num = num.replace(/\./g, '');
+    else if (/^\d{1,3}(,\d{3})+$/.test(num)) num = num.replace(/,/g, '');
+    else num = num.replace(',', '.');
+    let val = Number(num);
+    const unit = (m[2] || '').toLowerCase();
+    if (unit === 'rb' || unit === 'ribu' || unit === 'k') val *= 1000;
+    else if (unit === 'jt' || unit === 'juta') val *= 1000000;
+    return Number.isFinite(val) && val > 0 ? { value: Math.round(val), matched: m[0] } : null;
+  }
+
+  function finLocalDate(offset = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString('en-CA');
+  }
+
+  function finParse(text) {
+    const verbRe = /\b(catat|catatkan|catet|tambah|tambahkan|input|masukkan|masukan|simpan|tulis|record)\b/i;
+    const dirRe  = /\b(pemasukan|pendapatan|income|pengeluaran|expense)\b/i;
+    const vm = text.match(verbRe), dm = text.match(dirRe);
+    if (!vm || !dm) return null;
+    const direction = /^(pemasukan|pendapatan|income)$/i.test(dm[1]) ? 'in' : 'out';
+    let rest = text;
+
+    // Tanggal
+    let date = null;
+    let d;
+    if ((d = rest.match(/\b(\d{4})-(\d{2})-(\d{2})\b/))) {
+      date = d[0]; rest = rest.replace(d[0], ' ');
+    } else if ((d = rest.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/))) {
+      date = `${d[3]}-${d[2].padStart(2, '0')}-${d[1].padStart(2, '0')}`; rest = rest.replace(d[0], ' ');
+    } else if (/\bkemarin lusa\b/i.test(rest)) {
+      date = finLocalDate(-2); rest = rest.replace(/\bkemarin lusa\b/i, ' ');
+    } else if (/\bkemarin\b/i.test(rest)) {
+      date = finLocalDate(-1); rest = rest.replace(/\bkemarin\b/i, ' ');
+    } else if (/\bhari ini\b/i.test(rest)) {
+      date = finLocalDate(0); rest = rest.replace(/\bhari ini\b/i, ' ');
+    }
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + 'T00:00:00')))) date = null;
+
+    rest = rest.replace(verbRe, ' ').replace(dirRe, ' ').replace(/\btanggal\b\s*[:=]?/gi, ' ');
+
+    // Nominal
+    let amount = null;
+    const am = finAmount(rest);
+    if (am) { amount = am.value; rest = rest.replace(am.matched, ' '); }
+
+    // Bukan perintah kalau tanpa nominal dan kelihatan seperti pertanyaan
+    if (!amount && (/[?]/.test(text) || /\b(cara|gimana|bagaimana|kenapa|mengapa)\b/i.test(text))) return null;
+    if (!amount && !/\b(catat|catatkan|catet)\b/i.test(text)) return null;
+
+    // Catatan: ambil sampai akhir / sampai tanda '|'
+    const raw = {};
+    const nm = rest.match(/\b(catatan|keterangan)\b\s*[:=]?/i);
+    if (nm) {
+      const after = rest.slice(nm.index + nm[0].length);
+      const bar = after.indexOf('|');
+      const note = finClean(bar === -1 ? after : after.slice(0, bar));
+      if (note) raw.note = note;
+      rest = rest.slice(0, nm.index) + ' ' + (bar === -1 ? '' : ' | ' + after.slice(bar + 1));
+    }
+
+    // Marker kategori / buku / akun
+    const marks = [...rest.matchAll(/\b(kategori|buku|akun)\b\s*[:=]?/gi)];
+    marks.forEach((m, i) => {
+      const start = m.index + m[0].length;
+      const end = i + 1 < marks.length ? marks[i + 1].index : rest.length;
+      const v = finClean(rest.slice(start, end));
+      const slot = { kategori: 'category', buku: 'book', akun: 'account' }[m[1].toLowerCase()];
+      if (v && !raw[slot]) raw[slot] = v;
+    });
+    const pre = marks.length ? rest.slice(0, marks[0].index) : rest;
+
+    return { direction, amount, date, raw, rest: finNorm(pre) };
+  }
+
+  function finResolve(input, options) {
+    const n = finNorm(input);
+    if (!n) return { status: 'none' };
+    const nn = n.replace(/ /g, '');
+    const scored = [];
+    for (const o of options) {
+      const on = finNorm(o.name);
+      if (!on) continue;
+      const onn = on.replace(/ /g, '');
+      let score = 0;
+      if (onn === nn) score = 1;
+      else if (nn.length >= 2 && (onn.includes(nn) || (onn.length >= 3 && nn.includes(onn)))) score = 0.9;
+      else { const sim = finSim(nn, onn); if (sim >= 0.7) score = sim; }
+      if (!score) {
+        const ot = on.split(' ');
+        if (n.split(' ').some(t => t.length >= 3 && ot.includes(t))) score = 0.6;
+      }
+      if (score) scored.push({ o, score });
+    }
+    if (!scored.length) return { status: 'none' };
+    scored.sort((a, b) => b.score - a.score);
+    const exact = scored.filter(x => x.score === 1);
+    if (exact.length === 1) return { status: 'exact', item: exact[0].o };
+    if (exact.length > 1) return { status: 'ambiguous', items: exact.map(x => x.o).slice(0, 6) };
+    if (scored.length === 1 || scored[0].score - scored[1].score >= 0.15) return { status: 'suggest', item: scored[0].o };
+    return { status: 'ambiguous', items: scored.slice(0, 6).map(x => x.o) };
+  }
+
+  function finScan(restNorm, options) {
+    if (!restNorm) return null;
+    const padded = ' ' + restNorm + ' ';
+    const hits = options
+      .map(o => ({ o, n: finNorm(o.name) }))
+      .filter(x => x.n && padded.includes(' ' + x.n + ' '))
+      .sort((a, b) => b.n.length - a.n.length);
+    return hits.length ? hits[0].o : null;
+  }
+
+  const finTypeOf = (c) => {
+    const t = finNorm(c.type ?? c.kind ?? c.direction);
+    if (['income', 'in', 'pemasukan', 'masuk'].includes(t)) return 'income';
+    if (['expense', 'out', 'pengeluaran', 'keluar'].includes(t)) return 'expense';
+    if (['both', 'all', 'semua', ''].includes(t)) return 'both';
+    return t;
+  };
+
+  const finSay = (t) => { appendMessage('assistant', t); return true; };
+  const finList = (opts) => opts.slice(0, 10).map((o, i) => `${i + 1}. ${o.name}`).join('\n');
+
+  async function finLoad() {
+    await EcosystemDB.open();
+    const data = await EcosystemDB.kv.finances.get('db');
+    if (!data || !Array.isArray(data.transactions)) throw new Error('Data CuciMoney+ belum ditemukan di database bersama.');
+    return data;
+  }
+
+  // Jalankan alur: cari field yang masih kurang → tanya, atau simpan kalau sudah lengkap.
+  // Return false HANYA kalau pencatatan dibatalkan otomatis dan pesan sebaiknya diteruskan ke chat biasa.
+  async function finAdvance() {
+    const st = financePending;
+    const data = await finLoad();
+    const tipe = st.direction === 'in' ? 'pemasukan' : 'pengeluaran';
+    st.tries = st.tries || {};
+    st.sel = st.sel || {};
+    st.noScan = st.noScan || {};
+
+    // Tanya ulang; kalau sudah 2x gagal di field yang sama → batalkan
+    const askUser = (slot, msg, ask, fail = false) => {
+      if (fail && st.answered === slot) st.tries[slot] = (st.tries[slot] || 0) + 1;
+      else if (!fail) st.tries[slot] = 0;
+      st.answered = null;
+      if ((st.tries[slot] || 0) >= 2) {
+        financePending = null;
+        finSay('Aku belum nangkep maksudnya, jadi pencatatan transaksi kubatalkan dulu. Coba lagi ya, contoh: catat ' + tipe + ' 5000 kategori Minuman buku Personal akun Dana Cash');
+        return false;
+      }
+      st.ask = ask;
+      return finSay(msg);
+    };
+
+    if (!(st.amount > 0)) {
+      return askUser('amount', 'Berapa nominalnya?', { slot: 'amount', type: 'value' });
+    }
+
+    const slots = [
+      { key: 'book', label: 'buku', q: 'Di buku mana?',
+        options: () => data.books || [] },
+      { key: 'account', label: 'akun', q: 'Pakai akun apa?',
+        options: () => {
+          const book = (data.books || []).find(b => String(b.id) === String(st.sel.book?.id));
+          return (data.accounts || []).filter(a => (book?.accountIds || []).some(id => String(id) === String(a.id)));
+        } },
+      { key: 'category', label: 'kategori ' + tipe, q: 'Kategori ' + tipe + ' apa?',
+        options: () => (data.categories || []).filter(c => { const t = finTypeOf(c); return t === 'both' || t === (st.direction === 'in' ? 'income' : 'expense'); }) },
+    ];
+
+    for (const s of slots) {
+      const options = s.options();
+      if (!options.length) throw new Error(`Belum ada ${s.label} yang tersedia${s.key === 'account' ? ' di buku ini' : ''}.`);
+
+      if (st.sel[s.key]) {
+        if (options.some(o => String(o.id) === String(st.sel[s.key].id))) continue;
+        st.sel[s.key] = null;
+      }
+
+      const rawVal = st.raw[s.key];
+      if (!rawVal) {
+        if (!st.noScan[s.key]) {
+          const hit = finScan(st.rest, options);
+          if (hit) { st.sel[s.key] = { id: hit.id, name: hit.name }; continue; }
+          if (options.length === 1) { st.sel[s.key] = { id: options[0].id, name: options[0].name }; continue; }
+        }
+        return askUser(s.key, `${s.q}\n${finList(options)}`, { slot: s.key, type: 'value', options });
+      }
+
+      const r = finResolve(rawVal, options);
+      if (r.status === 'exact') { st.sel[s.key] = { id: r.item.id, name: r.item.name }; continue; }
+      if (r.status === 'suggest') {
+        return askUser(s.key, `Maksudmu ${s.label} “${r.item.name}”? (ya / bukan)`,
+          { slot: s.key, type: 'confirm', candidate: r.item, options });
+      }
+      if (r.status === 'ambiguous') {
+        return askUser(s.key, `Ada beberapa ${s.label} yang mirip dengan “${rawVal}”:\n${finList(r.items)}\nYang mana? (ketik nomor atau namanya)`,
+          { slot: s.key, type: 'value', options: r.items });
+      }
+      return askUser(s.key, `${s.label[0].toUpperCase() + s.label.slice(1)} “${rawVal}” tidak ditemukan. Pilihan yang ada:\n${finList(options)}\nYang mana?`,
+        { slot: s.key, type: 'value', options }, true);
+    }
+
+    // Semua lengkap → konfirmasi lalu simpan
+    const book = data.books.find(b => String(b.id) === String(st.sel.book.id));
+    const account = data.accounts.find(a => String(a.id) === String(st.sel.account.id));
+    const category = data.categories.find(c => String(c.id) === String(st.sel.category.id));
+    const direction = st.direction, amount = st.amount;
+    const date = st.date || finLocalDate(0);
+    const title = st.raw.note || category.name;
+    const pretty = amount.toLocaleString('id-ID');
+    const label = direction === 'in' ? 'Pemasukan' : 'Pengeluaran';
+    const confirmText = `Simpan transaksi ini ke CuciMoney+?\n\n${label}: Rp ${pretty}\nBuku: ${book.name}\nAkun: ${account.name}\nKategori: ${category.name}\nCatatan: ${title}\nTanggal: ${date}`;
+    financePending = null;
+    if (!window.confirm(confirmText)) {
+      return finSay('Oke, transaksi dibatalkan. Belum ada perubahan di CuciMoney+.');
+    }
+    const trx = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), bookId: book.id, title, amount, direction, category_id: category.id, account_id: account.id, date, member_id: data.members?.[0]?.id || 'm1', createdAt: Date.now() };
+    data.transactions.unshift(trx);
+    account.balance = Number(account.balance || 0) + (direction === 'in' ? amount : -amount);
+    await EcosystemDB.kv.finances.set('db', data);
+    return finSay(`Transaksi tersimpan di CuciMoney+ ✓\n${label} Rp ${pretty} · ${title}\n${book.name} / ${account.name} · ${date}`);
+  }
+
+  async function finHandleAnswer(text) {
+    const st = financePending;
+    const n = finNorm(text);
+    if (/\b(batal|batalkan|cancel)\b/.test(n) || /\b(gak|ga|nggak|ngga|tidak|enggak) jadi\b/.test(n)) {
+      financePending = null;
+      return finSay('Oke, pencatatan dibatalkan.');
+    }
+    const ask = st.ask;
+    if (!ask) { financePending = null; return false; }
+    st.ts = Date.now();
+    st.answered = ask.slot;
+
+    if (ask.slot === 'amount') {
+      const a = finAmount(text);
+      if (a) st.amount = a.value;
+      else {
+        st.tries = st.tries || {};
+        st.tries.amount = (st.tries.amount || 0) + 1;
+        if (st.tries.amount >= 2) { financePending = null; finSay('Nominalnya belum kebaca, pencatatan kubatalkan dulu.'); return false; }
+        return finSay('Nominalnya belum kebaca. Contoh: 5000, 5rb, atau 1,5 juta.');
+      }
+      st.answered = null;
+    } else if (ask.type === 'confirm') {
+      if (/^(ya|iya|iy|y|yes|yap|yup|betul|benar|bener|ok|oke|okay|sip|lanjut|itu|boleh)( |$)/.test(n)) {
+        st.sel[ask.slot] = { id: ask.candidate.id, name: ask.candidate.name };
+        st.answered = null;
+      } else if (/^(bukan|tidak|nggak|ngga|enggak|gak|ga|no|nope|salah)( |$)/.test(n)) {
+        st.raw[ask.slot] = null;
+        st.noScan[ask.slot] = true;
+      } else {
+        st.raw[ask.slot] = finClean(text);
+      }
+    } else {
+      const pick = /^\d{1,2}$/.test(n) && ask.options ? ask.options[Number(n) - 1] : null;
+      if (pick) { st.sel[ask.slot] = { id: pick.id, name: pick.name }; st.answered = null; }
+      else st.raw[ask.slot] = finClean(text);
+    }
+    return await finAdvance();
+  }
+
+  async function handleFinanceCommand(text) {
+    try {
+      if (financePending && Date.now() - financePending.ts > FIN_TTL) financePending = null;
+      const intent = finParse(text);
+      if (intent) {
+        financePending = { ...intent, sel: {}, noScan: {}, tries: {}, ask: null, answered: null, ts: Date.now() };
+        return await finAdvance();
+      }
+      if (!financePending) return false;
+      return await finHandleAnswer(text);
+    } catch (err) {
+      financePending = null;
+      appendMessage('assistant', `Belum bisa menyimpan transaksi: ${err.message || 'terjadi kesalahan'}`);
       return true;
     }
-    try {
-      await EcosystemDB.open();
-      const data = await EcosystemDB.kv.finances.get('db');
-      if (!data || !Array.isArray(data.transactions)) throw new Error('Data CuciMoney+ belum ditemukan di database bersama.');
-      const book = data.books?.find(x => String(x.name).toLowerCase() === fields.buku.toLowerCase());
-      if (!book) throw new Error(`Buku “${fields.buku}” tidak ditemukan. Nama buku harus sama persis.`);
-      const account = data.accounts?.find(x => String(x.name).toLowerCase() === fields.akun.toLowerCase() && (book.accountIds || []).some(id => String(id) === String(x.id)));
-      if (!account) throw new Error(`Akun “${fields.akun}” tidak ditemukan di buku “${book.name}”.`);
-      const category = data.categories?.find(x => String(x.name).toLowerCase() === fields.kategori.toLowerCase() && (x.type === 'both' || x.type === (direction === 'in' ? 'income' : 'expense')));
-      if (!category) throw new Error(`Kategori “${fields.kategori}” tidak ditemukan atau tidak cocok dengan jenis transaksi.`);
-      const date = fields.tanggal || new Date().toLocaleDateString('en-CA');
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + 'T00:00:00'))) throw new Error('Tanggal harus berformat YYYY-MM-DD.');
-      const title = fields.catatan || category.name;
-      const pretty = amount.toLocaleString('id-ID');
-      const confirmText = `Simpan transaksi ini ke CuciMoney+?\n\n${direction === 'in' ? 'Pemasukan' : 'Pengeluaran'}: Rp ${pretty}\nBuku: ${book.name}\nAkun: ${account.name}\nKategori: ${category.name}\nCatatan: ${title}\nTanggal: ${date}`;
-      if (!window.confirm(confirmText)) {
-        appendMessage('assistant', 'Oke, transaksi dibatalkan. Belum ada perubahan di CuciMoney+.');
-        return true;
-      }
-      const trx = { id: Date.now() * 1000 + Math.floor(Math.random() * 1000), bookId: book.id, title, amount, direction, category_id: category.id, account_id: account.id, date, member_id: data.members?.[0]?.id || 'm1', createdAt: Date.now() };
-      data.transactions.unshift(trx);
-      account.balance = Number(account.balance || 0) + (direction === 'in' ? amount : -amount);
-      await EcosystemDB.kv.finances.set('db', data);
-      appendMessage('assistant', `Transaksi tersimpan di CuciMoney+ ✓\n${direction === 'in' ? 'Pemasukan' : 'Pengeluaran'} Rp ${pretty} · ${title}\n${book.name} / ${account.name} · ${date}`);
-    } catch (err) {
-      appendMessage('assistant', `Belum bisa menyimpan transaksi: ${err.message || 'terjadi kesalahan'}`);
-    }
-    return true;
   }
 
   async function handleSend() {
@@ -2913,7 +3194,7 @@
     msgInput.style.height = 'auto';
     appendMessage('user', text);
     chatHistory.push({ role: 'user', content: text });
-    if (await handleFinanceCommand(text)) return;
+    if (await handleFinanceCommand(text)) { chatHistory.pop(); return; }
     await sendToAPI();
   }
 
