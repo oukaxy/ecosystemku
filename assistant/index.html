@@ -2948,21 +2948,121 @@
         throw new Error(`HTTP ${res.status}${errText ? ': ' + errText : ''}`);
       }
 
-      const data = await res.json();
-      const rawReply = data?.text || data?.message || data?.content || '';
-      if (!rawReply) throw new Error('Respons kosong dari server');
+      const isSSE = (res.headers.get('content-type') || '').includes('text/event-stream');
 
-      const { cleanText: afterOpen, openUrl } = parseOpenTag(rawReply);
-      const { cleanText: replyText }          = parseExprTag(afterOpen);
+      let finalText = '';
+      let finalTts  = '';
+      let openUrl   = null;
+      let hadExprTag = false;
 
-      chatHistory.push({ role: 'assistant', content: replyText });
-      typingEl.remove();
-      appendMessage('assistant', replyText);
+      if (!isSSE) {
+        // ── Fallback: server balas JSON biasa (mode non-stream) ──
+        const data = await res.json();
+        const rawReply = data?.text || data?.message || data?.content || '';
+        if (!rawReply) throw new Error('Respons kosong dari server');
+
+        const parsedOpen = parseOpenTag(rawReply);
+        openUrl = parsedOpen.openUrl;
+        hadExprTag = /\[EXPR:([a-z]+)\]/i.test(parsedOpen.cleanText);
+        finalText = parseExprTag(parsedOpen.cleanText).cleanText;
+        finalTts  = (data?.tts || '').trim();
+
+        typingEl.remove();
+        appendMessage('assistant', finalText);
+
+      } else {
+        // ── Mode stream: tampilkan teks bertahap, tag ditahan sampai lengkap ──
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let sseBuf = '';
+        let raw    = '';        // semua delta mentah, apa adanya dari LLM
+        let shown  = 0;         // berapa karakter dari "visible text" yang sudah dirender
+        let bubbleEl = null;
+        let streamError = null;
+
+        // Hitung teks yang "aman" ditampilkan: buang tag lengkap ([JA]..[/JA], [EXPR:x], [OPEN:x]),
+        // dan tahan kalau ada '[' yang belum ditutup di ujung (supaya tag tidak kelihatan kepotong).
+        const visibleTextOf = (s) => {
+          let v = s
+            .replace(/\[JA\][\s\S]*?\[\/JA\]/gi, '')
+            .replace(/\[EXPR:[a-z]+\]/gi, '')
+            .replace(/\[OPEN:[a-z0-9-]+\]/gi, '');
+          const openBracket = v.lastIndexOf('[');
+          if (openBracket !== -1 && !v.slice(openBracket).includes(']')) {
+            v = v.slice(0, openBracket);
+          }
+          return v;
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          sseBuf += decoder.decode(value, { stream: true });
+          const events = sseBuf.split('\n\n');
+          sseBuf = events.pop() ?? '';
+
+          for (const evt of events) {
+            const lines = evt.split('\n');
+            let eventName = 'message';
+            let dataStr = '';
+            for (const line of lines) {
+              if (line.startsWith('event:')) eventName = line.slice(6).trim();
+              else if (line.startsWith('data:')) dataStr += line.slice(5).trim();
+            }
+            if (!dataStr) continue;
+
+            let payload;
+            try { payload = JSON.parse(dataStr); } catch { continue; }
+
+            if (eventName === 'delta') {
+              raw += payload.delta || '';
+              const visible = visibleTextOf(raw);
+
+              if (visible.length > shown) {
+                if (!bubbleEl) {
+                  typingEl.remove();
+                  bubbleEl = appendMessage('assistant', '');
+                }
+                bubbleEl.querySelector('.msg-bubble').textContent = visible;
+                shown = visible.length;
+                scrollToBottom();
+              }
+            } else if (eventName === 'done') {
+              // payload.text: teks Indonesia final dari server (tag [JA] sudah dibuang server,
+              // tapi [EXPR:xxx]/[OPEN:xxx] masih ada, diproses sama seperti mode non-stream).
+              const parsedOpen = parseOpenTag(payload.text || visibleTextOf(raw));
+              openUrl    = parsedOpen.openUrl;
+              hadExprTag = /\[EXPR:([a-z]+)\]/i.test(parsedOpen.cleanText);
+              finalText  = parseExprTag(parsedOpen.cleanText).cleanText;
+              finalTts   = (payload.tts || '').trim();
+            } else if (eventName === 'error') {
+              streamError = payload.error || 'Terjadi kesalahan saat streaming';
+            }
+          }
+        }
+
+        if (streamError) throw new Error(streamError);
+        if (!finalText) throw new Error('Respons kosong dari server');
+
+        if (!bubbleEl) {
+          typingEl.remove();
+          bubbleEl = appendMessage('assistant', finalText);
+        } else {
+          bubbleEl.querySelector('.msg-bubble').textContent = finalText;
+        }
+      }
+
+      // Kalau LLM tidak menyertakan [EXPR:...], lepas pose "puzzle" (mikir) yang
+      // dipasang saat menunggu, supaya Rem tidak nyangkut di ekspresi bingung.
+      // (Kalau ada [EXPR:...], parseExprTag di atas sudah memanggil setExpression sendiri.)
+      if (!hadExprTag && currentExpr === 'puzzle') setExpression('none');
+
+      chatHistory.push({ role: 'assistant', content: finalText });
 
       // Kirim voiceId karakter ke TTS
       const voiceId = currentChar?.tts?.voiceId || '';
-      const jaText  = (data?.tts || '').trim();
-      playTTS(jaText || replyText, openUrl ? () => window.open(openUrl, '_blank') : null, voiceId, !!jaText);
+      playTTS(finalTts || finalText, openUrl ? () => window.open(openUrl, '_blank') : null, voiceId, !!finalTts);
 
     } catch (err) {
       typingEl.remove();
@@ -2979,6 +3079,12 @@
     sendBtn.disabled  = on;
     msgInput.disabled = on;
     statusEl.textContent = on ? '· mengetik…' : `· idle`;
+
+    // Animasi menunggu: Rem pasang pose "puzzle" (bingung/mikir) selama LLM memproses.
+    // Nanti diganti motion 'idle' otomatis begitu jawaban/TTS mulai (lihat playTTS & appendMessage).
+    if (on && currentCharId === 'rem') {
+      playRemMotion('puzzle');
+    }
   }
 
   function appendMessage(role, text) {
