@@ -2470,6 +2470,18 @@
     }
   }
 
+  // Pemicu ekspresi sesaat (tap kepala/badan/kaki, pet, dll).
+  // Beda dari memanggil playRemMotion() langsung: ini lewat setExpression()
+  // supaya remFaceParams (termasuk PARAM_CHEEK_01 / blush) ikut diset & di-reset,
+  // dan ada auto-revert ke 'none' setelah beberapa detik — sama seperti tag [EXPR:...] dari LLM.
+  function triggerRemExpression(name, revertMs = 4000) {
+    if (currentCharId !== 'rem') return;
+    setExpression(name);
+    setTimeout(() => {
+      if (currentExpr === name) setExpression('none');
+    }, revertMs);
+  }
+
   function setExpression(name) {
     if (!model) return;
     currentExpr = name;
@@ -2599,16 +2611,16 @@
 
     if (isHeadZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('head')), 3500);
-      if (currentCharId === 'rem') playRemMotion('shame');
+      triggerRemExpression('shame');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isBodyZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('body')), 3000);
       triggerNudge();
-      if (currentCharId === 'rem') playRemMotion('surprise');
+      triggerRemExpression('surprise');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     } else if (isLegZone(y, x)) {
       showIdleBubble(pickRandom(getBubbles('leg')), 3000);
-      if (currentCharId === 'rem') playRemMotion('appeal');
+      triggerRemExpression('appeal');
       _bubbleCooldown = Date.now() + BUBBLE_COOLDOWN_MS;
     }
   }, { passive: true });
@@ -2643,7 +2655,7 @@
     if (petActive && !petBubbleShown && petHairT > 1.5) {
       petBubbleShown = true;
       showIdleBubble(pickRandom(getBubbles('pet')), 3000);
-      if (currentCharId === 'rem') playRemMotion('happy');
+      triggerRemExpression('happy');
     }
 
     if (exprParams.ParamBlush) exprParams.ParamBlush.target = Math.max(currentExpr === 'blush' ? 1 : 0, i);
@@ -3078,13 +3090,18 @@
   function setUIThinking(on) {
     sendBtn.disabled  = on;
     msgInput.disabled = on;
-    statusEl.textContent = on ? '· mengetik…' : `· idle`;
 
     // Animasi menunggu: Rem pasang pose "puzzle" (bingung/mikir) selama LLM memproses.
-    // Nanti diganti motion 'idle' otomatis begitu jawaban/TTS mulai (lihat playTTS & appendMessage).
+    // Pakai setExpression() (bukan playRemMotion() langsung) supaya wajah (remFaceParams)
+    // ikut ke-set dan currentExpr benar-benar 'puzzle', sehingga reset di sendToAPI
+    // (if (!hadExprTag && currentExpr === 'puzzle') ...) beneran ke-trigger.
+    // Tidak pakai auto-revert timer di sini karena resetnya sudah ditangani manual
+    // begitu jawaban/TTS datang.
     if (on && currentCharId === 'rem') {
-      playRemMotion('puzzle');
+      setExpression('puzzle'); // ini juga menimpa statusEl, makanya diset ulang di bawah
     }
+
+    statusEl.textContent = on ? '· mengetik…' : `· idle`;
   }
 
   function appendMessage(role, text) {
