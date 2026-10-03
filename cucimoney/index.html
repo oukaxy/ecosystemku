@@ -4010,6 +4010,14 @@ function _renderView(name) {
 let _savePending = false;
 let _saveTimer   = null;
 
+/* Pelacak perubahan lokal sejak flush terakhir, supaya merge dengan DB
+   bersama tidak menghidupkan lagi transaksi yang dihapus / menimpa edit. */
+const _pendingTrxIds = new Set();  // id transaksi ditambah/diedit lokal
+const _deletedTrxIds = new Set();  // id transaksi dihapus lokal
+let _forceOverwriteDb = false;     // true saat reset data (lewati merge)
+function _trackUpsert(t) { const id = String(t.id); _pendingTrxIds.add(id); _deletedTrxIds.delete(id); }
+function _trackDelete(t) { const id = String(t.id); _deletedTrxIds.add(id); _pendingTrxIds.delete(id); }
+
 function markSave() {
     _savePending = true;
     clearTimeout(_saveTimer);
@@ -4022,22 +4030,43 @@ async function flushSave() {
     try {
         // Tab lain (mis. Rem) bisa menulis ke DB bersama. Jangan sampai
         // snapshot lama dari tab ini menimpa transaksi yang baru ditambahkan.
-        const latest = await idbGet('db');
+        const latest = _forceOverwriteDb ? null : await idbGet('db');
+        // Snapshot perubahan yang akan disimpan di flush ini
+        const pendIds = new Set(_pendingTrxIds);
+        const delIds  = new Set(_deletedTrxIds);
         let dbToSave = db;
         if (latest && Array.isArray(latest.transactions) && Array.isArray(db.transactions)) {
-            const latestIds = new Set(latest.transactions.map(t => String(t.id)));
-            const localOnly = db.transactions.filter(t => !latestIds.has(String(t.id)));
-            dbToSave = { ...db, ...latest, transactions: [...localOnly, ...latest.transactions] };
-            // Pakai saldo terbaru dari DB bersama, lalu tambahkan efek transaksi
-            // lokal yang belum ada di sana agar tidak menggandakan transaksi Rem.
+            const latestById = new Map(latest.transactions.map(t => [String(t.id), t]));
+            // Transaksi lokal yang harus menang: baru ditambah / baru diedit /
+            // belum ada di DB bersama.
+            const localWins = db.transactions.filter(t => {
+                const id = String(t.id);
+                return !delIds.has(id) && (pendIds.has(id) || !latestById.has(id));
+            });
+            const localWinIds = new Set(localWins.map(t => String(t.id)));
+            // Dari DB bersama: buang yang sudah dihapus lokal & yang diganti versi lokal
+            const fromLatest = latest.transactions.filter(t => {
+                const id = String(t.id);
+                return !delIds.has(id) && !localWinIds.has(id);
+            });
+            dbToSave = { ...db, ...latest, transactions: [...localWins, ...fromLatest] };
+            // Saldo: mulai dari saldo DB bersama, cabut efek salinan DB bersama
+            // untuk transaksi yang dihapus/diganti lokal, lalu tambahkan efek versi lokal.
+            const effect = (t, accId) => {
+                if (String(t.account_id) !== String(accId)) return 0;
+                const amount = Number(t.amount) || 0;
+                return t.direction === 'in' ? amount : -amount;
+            };
+            const staleInLatest = latest.transactions.filter(t => {
+                const id = String(t.id);
+                return delIds.has(id) || localWinIds.has(id);
+            });
+            const localWinsToApply = localWins.filter(t => pendIds.has(String(t.id)) || !latestById.has(String(t.id)));
             dbToSave.accounts = (latest.accounts || db.accounts || []).map(latestAccount => {
                 const localAccount = (db.accounts || []).find(a => String(a.id) === String(latestAccount.id));
-                const delta = localOnly.reduce((sum, t) => {
-                    if (String(t.account_id) !== String(latestAccount.id)) return sum;
-                    const amount = Number(t.amount) || 0;
-                    return sum + (t.direction === 'in' ? amount : -amount);
-                }, 0);
-                return { ...(localAccount || {}), ...latestAccount, balance: Number(latestAccount.balance || 0) + delta };
+                const removed = staleInLatest.reduce((sum, t) => sum + effect(t, latestAccount.id), 0);
+                const added   = localWinsToApply.reduce((sum, t) => sum + effect(t, latestAccount.id), 0);
+                return { ...(localAccount || {}), ...latestAccount, balance: Number(latestAccount.balance || 0) - removed + added };
             });
             // Akun yang baru dibuat di tab lokal tetap dipertahankan.
             for (const localAccount of (db.accounts || [])) {
@@ -4047,6 +4076,11 @@ async function flushSave() {
         await idbSet('db', dbToSave);
         // Keep local memory aligned with merged shared data.
         db = dbToSave;
+        rebuildIndex(); // objek transaksi diganti hasil merge -> index harus sinkron
+        // Perubahan yang sudah tersimpan tidak perlu dilacak lagi
+        pendIds.forEach(id => _pendingTrxIds.delete(id));
+        delIds.forEach(id => _deletedTrxIds.delete(id));
+        _forceOverwriteDb = false;
     } catch (e) {
         console.warn('IDB save db:', e);
         _savePending = true;
@@ -5423,6 +5457,8 @@ async function confirmResetData() {
     if (!ok) return;
     seedDefaultData();
     rebuildIndex();
+    _pendingTrxIds.clear(); _deletedTrxIds.clear();
+    _forceOverwriteDb = true; // jangan di-merge ulang dengan data lama di IDB
     markSave(); invalidateMetricsCache(); markDirty();
     renderApp();
     showNotification('Data direset', 'warning');
@@ -5942,7 +5978,7 @@ async function deleteBook(id) {
     const deletedTrxIds = new Set(getTrxForBook(book.id).map(t => t.id));
     deletedTrxIds.forEach(tid => {
         const t = getTransaction(tid);
-        if (t) { reverseAccountBalance(t); _indexRemove(t); }
+        if (t) { reverseAccountBalance(t); _indexRemove(t); _trackDelete(t); }
     });
     db.transactions = db.transactions.filter(t => !deletedTrxIds.has(t.id));
 
@@ -6122,6 +6158,7 @@ async function deleteFromDetail() {
         if (paired) {
             reverseAccountBalance(paired);
             _indexRemove(paired);
+            _trackDelete(paired);
             invalidateMetricsCache(paired);
             idsToDelete.add(paired.id);
         }
@@ -6129,6 +6166,7 @@ async function deleteFromDetail() {
 
     reverseAccountBalance(t);
     _indexRemove(t);
+    _trackDelete(t);
     invalidateMetricsCache(t);
     db.transactions = db.transactions.filter(x => !idsToDelete.has(x.id));
     markDirty(); markSave();
@@ -7311,6 +7349,7 @@ function saveTrxFromKeyboard() {
             if (oldTrx) {
                 reverseAccountBalance(oldTrx);
                 _indexRemove(oldTrx);
+                _trackDelete(oldTrx);
                 invalidateMetricsCache(oldTrx);
                 // Hapus paired transaction jika ada
                 const pairedId = oldTrx.transferPair;
@@ -7318,6 +7357,7 @@ function saveTrxFromKeyboard() {
                 if (pairedTrx) {
                     reverseAccountBalance(pairedTrx);
                     _indexRemove(pairedTrx);
+                    _trackDelete(pairedTrx);
                     invalidateMetricsCache(pairedTrx);
                     db.transactions = db.transactions.filter(t => t.id !== pairedTrx.id);
                 }
@@ -7328,6 +7368,8 @@ function saveTrxFromKeyboard() {
         db.transactions.unshift(outTrx);
         _indexAdd(outTrx);
         _indexAdd(inTrx);
+        _trackUpsert(outTrx);
+        _trackUpsert(inTrx);
         applyAccountBalance(outTrx);
         applyAccountBalance(inTrx);
 
@@ -7385,6 +7427,7 @@ function saveTrxFromKeyboard() {
             reverseAccountBalance(oldTrx);
             db.transactions[idx] = newTrx;
             _indexAdd(newTrx);
+            _trackUpsert(newTrx);
             invalidateMetricsCache(oldTrx);
             invalidateMetricsCache(newTrx);
             showNotification('Transaksi diperbarui');
@@ -7392,6 +7435,7 @@ function saveTrxFromKeyboard() {
     } else {
         db.transactions.unshift(newTrx);
         _indexAdd(newTrx);
+        _trackUpsert(newTrx);
         invalidateMetricsCache(newTrx);
         showNotification('Transaksi ditambahkan');
     }
