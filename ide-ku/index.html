@@ -1073,6 +1073,27 @@
       flex-shrink: 0;
     }
 
+  
+    /* ── Wishlist: progress tabungan (dari CuciMoney+) ── */
+    .wishlist-saving {
+      padding: 9px 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+    .wishlist-saving.boxed {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 16px;
+      background: var(--input-bg);
+    }
+    .ws-top {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      font-size: 11px; color: var(--text-sub); margin-bottom: 6px;
+    }
+    .ws-top b { color: var(--text); font-weight: 600; }
+    .ws-bar { height: 5px; border-radius: 99px; background: var(--border); overflow: hidden; }
+    .ws-fill { height: 100%; border-radius: 99px; background: #10b981; transition: width 0.4s ease; }
+    .ws-fill.full { background: #f59e0b; }
+    .ws-note { font-size: 11px; color: #d97706; margin-top: 6px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -1469,10 +1490,48 @@ async function getAllIdeas() {
   return EcosystemDB.ideas.getAll();
 }
 async function putIdea(idea) {
-  return EcosystemDB.ideas.put(idea);
+  return EcosystemDB.ideas.put(idea).then(r => { try { EcosystemDB.sync && EcosystemDB.sync.notify('ideas'); } catch (_) {} return r; });
 }
 async function deleteIdeaDB(id) {
-  return EcosystemDB.ideas.delete(id);
+  return EcosystemDB.ideas.delete(id).then(r => { try { EcosystemDB.sync && EcosystemDB.sync.notify('ideas'); } catch (_) {} return r; });
+}
+
+// ── Tabungan wishlist (dikelola di CuciMoney+, di sini hanya dibaca) ──
+let savingsData = { pots: {} };
+let _sharedSig = "";
+async function loadSavings() {
+  try {
+    if (EcosystemDB.savings) savingsData = await EcosystemDB.savings.getAll();
+  } catch (_) {}
+}
+function potFor(id) {
+  const p = savingsData.pots && savingsData.pots[String(id)];
+  return p && p.saved > 0 ? p : null;
+}
+function savingBlockHtml(idea, boxed) {
+  if (!idea || idea.type !== "Wishlist") return "";
+  const pot = potFor(idea.id);
+  if (!pot) return "";
+  const price = Number(idea.price) || 0;
+  const saved = pot.saved;
+  const full = price > 0 && saved >= price;
+  const pct = price > 0 ? (full ? 100 : Math.min(99, Math.floor(saved / price * 100))) : 0;
+  const fmt = n => "Rp " + Number(n).toLocaleString("id-ID");
+  return `<div class="wishlist-saving${boxed ? " boxed" : ""}">
+    <div class="ws-top"><span>Tabungan di CuciMoney+</span><span><b>${fmt(saved)}</b>${price > 0 ? ` / ${fmt(price)} · ${pct}%` : ""}</span></div>
+    ${price > 0 ? `<div class="ws-bar"><div class="ws-fill${full ? " full" : ""}" style="width:${pct}%"></div></div>` : ""}
+    ${full ? `<div class="ws-note">Target tercapai — cairkan lewat menu Tabungan di CuciMoney+</div>` : ""}
+  </div>`;
+}
+async function refreshFromShared() {
+  try {
+    const [data] = await Promise.all([getAllIdeas(), loadSavings()]);
+    const sig = JSON.stringify([data, savingsData]);
+    if (sig === _sharedSig) return;       // tidak ada perubahan → jangan render ulang
+    _sharedSig = sig;
+    ideas = data;
+    render();
+  } catch (_) {}
 }
 
 // ── State ──
@@ -1906,6 +1965,7 @@ function renderList() {
             </div>
           </div>
 
+          ${savingBlockHtml(idea)}
           <div class="wishlist-footer">
             <div class="wishlist-footer-item">
               <span class="wishlist-status-dot" style="background:${statusDot}"></span>
@@ -2181,6 +2241,8 @@ function openItemModal(id) {
 
       ${idea.notes ? `<p class="card-notes" style="margin-bottom:16px">${escHtml(idea.notes)}</p>` : ""}
 
+      ${savingBlockHtml(idea, true)}
+
       <div class="card-actions">
         <div class="act-row">
           <span class="act-label">Status</span>
@@ -2263,7 +2325,9 @@ function clearSearch() {
 function askDelete(e, id, title) {
   e.stopPropagation();
   pendingDeleteId = id;
-  document.getElementById("modal-sub").textContent = `"${title}" akan dihapus permanen.`;
+  const _pot = potFor(id);
+  document.getElementById("modal-sub").textContent = `"${title}" akan dihapus permanen.` +
+    (_pot ? ` Dana tabungan Rp ${Number(_pot.saved).toLocaleString("id-ID")} di CuciMoney+ tetap aman — kembalikan ke akun lewat menu Tabungan.` : "");
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -3218,9 +3282,16 @@ function showAIDecisionModal(idea, decision) {
 // ── Init ──
 initTheme();
 populateCatSelects(CATEGORIES[0], null);
-EcosystemDB.open().then(() => getAllIdeas()).then(data => {
+EcosystemDB.open().then(() => Promise.all([getAllIdeas(), loadSavings()])).then(([data]) => {
   ideas = data;
+  _sharedSig = JSON.stringify([data, savingsData]);
   render();
+  // Wishlist/tabungan diubah dari CuciMoney+ (atau tab lain) → muat ulang otomatis
+  try {
+    EcosystemDB.sync && EcosystemDB.sync.on(m => {
+      if (m && (m.topic === "ideas" || m.topic === "savings" || m.topic === "visible")) refreshFromShared();
+    });
+  } catch (_) {}
 }).catch(() => {
   document.getElementById("list").innerHTML = `<div class="loading">Gagal memuat data.</div>`;
 });
