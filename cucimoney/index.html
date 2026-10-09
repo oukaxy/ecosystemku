@@ -2571,6 +2571,121 @@
         .skeleton-line-title { height: 13px; width: 55%; }
         .skeleton-line-sub   { height: 11px; width: 35%; }
         .skeleton-amount     { width: 70px; height: 13px; border-radius: 0.4rem; }
+
+        /* ===== TABUNGAN ===== */
+        .sv-hero {
+            margin: 1rem 1.25rem 1rem; padding: 1.25rem; border-radius: 1.4rem;
+            background: linear-gradient(135deg, #12303A 0%, #0D1A2E 100%);
+            border: 1px solid var(--border); position: relative; overflow: hidden;
+        }
+        .sv-hero::after {
+            content: ''; position: absolute; top: -50px; right: -40px; width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(0,191,165,0.2), transparent 70%); pointer-events: none;
+        }
+        .sv-hero-label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.2px; }
+        .sv-hero-amount { font-size: 2rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px; margin: 0.35rem 0 0.9rem; }
+        .sv-hero-meta { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-top: 0.6rem; }
+        .sv-bar { height: 8px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
+        .sv-bar.big { height: 10px; margin: 0 1.5rem; }
+        .sv-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), #64DD17); transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
+        .sv-bar-fill.ready { background: linear-gradient(90deg, #FFAB00, #64DD17); }
+        .sv-section {
+            padding: 0.6rem 1.5rem 0.5rem; font-size: 0.68rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between;
+        }
+        .sv-card {
+            margin: 0 1.25rem 0.75rem; padding: 1rem 1.1rem; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 1.25rem; cursor: pointer; transition: background 0.15s, transform 0.15s;
+        }
+        .sv-card:active { background: var(--bg-hover); transform: scale(0.99); }
+        .sv-card.ready { border-color: rgba(255,171,0,0.45); box-shadow: 0 0 0 1px rgba(255,171,0,0.12) inset; }
+        .sv-card.done { opacity: 0.6; }
+        .sv-card-top { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.85rem; }
+        .sv-ico {
+            width: 44px; height: 44px; border-radius: 0.9rem; background: var(--primary-dim);
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0;
+        }
+        .sv-ico.big { width: 52px; height: 52px; font-size: 1.6rem; border-radius: 1rem; }
+        .sv-info { flex: 1; min-width: 0; }
+        .sv-name { font-size: 0.92rem; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sv-sub { font-size: 0.72rem; font-weight: 500; color: var(--text-muted); margin-top: 0.15rem; display: flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+        .sv-pri-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .sv-pct { font-size: 0.95rem; font-weight: 800; color: var(--primary); }
+        .sv-card-foot { display: flex; justify-content: space-between; font-size: 0.74rem; font-weight: 600; color: var(--text-muted); margin-top: 0.55rem; }
+        .sv-card-foot b { color: var(--text-main); font-weight: 800; }
+        .sv-done-tag { font-size: 0.78rem; font-weight: 700; color: var(--income); }
+        .sv-actions { margin-top: 0.85rem; }
+        .sv-btn {
+            width: 100%; padding: 0.7rem 1rem; border-radius: 0.85rem; border: none;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: 0.15s;
+        }
+        .sv-btn:active { transform: scale(0.98); opacity: 0.9; }
+        .sv-btn.primary { background: var(--primary-dim); color: var(--primary); }
+        .sv-btn.ready { background: linear-gradient(135deg, #FFAB00, #FF8F00); color: #1a1200; }
+        .sv-btn.ghost { background: var(--bg-card2); color: var(--text-muted); border: 1px solid var(--border); }
+
+        /* detail */
+        .sv-d-head { display: flex; align-items: center; gap: 0.9rem; padding: 0.25rem 1.5rem 1rem; }
+        .sv-d-name { font-size: 1.05rem; font-weight: 800; color: var(--text-main); }
+        .sv-d-sub { font-size: 0.74rem; color: var(--text-muted); margin-top: 0.2rem; }
+        .sv-d-amount { font-size: 2.1rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; padding: 0 1.5rem 0.7rem; }
+        .sv-d-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 1rem 1.5rem 0; }
+        .sv-d-stats div { background: var(--bg-card2); border-radius: 0.85rem; padding: 0.65rem 0.7rem; display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+        .sv-d-stats span { font-size: 0.62rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+        .sv-d-stats b { font-size: 0.78rem; font-weight: 800; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sv-primary-wrap { padding: 0 1.5rem; margin-top: 1rem; }
+        .sv-primary-wrap .btn { width: 100%; }
+        .sv-links { display: flex; justify-content: center; gap: 1.5rem; padding: 0.9rem 1.5rem 0.25rem; flex-wrap: wrap; }
+        .sv-link { background: none; border: none; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); cursor: pointer; padding: 0.3rem; }
+        .sv-link.danger { color: var(--expense); }
+        .sv-hist-list { padding: 0 1.5rem; }
+        .sv-hist { display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+        .sv-hist:last-child { border-bottom: none; }
+        .sv-hist-ico { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; flex-shrink: 0; }
+        .sv-hist-ico.in { background: var(--income-dim); color: var(--income); }
+        .sv-hist-ico.out { background: rgba(255,171,0,0.15); color: #FFAB00; }
+        .sv-hist-info { flex: 1; min-width: 0; }
+        .sv-hist-title { font-size: 0.82rem; font-weight: 600; color: var(--text-main); }
+        .sv-hist-date { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .sv-hist-amt { font-size: 0.82rem; font-weight: 800; }
+        .sv-hist-amt.in { color: var(--income); }
+        .sv-hist-amt.out { color: #FFAB00; }
+        .sv-hist-empty { text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 1rem 0; }
+
+        /* sheets: form / nabung / cairkan */
+        .sv-sheet-body { padding: 0 1.5rem 0.5rem; overflow-y: auto; overscroll-behavior: contain; flex: 1; }
+        .sv-sheet-item { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; }
+        .sv-lbl { display: block; font-size: 0.82rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 1.1rem 0 0.5rem; }
+        .sv-amount-wrap {
+            display: flex; align-items: center; gap: 0.6rem; padding: 0.9rem 1.1rem;
+            background: var(--bg-card2); border: 1px solid var(--border-strong); border-radius: 1rem;
+        }
+        .sv-amount-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+        .sv-amount-wrap span { font-size: 1.2rem; font-weight: 800; color: var(--text-muted); }
+        .sv-amount-wrap input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; font-size: 1.6rem; font-weight: 800; color: var(--text-main); }
+        .sv-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+        .sv-chip { padding: 0.45rem 0.85rem; border-radius: 99px; border: 1px solid var(--border-strong); background: var(--bg-card2); color: var(--text-main); font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+        .sv-chip.strong { border-color: var(--primary); color: var(--primary); background: var(--primary-dim); }
+        .sv-acc { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0.9rem; border-radius: 0.95rem; border: 1px solid var(--border); background: var(--bg-card2); margin-bottom: 0.5rem; cursor: pointer; }
+        .sv-acc.sel { border-color: var(--primary); background: var(--primary-dim); }
+        .sv-acc-ico { font-size: 1.25rem; }
+        .sv-acc-info { flex: 1; min-width: 0; }
+        .sv-acc-name { font-size: 0.86rem; font-weight: 700; color: var(--text-main); }
+        .sv-acc-bal { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .sv-acc-check { color: var(--primary); font-weight: 800; opacity: 0; }
+        .sv-acc.sel .sv-acc-check { opacity: 1; }
+        .sv-wd-amount { font-size: 2rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; text-align: center; margin: 0.4rem 0 0.2rem; }
+        .sv-warn { font-size: 0.76rem; line-height: 1.45; color: #FFAB00; background: rgba(255,171,0,0.1); border-radius: 0.8rem; padding: 0.7rem 0.9rem; margin-top: 0.6rem; }
+        .sv-check { display: flex; align-items: center; gap: 0.6rem; margin-top: 1rem; font-size: 0.84rem; color: var(--text-main); cursor: pointer; }
+        .sv-check input { width: 18px; height: 18px; accent-color: var(--primary); }
+        .sv-seg { display: flex; gap: 0.4rem; }
+        .sv-seg-btn { flex: 1; padding: 0.65rem 0.4rem; border-radius: 0.85rem; border: 1px solid var(--border-strong); background: var(--bg-card2); color: var(--text-muted); font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+        .sv-seg-btn.on { border-color: var(--primary); background: var(--primary-dim); color: var(--primary); }
+        .sv-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
+        .sv-icon-opt { aspect-ratio: 1; border-radius: 0.8rem; border: 1px solid var(--border); background: var(--bg-card2); font-size: 1.25rem; cursor: pointer; }
+        .sv-icon-opt.on { border-color: var(--primary); background: var(--primary-dim); }
+        .sv-note { font-size: 0.74rem; color: var(--text-muted); margin-top: 0.9rem; line-height: 1.45; }
+        .sv-del { width: 100%; background: none; border: none; color: var(--expense); font-size: 0.82rem; font-weight: 700; padding: 0.4rem; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -2956,6 +3071,14 @@
                 <div class="lebih-label">Budget</div>
             </div>
 
+            <!-- Tabungan -->
+            <div class="lebih-item" onclick="switchView('tabungan', document.getElementById('nav-lebih'))">
+                <div class="lebih-icon-wrap" style="background:rgba(255,193,7,0.13);">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFC107" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>
+                </div>
+                <div class="lebih-label">Tabungan</div>
+            </div>
+
             <!-- Kategori -->
             <div class="lebih-item" onclick="openCategoryManager()">
                 <div class="lebih-icon-wrap" style="background:rgba(124,77,255,0.12);">
@@ -3009,6 +3132,28 @@
         </div>
     </div>
 
+    <!-- ===== VIEW: TABUNGAN ===== -->
+    <div id="view-tabungan" class="view">
+        <div class="header">
+            <div class="title" style="display:flex;align-items:center;gap:0.5rem;">
+                <button class="icon-btn" onclick="switchView('lebih', document.getElementById('nav-lebih'))" aria-label="Kembali" style="margin-right:0.1rem;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>
+                Tabungan
+            </div>
+            <button class="icon-btn" onclick="svOpenForm()" aria-label="Tambah wishlist">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+        </div>
+        <div id="sv-hero"></div>
+        <div id="sv-list"></div>
+        <button class="add-btn" onclick="svOpenForm()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah Wishlist
+        </button>
+    </div>
+
     <!-- ===== BOTTOM NAV ===== -->
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="switchView('buku',this)">
@@ -3023,7 +3168,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             <span class="nav-label">Analisis</span>
         </div>
-        <div class="nav-item" onclick="switchView('lebih',this)">
+        <div class="nav-item" id="nav-lebih" onclick="switchView('lebih',this)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><circle cx="5" cy="12" r="3"/></svg>
             <span class="nav-label">Lainnya</span>
         </div>
@@ -3069,6 +3214,74 @@
         <div id="book-list-sheet"></div>
         <div style="padding:0 1.5rem;">
             <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="openAddBookModal()">+ Buku Baru</button>
+        </div>
+    </div>
+
+    <!-- ===== TABUNGAN: SHEETS ===== -->
+    <div class="bottom-sheet" id="sheet-sv-detail" style="max-height:88vh;display:flex;flex-direction:column;">
+        <div class="sheet-handle"></div>
+        <div id="sv-detail-body" style="overflow-y:auto;overscroll-behavior:contain;flex:1;padding-top:0.5rem;"></div>
+    </div>
+
+    <div class="bottom-sheet" id="sheet-sv-form" style="max-height:92vh;display:flex;flex-direction:column;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="sv-form-title">Wishlist Baru</div>
+        <div class="sv-sheet-body">
+            <div class="form-group">
+                <label>Nama barang</label>
+                <input type="text" id="sv-f-title" maxlength="80" placeholder="Contoh: Sepatu lari" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Harga / target (Rp)</label>
+                <input type="text" id="sv-f-price" inputmode="numeric" placeholder="0" oninput="svFmtInput(this)">
+            </div>
+            <div class="form-group">
+                <label>Prioritas</label>
+                <div class="sv-seg" id="sv-f-pri"></div>
+            </div>
+            <div class="form-group">
+                <label>Ikon</label>
+                <div class="sv-icon-grid" id="sv-f-icons"></div>
+            </div>
+            <div class="sv-note" id="sv-f-locked" style="display:none;">Sebagian dana sudah tertabung. Mengubah harga akan menggeser target, uangnya tetap aman di Tabungan.</div>
+            <div class="sv-note">Wishlist ini dipakai bersama IdeKu — perubahan di sini otomatis muncul di sana, begitu juga sebaliknya.</div>
+        </div>
+        <div class="form-buttons">
+            <button class="btn btn-secondary" onclick="history.back()">Batal</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="svSaveForm()">Simpan</button>
+        </div>
+        <div id="sv-f-del-wrap" style="display:none;padding:0 1.5rem;"><button class="sv-del" onclick="svDeleteWishlist()">Hapus wishlist</button></div>
+    </div>
+
+    <div class="bottom-sheet" id="sheet-sv-deposit" style="max-height:92vh;display:flex;flex-direction:column;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Nabung</div>
+        <div class="sv-sheet-body">
+            <div id="sv-dp-head"></div>
+            <div class="sv-amount-wrap"><span>Rp</span><input type="text" id="sv-dp-amount" inputmode="numeric" placeholder="0" oninput="svFmtInput(this)"></div>
+            <div class="sv-chips" id="sv-dp-chips"></div>
+            <label class="sv-lbl">Ambil dari akun</label>
+            <div id="sv-dp-accounts"></div>
+            <div class="sv-note">Uang dipindah ke akun Tabungan dan terkunci sampai target tercapai.</div>
+        </div>
+        <div class="form-buttons">
+            <button class="btn btn-secondary" onclick="history.back()">Batal</button>
+            <button class="btn btn-primary" style="flex:2;" onclick="svDoDeposit()">Nabung Sekarang</button>
+        </div>
+    </div>
+
+    <div class="bottom-sheet" id="sheet-sv-withdraw" style="max-height:92vh;display:flex;flex-direction:column;">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title" id="sv-wd-title">Cairkan Tabungan</div>
+        <div class="sv-sheet-body">
+            <div id="sv-wd-head"></div>
+            <label class="sv-lbl">Kembalikan ke akun</label>
+            <div id="sv-wd-accounts"></div>
+            <div id="sv-wd-opts"></div>
+        </div>
+        <div class="form-buttons">
+            <button class="btn btn-secondary" onclick="history.back()">Batal</button>
+            <button class="btn btn-primary" style="flex:2;" id="sv-wd-confirm" onclick="svDoWithdraw()">Cairkan ke Akun</button>
         </div>
     </div>
 
@@ -3846,6 +4059,9 @@ async function loadFromLS() {
         seedDefaultData();
     }
 
+    // Muat tabungan + wishlist (dipakai bersama IdeKu)
+    try { await svLoad(); } catch (e) { console.warn('Tabungan gagal dimuat:', e); }
+
     // Boot app setelah data siap
     rebuildIndex();
     const currentBook = db.books.find(b => b.id === state.currentBookId);
@@ -3978,10 +4194,10 @@ function getTrxForBook(bookId) {
    yang sedang aktif. View lain di-flag dirty → dirender saat
    pertama kali dibuka via switchView().
 ---------------------------------------------------------------- */
-const _dirty = { buku: true, dompet: true, analisis: true, lebih: true };
+const _dirty = { buku: true, dompet: true, analisis: true, tabungan: true, lebih: true };
 let _activeView = 'buku';
 
-function markDirty(views = ['buku','dompet','analisis','lebih']) {
+function markDirty(views = ['buku','dompet','analisis','tabungan','lebih']) {
     views.forEach(v => _dirty[v] = true);
 }
 
@@ -3999,6 +4215,7 @@ function _renderView(name) {
     if (name === 'buku')    renderBuku();
     if (name === 'dompet')  renderDompet();
     if (name === 'analisis') renderAnalysis();
+    if (name === 'tabungan') renderTabungan();
     if (name === 'lebih')   renderLebih();
 }
 
@@ -4087,6 +4304,7 @@ async function flushSave() {
     }
     idbSet('budgets', budgets).catch(e => console.warn('IDB save budgets:', e));
     idbSet('masterBudgets', masterBudgets).catch(e => console.warn('IDB save masterBudgets:', e));
+    if (_savingsDirty) svWrite().catch(e => { _savingsDirty = true; console.warn('IDB save savings:', e); });
     // Simpan preferensi UI yang harus persisten
     idbSet('appPrefs', {
         currentBookId:        state.currentBookId,
@@ -4406,6 +4624,9 @@ function renderDompet() {
         else asset += a.balance;
     });
     
+    const _svAcc = db.accounts.find(a => a.isSavings);
+    const _svBal = _svAcc ? (_svAcc.balance || 0) : 0;
+    asset += _svBal;
     const net = asset - liability;
     document.getElementById('dompet-networth').textContent = formatCurrency(net);
     document.getElementById('dompet-asset').textContent = formatCurrency(asset);
@@ -4462,6 +4683,27 @@ function renderDompet() {
 
             html += `</div>`;
         });
+    }
+    if (_svAcc && _svBal > 0) {
+        html += `<div class="account-group-card">
+            <div class="account-category-header">
+                <div class="account-category-title"><span>Tabungan</span></div>
+                <div class="account-category-total">Aset: ${formatCurrency(_svBal)}</div>
+            </div>
+            <div class="account-item" onclick="switchView('tabungan', document.getElementById('nav-lebih'))">
+                <div class="account-item-left">
+                    <div class="account-icon" style="background:var(--primary-dim)">🐷</div>
+                    <div class="account-info">
+                        <div class="account-name">Tabungan Wishlist</div>
+                        <div class="account-notes">Terkunci sampai target tercapai</div>
+                    </div>
+                </div>
+                <div class="account-balance-wrap">
+                    <div class="account-balance">${formatCurrency(_svBal)}</div>
+                    <div class="account-currency">IDR(1.0)</div>
+                </div>
+            </div>
+        </div>`;
     }
     document.getElementById('account-list').innerHTML = html;
 }
@@ -5398,7 +5640,7 @@ function drawDonut(sorted, total, svgId = 'donut-svg') {
 function renderLebih() {
     document.getElementById('cat-count-label').textContent  = db.categories.length;
     document.getElementById('book-count-label').textContent = db.books.length;
-    document.getElementById('acc-count-label').textContent  = db.accounts.length;
+    document.getElementById('acc-count-label').textContent  = db.accounts.filter(a => !a.isSavings).length;
     document.getElementById('trx-count-label').textContent  = db.transactions.length;
 }
 
@@ -5459,6 +5701,7 @@ async function confirmResetData() {
     rebuildIndex();
     _pendingTrxIds.clear(); _deletedTrxIds.clear();
     _forceOverwriteDb = true; // jangan di-merge ulang dengan data lama di IDB
+    savings = { pots: {} }; _savingsDirty = true;
     markSave(); invalidateMetricsCache(); markDirty();
     renderApp();
     showNotification('Data direset', 'warning');
@@ -5512,7 +5755,7 @@ function switchView(name, el) {
 /* Layer priority (dari bawah ke atas):
    base → view → modal-fs → bottom-sheet → overlay-dialog */
 
-const NAV_VIEWS = ['buku', 'dompet', 'analisis', 'lebih'];
+const NAV_VIEWS = ['buku', 'dompet', 'analisis', 'tabungan', 'lebih'];
 
 function _getOpenLayers() {
     const layers = [];
@@ -5597,7 +5840,7 @@ function _closeTopLayer() {
         case 'sheet':
             top.el.classList.remove('active');
             // Tutup overlay jika tidak ada modal lain
-            if (_getOpenLayers().filter(l => l.type !== 'sheet').length === 0) {
+            if (_getOpenLayers().length === 0) {
                 document.getElementById('main-overlay')?.classList.remove('active');
             }
             break;
@@ -5683,7 +5926,7 @@ window.addEventListener('popstate', (e) => {
 
     // Tidak ada modal → intent keluar
     // Klik 2x untuk keluar HANYA berlaku di view utama (buku, dompet, analisis, lebih)
-    const _mainViews = ['buku', 'dompet', 'analisis', 'lebih'];
+    const _mainViews = ['buku', 'dompet', 'analisis', 'tabungan', 'lebih'];
     if (!_mainViews.includes(_activeView)) return;
 
     if (_exitPressedOnce) {
@@ -5959,6 +6202,10 @@ async function deleteBook(id) {
         return;
     }
 
+    if (getTrxForBook(book.id).some(t => t.savingsPot !== undefined)) {
+        showNotification('Buku ini punya transaksi Tabungan — cairkan/kembalikan dulu dari menu Tabungan', 'warning');
+        return;
+    }
     const trxCount = getTrxForBook(book.id).length;
     let message = `Buku <b>${book.name}</b> akan dihapus.`;
     if (trxCount > 0) {
@@ -6137,6 +6384,7 @@ async function deleteFromDetail() {
     if (!id) return;
     const t = getTransaction(id);
     if (!t) return;
+    if (t.savingsPot !== undefined) { showNotification('Transaksi tabungan dikelola dari menu Tabungan', 'warning'); return; }
     const isTransfer = !!t.transferPair;
     const msg = isTransfer
         ? 'Kedua sisi transfer (keluar & masuk) akan dihapus.'
@@ -7468,6 +7716,7 @@ function saveAndNext() {
 function editTransaction(id) {
     const trx = getTransaction(id);
     if (!trx) return;
+    if (trx.savingsPot !== undefined) { showNotification('Transaksi tabungan dikelola dari menu Tabungan', 'warning'); return; }
     // Use the actual trx.id (preserves original type: number or string)
     state.editingTrxId = trx.id;
     
@@ -7824,7 +8073,8 @@ function exportBackupJSON() {
         _app: 'cucimoney',
         _exportedAt: new Date().toISOString(),
         db,
-        masterBudgets
+        masterBudgets,
+        savings
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8;' });
     const a = document.createElement('a');
@@ -7889,6 +8139,8 @@ function importBackupJSON(event) {
 
         await idbSet('db', db);
         await idbSet('masterBudgets', masterBudgets);
+        savings = (payload.savings && payload.savings.pots) ? payload.savings : { pots: {} };
+        await svWrite();
 
         monthlyMetrics = {};
         // Pastikan currentBookId valid
@@ -8337,6 +8589,519 @@ function openEditAccountFromDetail() {
         updateAccDisplay();
     }
 }
+
+/* ===========================
+   TABUNGAN — nabung untuk wishlist IdeKu
+   Cara kerja:
+   • Uang dipindah (transfer 2 sisi) dari akun → akun sistem "Tabungan".
+   • Tiap wishlist punya "pot" sendiri; uangnya terkunci sampai target (harga) tercapai.
+   • Setelah tercapai → "Cairkan": uang kembali ke akun pilihan, wishlist ditandai Selesai di IdeKu.
+   • Wishlist dibaca & ditulis di store `ideas` (type 'Wishlist') — dipakai bersama IdeKu.
+   • Pot disimpan di kv finances:savings (EcosystemDB.savings).
+=========================== */
+let savings = { pots: {} };
+let svWishlist = [];
+let _savingsDirty = false;
+let svBusy = false;
+let svDetailId = null, svFormId = null, svFormIcon = 'bag', svFormPri = 'Nanti';
+let svDpId = null, svDpAcc = null, svWdId = null, svWdAcc = null, svWdMode = 'realize', svLastAcc = null;
+
+const SV_ICONS = {
+    bag:'🛍️', phone:'📱', laptop:'💻', headphone:'🎧', watch:'⌚', camera:'📷', shirt:'👕', shoe:'👟',
+    book:'📚', gamepad:'🎮', furniture:'🛋️', food:'🍔', bike:'🚲', tool:'🔧', gift:'🎁', beauty:'💄',
+    sport:'⚽', car:'🚗', music:'🎵', health:'💊', star:'⭐', other:'📦', tv:'📺', glasses:'👓',
+    ring:'💍', toy:'🧸', plant:'🪴', palette:'🎨', pen:'✏️'
+};
+const SV_PRIORITIES = ['Penting', 'Nanti', 'Kapan-kapan'];
+const SV_PRI_COLOR = { 'Penting': '#FF5370', 'Nanti': '#FFAB00', 'Kapan-kapan': '#00BFA5' };
+const SV_PRI_RANK = { 'Penting': 0, 'Nanti': 1, 'Kapan-kapan': 2 };
+
+/* ── helpers kecil ── */
+function svEsc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function svToday() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function svIcon(key) { return SV_ICONS[key] || SV_ICONS.bag; }
+function svParseRp(str) { return parseInt(String(str || '').replace(/\D/g, ''), 10) || 0; }
+function svFmtInput(el) {
+    const n = svParseRp(el.value);
+    el.value = n ? n.toLocaleString('id-ID') : '';
+}
+function svShort(v) { return v >= 1000000 ? (v / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 }) + 'jt' : (v / 1000) + 'rb'; }
+function svFindWish(id) { return svWishlist.find(w => String(w.id) === String(id)) || null; }
+function svGetPot(id) { return savings.pots[String(id)] || null; }
+function svEnsurePot(id) {
+    const k = String(id);
+    if (!savings.pots[k]) savings.pots[k] = { wishId: k, saved: 0, history: [], snap: null, realizedAt: null, realizedAmount: 0 };
+    return savings.pots[k];
+}
+function svSnap(w, pot) { if (w && pot) pot.snap = { title: w.title, price: Number(w.price) || 0, image: w.image || 'bag' }; }
+function svDefaultCat() {
+    try {
+        const cats = JSON.parse(localStorage.getItem('ideku-categories') || 'null');
+        if (Array.isArray(cats) && cats.length) return cats.includes('Belanja') ? 'Belanja' : cats[0];
+    } catch (_) {}
+    return 'Belanja';
+}
+function svUniqueIds(n) {
+    const used = new Set(db.transactions.map(t => String(t.id)));
+    const out = [];
+    while (out.length < n) {
+        const id = generateId();
+        if (!used.has(String(id))) { used.add(String(id)); out.push(id); }
+    }
+    return out;
+}
+
+/* ── load / simpan / sync ── */
+async function svLoad() {
+    const [sv, wl] = await Promise.all([EcosystemDB.savings.getAll(), EcosystemDB.ideas.getWishlist()]);
+    savings = sv;
+    svWishlist = wl;
+    svWishlist.forEach(w => svSnap(w, svGetPot(w.id)));
+}
+function svWrite() {
+    _savingsDirty = false;
+    return EcosystemDB.savings.save(savings);
+}
+async function svCommit() {
+    _savingsDirty = true;
+    _savePending = true;
+    await flushSave();        // simpan transaksi + saldo dulu
+    await svWrite();          // lalu pot tabungan
+    try { EcosystemDB.sync.notify('savings'); } catch (_) {}
+    markDirty();
+    renderApp();
+}
+function svNotifyIdeas() { try { EcosystemDB.sync.notify('ideas'); } catch (_) {} }
+
+async function svRefreshWishlist() {
+    try {
+        svWishlist = await EcosystemDB.ideas.getWishlist();
+        svWishlist.forEach(w => svSnap(w, svGetPot(w.id)));
+        markDirty(['tabungan', 'dompet']);
+        if (_activeView === 'tabungan') renderTabungan();
+        if (document.getElementById('sheet-sv-detail')?.classList.contains('active')) svRenderDetail();
+    } catch (e) { console.warn('Refresh wishlist:', e); }
+}
+
+/* ── sheet helpers ── */
+function svOpenSheet(id) {
+    document.getElementById(id).classList.add('active');
+    _pushModalState(id);
+    openOverlay();
+}
+function svCloseSheet(id) {
+    document.getElementById(id)?.classList.remove('active');
+    if (_getOpenLayers().length === 0) document.getElementById('main-overlay').classList.remove('active');
+}
+
+/* ── akun sistem "Tabungan" (tidak dimasukkan ke buku → tidak muncul di picker transaksi) ── */
+function svAccount(create) {
+    let a = db.accounts.find(x => x.isSavings);
+    if (!a && create) {
+        a = { id: generateId(), name: 'Tabungan', type: 'saving', icon: '🐷', balance: 0, isSavings: true, notes: 'Dana wishlist · terkunci sampai target tercapai' };
+        db.accounts.push(a);
+    }
+    return a || null;
+}
+function svSourceAccounts() {
+    const book = db.books.find(b => b.id === state.currentBookId);
+    const ids = book?.accountIds || [];
+    return db.accounts.filter(a => !a.isSavings && a.type !== 'credit' && ids.includes(a.id));
+}
+
+/* Transfer 2 sisi, memakai mekanisme transfer yang sama dengan menu transaksi */
+function svTransfer({ fromId, toId, amount, outTitle, inTitle, wishId }) {
+    const cat = db.categories.find(c => c.type === 'both') || db.categories[db.categories.length - 1];
+    const pair = generateId();
+    const now = Date.now();
+    const date = svToday();
+    const [idOut, idIn] = svUniqueIds(2);
+    const out = { id: idOut, bookId: state.currentBookId, title: outTitle, amount, direction: 'out', category_id: cat?.id || 12,
+        account_id: fromId, date, transferPair: pair, createdAt: now, savingsPot: String(wishId) };
+    const inn = { id: idIn, bookId: state.currentBookId, title: inTitle, amount, direction: 'in', category_id: cat?.id || 12,
+        account_id: toId, date, transferPair: pair, createdAt: now, savingsPot: String(wishId) };
+    db.transactions.unshift(inn);
+    db.transactions.unshift(out);
+    _indexAdd(out); _indexAdd(inn);
+    _trackUpsert(out); _trackUpsert(inn);
+    applyAccountBalance(out); applyAccountBalance(inn);
+    invalidateMetricsCache(out);
+    return { out, inn, pair, date };
+}
+
+/* ── data turunan untuk tampilan ── */
+function svItem(id, w, pot, name, icon, target, saved) {
+    const reached = target > 0 && saved >= target;
+    const pct = target > 0 ? (reached ? 100 : Math.min(99, Math.floor(saved / target * 100))) : 0;
+    let state;
+    if (!w) state = 'orphan';
+    else if (w.status === 'Selesai' && saved === 0) state = 'done';
+    else if (reached) state = 'ready';
+    else if (saved > 0) state = 'saving';
+    else state = 'idle';
+    return { id: String(id), w, pot, name, icon, target, saved, pct, reached, state, remaining: Math.max(0, target - saved) };
+}
+function svBuildItems() {
+    const items = svWishlist.map(w => {
+        const pot = svGetPot(w.id);
+        return svItem(w.id, w, pot, w.title, w.image || 'bag', Number(w.price) || 0, pot ? pot.saved : 0);
+    });
+    Object.values(savings.pots).forEach(pot => {
+        if (svFindWish(pot.wishId) || !(pot.saved > 0)) return;
+        const sn = pot.snap || {};
+        items.push(svItem(pot.wishId, null, pot, sn.title || 'Wishlist terhapus', sn.image || 'bag', Number(sn.price) || 0, pot.saved));
+    });
+    return items;
+}
+
+/* ── render: tab Tabungan ── */
+function svCardHtml(it) {
+    const pri = it.w?.priority;
+    const priDot = pri ? `<span class="sv-pri-dot" style="background:${SV_PRI_COLOR[pri] || '#888'}"></span>${svEsc(pri)}` : '';
+    let sub;
+    if (it.state === 'orphan') sub = 'Dihapus di IdeKu · dana masih tersimpan';
+    else if (it.state === 'done') sub = 'Selesai di IdeKu';
+    else sub = it.target > 0 ? `Target ${formatCurrency(it.target)}` : 'Belum ada harga/target';
+    const fillCls = it.reached ? 'sv-bar-fill ready' : 'sv-bar-fill';
+
+    let action = '';
+    if (it.state === 'ready') action = `<button class="sv-btn ready" onclick="event.stopPropagation();svOpenWithdraw('${it.id}','realize')">Cairkan ${formatCurrency(it.saved, true)}</button>`;
+    else if (it.state === 'saving') action = `<button class="sv-btn primary" onclick="event.stopPropagation();svOpenDeposit('${it.id}')">+ Nabung</button>`;
+    else if (it.state === 'idle' && it.target > 0) action = `<button class="sv-btn primary" onclick="event.stopPropagation();svOpenDeposit('${it.id}')">Mulai nabung</button>`;
+    else if (it.state === 'idle') action = `<button class="sv-btn ghost" onclick="event.stopPropagation();svOpenForm('${it.id}')">Atur target</button>`;
+    else if (it.state === 'orphan') action = `<button class="sv-btn ghost" onclick="event.stopPropagation();svOpenWithdraw('${it.id}','cancel')">Kembalikan ke akun</button>`;
+
+    const body = it.state === 'done'
+        ? `<div class="sv-done-tag">✓ Terbeli</div>`
+        : `<div class="sv-bar"><div class="${fillCls}" style="width:${it.pct}%"></div></div>
+           <div class="sv-card-foot"><span><b>${formatCurrency(it.saved)}</b></span><span>${it.target > 0 ? (it.reached ? 'Target tercapai 🎉' : 'Kurang ' + formatCurrency(it.remaining)) : ''}</span></div>`;
+
+    return `<div class="sv-card ${it.state}" onclick="svOpenDetail('${it.id}')">
+        <div class="sv-card-top">
+            <div class="sv-ico">${svIcon(it.icon)}</div>
+            <div class="sv-info">
+                <div class="sv-name">${svEsc(it.name)}</div>
+                <div class="sv-sub">${sub}${priDot ? ' · ' + priDot : ''}</div>
+            </div>
+            ${it.state !== 'done' && it.target > 0 ? `<div class="sv-pct">${it.pct}%</div>` : ''}
+        </div>
+        ${body}
+        ${action ? `<div class="sv-actions">${action}</div>` : ''}
+    </div>`;
+}
+
+function renderTabungan() {
+    const heroEl = document.getElementById('sv-hero');
+    const listEl = document.getElementById('sv-list');
+    if (!heroEl || !listEl) return;
+
+    const items = svBuildItems();
+    const totalSaved = Object.values(savings.pots).reduce((s, p) => s + (p.saved || 0), 0);
+    const counted = items.filter(i => ['ready', 'saving', 'idle'].includes(i.state) && i.target > 0);
+    const sumTarget = counted.reduce((s, i) => s + i.target, 0);
+    const sumSaved = counted.reduce((s, i) => s + Math.min(i.saved, i.target), 0);
+    const overall = sumTarget > 0 ? Math.floor(sumSaved / sumTarget * 100) : 0;
+    const nActive = items.filter(i => ['ready', 'saving', 'idle'].includes(i.state)).length;
+    const nReady = items.filter(i => i.state === 'ready').length;
+
+    heroEl.innerHTML = `<div class="sv-hero">
+        <div class="sv-hero-label">Total Tabungan</div>
+        <div class="sv-hero-amount">${formatHero(totalSaved)}</div>
+        <div class="sv-bar"><div class="sv-bar-fill" style="width:${overall}%"></div></div>
+        <div class="sv-hero-meta"><span>${nActive} wishlist aktif${nReady ? ' · ' + nReady + ' siap dicairkan' : ''}</span><span>${sumTarget > 0 ? overall + '% dari total target' : ''}</span></div>
+    </div>`;
+
+    if (items.length === 0) {
+        listEl.innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">🎯</div>
+            <div class="empty-state-text">Belum ada wishlist.<br>Tambah di sini atau lewat IdeKu — keduanya otomatis tersinkron.</div>
+        </div>`;
+        return;
+    }
+
+    const sections = [
+        ['ready', '🎉 Siap dicairkan'],
+        ['saving', 'Sedang menabung'],
+        ['idle', 'Belum mulai'],
+        ['orphan', 'Wishlist dihapus di IdeKu'],
+        ['done', 'Sudah terbeli']
+    ];
+    let html = '';
+    sections.forEach(([key, label]) => {
+        const group = items.filter(i => i.state === key).sort((a, b) =>
+            (SV_PRI_RANK[a.w?.priority] ?? 3) - (SV_PRI_RANK[b.w?.priority] ?? 3) || b.pct - a.pct || a.name.localeCompare(b.name));
+        if (!group.length) return;
+        html += `<div class="sv-section"><span>${label}</span><span>${group.length}</span></div>`;
+        html += group.map(svCardHtml).join('');
+    });
+    listEl.innerHTML = html;
+}
+
+/* ── detail wishlist ── */
+function svOpenDetail(id) {
+    svDetailId = String(id);
+    svRenderDetail();
+    svOpenSheet('sheet-sv-detail');
+}
+function svRenderDetail() {
+    const it = svBuildItems().find(i => i.id === svDetailId);
+    if (!it) { svCloseSheet('sheet-sv-detail'); return; }
+    const pot = it.pot;
+    const hist = (pot?.history || []).slice().reverse().slice(0, 40);
+    const histHtml = hist.length ? hist.map(h => {
+        const inn = h.type === 'in';
+        const label = inn ? `Nabung dari ${svEsc(h.accountName || 'akun')}`
+            : (h.kind === 'cancel' ? `Dikembalikan ke ${svEsc(h.accountName || 'akun')}` : `Dicairkan ke ${svEsc(h.accountName || 'akun')}`);
+        return `<div class="sv-hist">
+            <div class="sv-hist-ico ${inn ? 'in' : 'out'}">${inn ? '↓' : '↑'}</div>
+            <div class="sv-hist-info"><div class="sv-hist-title">${label}</div><div class="sv-hist-date">${formatDateShort(h.date)}</div></div>
+            <div class="sv-hist-amt ${inn ? 'in' : 'out'}">${inn ? '+' : '−'}${formatCurrency(h.amount)}</div>
+        </div>`;
+    }).join('') : `<div class="sv-hist-empty">Belum ada riwayat</div>`;
+
+    let primary = '';
+    if (it.state === 'ready') primary = `<button class="btn btn-primary" onclick="svOpenWithdraw('${it.id}','realize')">Cairkan ${formatCurrency(it.saved)}</button>`;
+    else if (it.state === 'saving' || (it.state === 'idle' && it.target > 0)) primary = `<button class="btn btn-primary" onclick="svOpenDeposit('${it.id}')">+ Nabung</button>`;
+    else if (it.state === 'idle') primary = `<button class="btn btn-primary" onclick="svOpenForm('${it.id}')">Atur target</button>`;
+
+    const secondary = [];
+    if (it.w) secondary.push(`<button class="sv-link" onclick="svOpenForm('${it.id}')">Edit wishlist</button>`);
+    if (it.saved > 0) secondary.push(`<button class="sv-link danger" onclick="svOpenWithdraw('${it.id}','cancel')">Kembalikan semua ke akun</button>`);
+
+    const status = it.state === 'ready' ? 'Siap cair' : it.state === 'saving' ? 'Menabung' : it.state === 'done' ? 'Terbeli' : it.state === 'orphan' ? 'Terhapus' : 'Belum mulai';
+
+    document.getElementById('sv-detail-body').innerHTML = `
+        <div class="sv-d-head">
+            <div class="sv-ico big">${svIcon(it.icon)}</div>
+            <div style="min-width:0">
+                <div class="sv-d-name">${svEsc(it.name)}</div>
+                <div class="sv-d-sub">${it.w ? svEsc(it.w.priority || '') + ' · tersinkron dengan IdeKu' : 'Tidak ada lagi di IdeKu'}</div>
+            </div>
+        </div>
+        <div class="sv-d-amount">${formatCurrency(it.saved)}</div>
+        <div class="sv-bar big"><div class="sv-bar-fill ${it.reached ? 'ready' : ''}" style="width:${it.pct}%"></div></div>
+        <div class="sv-d-stats">
+            <div><span>Target</span><b>${it.target > 0 ? formatCurrency(it.target) : '—'}</b></div>
+            <div><span>Kurang</span><b>${it.target > 0 ? formatCurrency(it.remaining) : '—'}</b></div>
+            <div><span>Status</span><b>${status}</b></div>
+        </div>
+        ${primary ? `<div class="sv-primary-wrap">${primary}</div>` : ''}
+        ${secondary.length ? `<div class="sv-links">${secondary.join('')}</div>` : ''}
+        <div class="sv-section" style="margin-top:.5rem"><span>Riwayat</span></div>
+        <div class="sv-hist-list">${histHtml}</div>`;
+}
+
+/* ── form wishlist (baru / edit) ── */
+function svRenderFormChoices() {
+    document.getElementById('sv-f-pri').innerHTML = SV_PRIORITIES.map(p =>
+        `<button type="button" class="sv-seg-btn ${svFormPri === p ? 'on' : ''}" onclick="svFormPri='${p}';svRenderFormChoices()">${p}</button>`).join('');
+    document.getElementById('sv-f-icons').innerHTML = Object.keys(SV_ICONS).map(k =>
+        `<button type="button" class="sv-icon-opt ${svFormIcon === k ? 'on' : ''}" onclick="svFormIcon='${k}';svRenderFormChoices()">${SV_ICONS[k]}</button>`).join('');
+}
+function svOpenForm(id) {
+    svFormId = id ? String(id) : null;
+    const w = svFormId ? svFindWish(svFormId) : null;
+    if (svFormId && !w) { showNotification('Wishlist tidak ditemukan', 'warning'); return; }
+    const pot = svFormId ? svGetPot(svFormId) : null;
+    document.getElementById('sv-form-title').textContent = w ? 'Edit Wishlist' : 'Wishlist Baru';
+    document.getElementById('sv-f-title').value = w ? w.title : '';
+    const price = w ? (Number(w.price) || 0) : 0;
+    document.getElementById('sv-f-price').value = price ? price.toLocaleString('id-ID') : '';
+    svFormPri = w?.priority && SV_PRIORITIES.includes(w.priority) ? w.priority : 'Nanti';
+    svFormIcon = w?.image && SV_ICONS[w.image] ? w.image : 'bag';
+    svRenderFormChoices();
+    const canDelete = !!w && !(pot && pot.saved > 0);
+    document.getElementById('sv-f-del-wrap').style.display = canDelete ? 'block' : 'none';
+    document.getElementById('sv-f-locked').style.display = (w && pot && pot.saved > 0) ? 'block' : 'none';
+    svOpenSheet('sheet-sv-form');
+    if (!w) setTimeout(() => document.getElementById('sv-f-title').focus(), 380);
+}
+async function svSaveForm() {
+    if (svBusy) return;
+    const title = document.getElementById('sv-f-title').value.trim();
+    const price = svParseRp(document.getElementById('sv-f-price').value);
+    if (!title) { showNotification('Nama wishlist wajib diisi', 'warning'); return; }
+    svBusy = true;
+    try {
+        if (svFormId) {
+            const w = svFindWish(svFormId);
+            const cur = (await EcosystemDB.get('ideas', w.id)) || w;   // baca versi terbaru dari DB bersama
+            cur.title = title; cur.price = price; cur.priority = svFormPri; cur.image = svFormIcon;
+            await EcosystemDB.ideas.put(cur);
+            svWishlist = svWishlist.map(x => String(x.id) === String(cur.id) ? cur : x);
+            const pot = svGetPot(cur.id);
+            if (pot) { svSnap(cur, pot); _savingsDirty = true; markSave(); }
+            showNotification('Wishlist diperbarui');
+        } else {
+            const idea = { id: Date.now(), title, notes: '', category: svDefaultCat(), priority: svFormPri,
+                status: 'Belum', type: 'Wishlist', price, image: svFormIcon };
+            await EcosystemDB.ideas.put(idea);
+            svWishlist.push(idea);
+            showNotification('Wishlist ditambahkan — otomatis muncul di IdeKu');
+        }
+        svNotifyIdeas();
+        svCloseSheet('sheet-sv-form');
+        markDirty(['tabungan', 'dompet']);
+        renderTabungan();
+        if (document.getElementById('sheet-sv-detail').classList.contains('active')) svRenderDetail();
+    } catch (e) {
+        console.warn(e);
+        showNotification('Gagal menyimpan wishlist', 'error');
+    } finally { svBusy = false; }
+}
+async function svDeleteWishlist() {
+    const w = svFindWish(svFormId);
+    if (!w) return;
+    const pot = svGetPot(w.id);
+    if (pot && pot.saved > 0) { showNotification('Kembalikan dulu uang tabungannya', 'warning'); return; }
+    const ok = await showConfirm({ icon: '🗑️', title: 'Hapus Wishlist', message: `<b>${svEsc(w.title)}</b> akan dihapus juga dari IdeKu.`, confirmLabel: 'Hapus', confirmClass: 'danger' });
+    if (!ok) return;
+    await EcosystemDB.ideas.delete(w.id);
+    svWishlist = svWishlist.filter(x => String(x.id) !== String(w.id));
+    if (pot) { delete savings.pots[String(w.id)]; _savingsDirty = true; markSave(); }
+    svNotifyIdeas();
+    svCloseSheet('sheet-sv-form');
+    svCloseSheet('sheet-sv-detail');
+    markDirty(['tabungan']);
+    renderTabungan();
+    showNotification('Wishlist dihapus', 'warning');
+}
+
+/* ── nabung (setor) ── */
+function svOpenDeposit(id) {
+    const it = svBuildItems().find(i => i.id === String(id));
+    if (!it || !it.w) return;
+    if (!(it.target > 0)) { showNotification('Atur harga/target dulu', 'warning'); svOpenForm(id); return; }
+    if (it.reached) { showNotification('Target sudah tercapai — saatnya dicairkan', 'warning'); return; }
+    svDpId = it.id;
+    const accs = svSourceAccounts();
+    svDpAcc = accs.find(a => String(a.id) === String(svLastAcc))?.id ?? accs.find(a => a.balance > 0)?.id ?? accs[0]?.id ?? null;
+    svDpAcc = svDpAcc == null ? null : String(svDpAcc);
+    document.getElementById('sv-dp-head').innerHTML = `
+        <div class="sv-sheet-item"><div class="sv-ico">${svIcon(it.icon)}</div>
+        <div class="sv-info"><div class="sv-name">${svEsc(it.name)}</div>
+        <div class="sv-sub">Terkumpul ${formatCurrency(it.saved)} dari ${formatCurrency(it.target)} · sisa <b>${formatCurrency(it.remaining)}</b></div></div></div>`;
+    const chips = [50000, 100000, 250000, 500000, 1000000].filter(v => v < it.remaining).slice(0, 4)
+        .map(v => `<button type="button" class="sv-chip" onclick="svSetDp(${v})">${svShort(v)}</button>`).join('');
+    document.getElementById('sv-dp-chips').innerHTML = chips + `<button type="button" class="sv-chip strong" onclick="svSetDp(${it.remaining})">Pas sisa</button>`;
+    document.getElementById('sv-dp-amount').value = '';
+    svRenderDpAccounts();
+    svOpenSheet('sheet-sv-deposit');
+    setTimeout(() => document.getElementById('sv-dp-amount').focus(), 380);
+}
+function svSetDp(v) { document.getElementById('sv-dp-amount').value = Number(v).toLocaleString('id-ID'); }
+function svRenderAccList(targetId, list, selected, fn) {
+    document.getElementById(targetId).innerHTML = list.length ? list.map(a =>
+        `<div class="sv-acc ${String(a.id) === String(selected) ? 'sel' : ''}" onclick="${fn}('${a.id}')">
+            <div class="sv-acc-ico">${getAccIcon(a)}</div>
+            <div class="sv-acc-info"><div class="sv-acc-name">${svEsc(a.name)}</div><div class="sv-acc-bal">${formatCurrency(a.balance)}</div></div>
+            <div class="sv-acc-check">✓</div>
+        </div>`).join('') : `<div class="sv-hist-empty">Belum ada akun di buku ini</div>`;
+}
+function svRenderDpAccounts() { svRenderAccList('sv-dp-accounts', svSourceAccounts(), svDpAcc, 'svPickDp'); }
+function svPickDp(id) { svDpAcc = String(id); svRenderDpAccounts(); }
+
+async function svDoDeposit() {
+    if (svBusy) return;
+    const it = svBuildItems().find(i => i.id === svDpId);
+    const acc = svDpAcc ? getAccount(svDpAcc) : null;
+    const amount = svParseRp(document.getElementById('sv-dp-amount').value);
+    if (!it || !it.w) return;
+    if (amount <= 0) { showNotification('Masukkan nominal', 'warning'); return; }
+    if (!acc) { showNotification('Pilih akun sumber', 'warning'); return; }
+    if (amount > acc.balance) { showNotification(`Saldo ${acc.name} tidak cukup`, 'error'); return; }
+    if (amount > it.remaining) { showNotification(`Maksimal ${formatCurrency(it.remaining)} (sisa target)`, 'warning'); return; }
+    svBusy = true;
+    try {
+        const sav = svAccount(true);
+        const pot = svEnsurePot(it.id);
+        svSnap(it.w, pot);
+        const r = svTransfer({ fromId: acc.id, toId: sav.id, amount, outTitle: `Nabung: ${it.name}`, inTitle: `Tabungan: ${it.name}`, wishId: it.id });
+        pot.saved += amount;
+        pot.history.push({ id: r.pair, type: 'in', amount, date: r.date, accountId: acc.id, accountName: acc.name, ts: Date.now(), trxIds: [r.out.id, r.inn.id] });
+        svLastAcc = acc.id;
+        await svCommit();
+        svCloseSheet('sheet-sv-deposit');
+        if (document.getElementById('sheet-sv-detail').classList.contains('active')) svRenderDetail();
+        if (pot.saved >= it.target) showNotification('Target tercapai! 🎉 Sekarang bisa dicairkan');
+        else showNotification(`${formatCurrency(amount)} masuk ke tabungan`);
+    } catch (e) {
+        console.warn(e);
+        showNotification('Gagal menabung', 'error');
+    } finally { svBusy = false; }
+}
+
+/* ── cairkan / kembalikan ── */
+function svOpenWithdraw(id, mode) {
+    const it = svBuildItems().find(i => i.id === String(id));
+    if (!it || !(it.saved > 0)) return;
+    if (mode === 'realize' && !it.reached) { showNotification('Target belum tercapai', 'warning'); return; }
+    svWdId = it.id; svWdMode = mode;
+    const accs = svSourceAccounts();
+    svWdAcc = accs[0] ? String(accs[0].id) : null;
+    const realize = mode === 'realize';
+    document.getElementById('sv-wd-title').textContent = realize ? 'Cairkan Tabungan' : 'Kembalikan ke Akun';
+    document.getElementById('sv-wd-head').innerHTML = `
+        <div class="sv-sheet-item"><div class="sv-ico">${svIcon(it.icon)}</div>
+        <div class="sv-info"><div class="sv-name">${svEsc(it.name)}</div>
+        <div class="sv-sub">${realize ? 'Target tercapai 🎉' : 'Tabungan dibatalkan'}</div></div></div>
+        <div class="sv-wd-amount">${formatCurrency(it.saved)}</div>
+        ${realize ? '' : `<div class="sv-warn">Seluruh dana dikembalikan ke akun dan progres wishlist ini kembali ke 0. Wishlist tetap ada di IdeKu.</div>`}`;
+    document.getElementById('sv-wd-opts').innerHTML = (realize && it.w)
+        ? `<label class="sv-check"><input type="checkbox" id="sv-wd-done" checked><span>Tandai wishlist <b>Selesai</b> di IdeKu</span></label>` : '';
+    document.getElementById('sv-wd-confirm').textContent = realize ? 'Cairkan ke Akun' : 'Kembalikan Semua';
+    svRenderWdAccounts();
+    svOpenSheet('sheet-sv-withdraw');
+}
+function svRenderWdAccounts() { svRenderAccList('sv-wd-accounts', svSourceAccounts(), svWdAcc, 'svPickWd'); }
+function svPickWd(id) { svWdAcc = String(id); svRenderWdAccounts(); }
+
+async function svDoWithdraw() {
+    if (svBusy) return;
+    const it = svBuildItems().find(i => i.id === svWdId);
+    const acc = svWdAcc ? getAccount(svWdAcc) : null;
+    const sav = svAccount(false);
+    if (!it || !it.pot || !(it.saved > 0)) return;
+    if (!acc) { showNotification('Pilih akun tujuan', 'warning'); return; }
+    if (!sav || sav.balance < it.saved) { showNotification('Saldo akun Tabungan tidak sinkron — cek menu Dompet', 'error'); return; }
+    const realize = svWdMode === 'realize';
+    const markDone = realize && it.w && document.getElementById('sv-wd-done')?.checked;
+    svBusy = true;
+    try {
+        const amount = it.saved;
+        const pot = it.pot;
+        const r = svTransfer({ fromId: sav.id, toId: acc.id, amount,
+            outTitle: `${realize ? 'Cairkan' : 'Kembalikan'}: ${it.name}`,
+            inTitle: `${realize ? 'Cairan tabungan' : 'Tabungan dikembalikan'}: ${it.name}`, wishId: it.id });
+        pot.saved = 0;
+        pot.history.push({ id: r.pair, type: 'out', kind: realize ? 'realize' : 'cancel', amount, date: r.date, accountId: acc.id, accountName: acc.name, ts: Date.now(), trxIds: [r.out.id, r.inn.id] });
+        if (realize) { pot.realizedAt = Date.now(); pot.realizedAmount = amount; }
+        if (markDone) {
+            const cur = (await EcosystemDB.get('ideas', it.w.id)) || it.w;
+            cur.status = 'Selesai';
+            await EcosystemDB.ideas.put(cur);
+            svWishlist = svWishlist.map(x => String(x.id) === String(cur.id) ? cur : x);
+            svNotifyIdeas();
+        }
+        await svCommit();
+        svCloseSheet('sheet-sv-withdraw');
+        if (document.getElementById('sheet-sv-detail').classList.contains('active')) svRenderDetail();
+        showNotification(realize ? `${formatCurrency(amount)} dicairkan ke ${acc.name}` : `${formatCurrency(amount)} dikembalikan ke ${acc.name}`);
+    } catch (e) {
+        console.warn(e);
+        showNotification('Gagal memproses', 'error');
+    } finally { svBusy = false; }
+}
+
+/* sinkron otomatis saat IdeKu mengubah wishlist (tab lain / kembali ke tab ini) */
+try {
+    EcosystemDB.sync?.on(msg => { if (msg && (msg.topic === 'ideas' || msg.topic === 'visible')) svRefreshWishlist(); });
+} catch (_) {}
 
 loadFromLS(); // async — boots app setelah IDB siap
 
