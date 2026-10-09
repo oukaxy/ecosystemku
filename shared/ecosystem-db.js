@@ -5,7 +5,7 @@
  * ║  Single IndexedDB untuk semua apps:                          ║
  * ║    • IdeKu        → domain: ideas                           ║
  * ║    • Daily OS     → domain: habits, todos                    ║
- * ║    • CuciMoney+   → domain: finances (kv-based)              ║
+ * ║    • CuciMoney+   → domain: finances (kv-based), savings     ║
  * ║    • Kronik       → domain: journal (journal_entries)        ║
  * ╚══════════════════════════════════════════════════════════════╝
  *
@@ -175,6 +175,9 @@ const EcosystemDB = (() => {
     getAll:  ()       => getAll('ideas'),
     put:     (idea)   => put('ideas', idea),
     delete:  (id)     => remove('ideas', id),
+
+    /** Wishlist = ideas dengan type 'Wishlist' (dipakai bersama IdeKu & CuciMoney+) */
+    getWishlist: () => getAll('ideas').then(all => all.filter(i => i && i.type === 'Wishlist')),
   };
 
   /* ═══════════════════════════════════════════════════════════════
@@ -248,6 +251,52 @@ const EcosystemDB = (() => {
       delete: (key)        => remove('kv', `finances:${key}`),
     },
   };
+
+  /* ═══════════════════════════════════════════════════════════════
+     DOMAIN: SAVINGS  (CuciMoney+ Tabungan ↔ IdeKu Wishlist)
+     Disimpan di kv 'finances:savings' sebagai:
+       { pots: { "<wishlistId>": Pot } }
+     Pot = {
+       wishId, saved,                      // saved = uang yang sedang tertabung (Rp)
+       snap: { title, price, image },      // salinan terakhir data wishlist (untuk wishlist yang terhapus)
+       history: [ { id, type:'in'|'out', kind?:'realize'|'cancel', amount, date,
+                    accountId, accountName, ts, trxIds:[out,in] } ],
+       realizedAt, realizedAmount          // terisi saat tabungan dicairkan karena target tercapai
+     }
+     Penulis tunggal: CuciMoney+.  IdeKu hanya membaca (untuk progress bar).
+  ═══════════════════════════════════════════════════════════════ */
+  const savings = {
+    getAll: async () => {
+      const r = await kv.finances.get('savings');
+      return (r && typeof r === 'object' && r.pots) ? r : { pots: {} };
+    },
+    save: (data) => kv.finances.set('savings', data),
+  };
+
+  /* ═══════════════════════════════════════════════════════════════
+     SYNC LINTAS TAB / APP  (BroadcastChannel + fallback saat tab kembali aktif)
+     IndexedDB tidak punya event antar-tab, jadi tiap app memberi kabar
+     lewat sync.notify('ideas' | 'savings') dan mendengarkan lewat sync.on(fn).
+  ═══════════════════════════════════════════════════════════════ */
+  const sync = (() => {
+    const handlers = new Set();
+    let ch = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        ch = new BroadcastChannel('ecosystem_sync');
+        ch.onmessage = (e) => handlers.forEach(h => { try { h(e.data || {}); } catch (_) {} });
+      }
+    } catch (_) { ch = null; }
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) handlers.forEach(h => { try { h({ topic: 'visible' }); } catch (_) {} });
+      });
+    }
+    return {
+      notify: (topic) => { try { ch && ch.postMessage({ topic, at: Date.now() }); } catch (_) {} },
+      on: (fn) => { handlers.add(fn); return () => handlers.delete(fn); },
+    };
+  })();
 
   /* ═══════════════════════════════════════════════════════════════
      CROSS-APP READ HELPERS
@@ -347,6 +396,8 @@ const EcosystemDB = (() => {
     todos,
     journal,
     kv,
+    savings,
+    sync,
 
     /* Cross-app helpers */
     getIdeasInProgress,
