@@ -1452,6 +1452,32 @@
     </div>
   </div>
 
+  <div class="section-title" style="margin-bottom:12px">Summary & Evaluasi</div>
+  <div class="settings-group">
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Summary Mingguan</strong>
+        <p>Senin – Minggu · file .md</p>
+      </div>
+      <select class="range-select" id="summaryWeekSel">
+        <option value="0">Minggu ini</option>
+        <option value="1">Minggu lalu</option>
+      </select>
+      <button class="btn-sm" id="btnSummaryWeek">Download</button>
+    </div>
+    <div class="setting-row">
+      <div class="setting-info">
+        <strong>Summary Bulanan</strong>
+        <p>Tanggal 1 – akhir bulan · file .md</p>
+      </div>
+      <select class="range-select" id="summaryMonthSel">
+        <option value="0">Bulan ini</option>
+        <option value="1">Bulan lalu</option>
+      </select>
+      <button class="btn-sm" id="btnSummaryMonth">Download</button>
+    </div>
+  </div>
+
   <div class="section-title" style="margin-bottom:12px">Data Habit</div>
   <div class="settings-group">
     <div class="setting-row">
@@ -2428,7 +2454,7 @@ function saveHabit() {
       });
     });
   } else {
-    habits.push({ name, category, color, icon, subTasks, history: {}, collapsed: false, activeDays, archived: false });
+    habits.push({ name, category, color, icon, subTasks, history: {}, collapsed: false, activeDays, archived: false, createdAt: getToday() });
   }
   save(); closeModal('habitModal'); renderHabits();
 }
@@ -3279,6 +3305,237 @@ window.clearDayHistory = async function(ds) {
   );
 };
 
+// ===== SUMMARY MINGGUAN / BULANAN (export .md) =====
+const SUM_DAY = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const SUM_DAY_FULL = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+function sumDS(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function sumParse(ds) { return new Date(ds + 'T00:00:00'); }
+function sumDates(startDS, endDS) {
+  const out = [], d = sumParse(startDS), end = sumParse(endDS);
+  while (d <= end) { out.push(sumDS(d)); d.setDate(d.getDate() + 1); }
+  return out;
+}
+// Minggu: Senin s/d Minggu. offset 0 = minggu ini, 1 = minggu lalu
+function sumWeekRange(offset) {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - offset * 7);
+  const e = new Date(d); e.setDate(e.getDate() + 6);
+  return { start: sumDS(d), end: sumDS(e) };
+}
+// Bulan: tanggal 1 s/d tanggal terakhir. offset 0 = bulan ini, 1 = bulan lalu
+function sumMonthRange(offset) {
+  const n = new Date();
+  const s = new Date(n.getFullYear(), n.getMonth() - offset, 1);
+  const e = new Date(s.getFullYear(), s.getMonth() + 1, 0);
+  return { start: sumDS(s), end: sumDS(e) };
+}
+function sumShort(ds) { return sumParse(ds).toLocaleDateString('id-ID', { day:'numeric', month:'short' }); }
+function sumLong(ds)  { return sumParse(ds).toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' }); }
+function sumPct(done, total) { return total === 0 ? '–' : Math.round((done / total) * 100) + '%'; }
+function sumCell(s) { return String(s ?? '').replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' '); }
+
+function sumAnalyzeHabit(h, dates, today) {
+  const slots = (h.subTasks && h.subTasks.length) ? h.subTasks.length : 1;
+  const histDates = Object.keys(h.history || {}).filter(d => (h.history[d] || []).length).sort();
+  // Habit baru dihitung sejak dibuat (createdAt) / aktivitas pertama, supaya hari sebelum habit ada tidak dianggap "belum"
+  const startFrom = h.createdAt || histDates[0] || '0000-00-00';
+  const a = { days: [], scheduled: 0, full: 0, partial: 0, miss: 0, slotsDone: 0, slotsTotal: 0 };
+  dates.forEach(ds => {
+    if (ds > today) { a.days.push({ ds, status: 'future' }); return; }
+    if (ds < startFrom || !isHabitScheduled(h, ds)) { a.days.push({ ds, status: 'off' }); return; }
+    const done = Math.min((h.history?.[ds] || []).length, slots);
+    const status = done >= slots ? 'full' : (done > 0 ? 'partial' : 'miss');
+    a.days.push({ ds, status, done, slots });
+    a.scheduled++; a[status]++;
+    a.slotsDone += done; a.slotsTotal += slots;
+  });
+  return a;
+}
+
+function sumBuildMarkdown(kind, offset) {
+  const today = getToday();
+  const range = kind === 'week' ? sumWeekRange(offset) : sumMonthRange(offset);
+  const dates = sumDates(range.start, range.end);
+  const isWeek = kind === 'week';
+  const periodLabel = isWeek
+    ? `${sumShort(range.start)} – ${sumShort(range.end)} ${sumParse(range.end).getFullYear()}`
+    : sumParse(range.start).toLocaleDateString('id-ID', { month:'long', year:'numeric' });
+  const symbol = { full:'✅', partial:'🔸', miss:'❌', off:'➖', future:'·' };
+
+  // ---- HABIT ----
+  const rows = habits
+    .filter(h => !h.archived)
+    .map(h => ({ h, a: sumAnalyzeHabit(h, dates, today) }))
+    .filter(r => r.a.scheduled > 0);
+  const T = rows.reduce((t, { a }) => {
+    t.done += a.slotsDone; t.total += a.slotsTotal;
+    t.full += a.full; t.partial += a.partial; t.miss += a.miss; t.days += a.scheduled;
+    return t;
+  }, { done:0, total:0, full:0, partial:0, miss:0, days:0 });
+
+  // ---- TODO ----
+  const doneTodos = todos
+    .filter(t => t.done && t.completedAt)
+    .map(t => ({ t, ds: sumDS(new Date(t.completedAt)) }))
+    .filter(x => x.ds >= range.start && x.ds <= range.end)
+    .sort((x, y) => x.ds.localeCompare(y.ds) || x.t.completedAt.localeCompare(y.t.completedAt));
+  const noDateCount = todos.filter(t => t.done && !t.completedAt).length;
+  const withDeadline = doneTodos.filter(x => x.t.deadline);
+  const onTime = withDeadline.filter(x => x.ds <= x.t.deadline).length;
+
+  const L = [];
+  L.push(`# ${isWeek ? 'Summary Mingguan' : 'Summary Bulanan'} — ${periodLabel}`);
+  L.push('');
+  L.push(`> **Periode:** ${sumLong(range.start)} → ${sumLong(range.end)}  `);
+  L.push(`> **Dibuat:** ${new Date().toLocaleString('id-ID', { dateStyle:'long', timeStyle:'short' })}`);
+  if (range.end >= today && range.start <= today) {
+    L.push(`> _Periode masih berjalan — data dihitung sampai ${sumLong(today)}._`);
+  }
+  L.push('');
+
+  // Ringkasan
+  L.push('## 📊 Ringkasan');
+  L.push('');
+  L.push('| Metrik | Hasil |');
+  L.push('|---|---|');
+  L.push(`| Capaian habit | **${sumPct(T.done, T.total)}** (${T.done} dari ${T.total} aktivitas) |`);
+  L.push(`| Hari-habit selesai penuh | ${T.full} dari ${T.days} |`);
+  L.push(`| Hari-habit sebagian | ${T.partial} |`);
+  L.push(`| Hari-habit belum selesai | ${T.miss} |`);
+  L.push(`| To-do selesai | **${doneTodos.length}** task |`);
+  if (withDeadline.length) L.push(`| To-do tepat waktu | ${onTime} dari ${withDeadline.length} yang punya deadline |`);
+  L.push('');
+
+  // Habit rinci
+  L.push('## ✅ Habit');
+  L.push('');
+  if (rows.length === 0) {
+    L.push('_Tidak ada habit terjadwal pada periode ini._');
+    L.push('');
+  } else {
+    if (isWeek) {
+      const head = dates.map(ds => `${SUM_DAY[sumParse(ds).getDay()]} ${sumParse(ds).getDate()}`);
+      L.push(`| Habit | ${head.join(' | ')} | Capaian |`);
+      L.push(`|---|${dates.map(() => ':-:').join('|')}|:-:|`);
+      rows.forEach(({ h, a }) => {
+        L.push(`| ${sumCell(h.name)} | ${a.days.map(d => symbol[d.status]).join(' | ')} | ${sumPct(a.slotsDone, a.slotsTotal)} |`);
+      });
+    } else {
+      L.push('| Habit | Terjadwal | Selesai penuh | Sebagian | Belum | Capaian |');
+      L.push('|---|:-:|:-:|:-:|:-:|:-:|');
+      rows.forEach(({ h, a }) => {
+        L.push(`| ${sumCell(h.name)} | ${a.scheduled} | ${a.full} | ${a.partial} | ${a.miss} | ${sumPct(a.slotsDone, a.slotsTotal)} |`);
+      });
+    }
+    L.push('');
+    L.push('_✅ selesai penuh · 🔸 sebagian · ❌ belum · ➖ tidak dijadwalkan · `·` belum tiba_');
+    L.push('');
+
+    // Belum selesai
+    L.push('### Habit yang belum selesai');
+    L.push('');
+    const lbl = ds => isWeek ? `${SUM_DAY[sumParse(ds).getDay()]} ${sumParse(ds).getDate()}` : String(sumParse(ds).getDate());
+    let anyGap = false;
+    rows.forEach(({ h, a }) => {
+      const miss = a.days.filter(d => d.status === 'miss').map(d => lbl(d.ds));
+      const part = a.days.filter(d => d.status === 'partial').map(d => lbl(d.ds));
+      if (!miss.length && !part.length) return;
+      anyGap = true;
+      const parts = [];
+      if (miss.length) parts.push(`belum: ${isWeek ? '' : 'tgl '}${miss.join(', ')}`);
+      if (part.length) parts.push(`sebagian: ${isWeek ? '' : 'tgl '}${part.join(', ')}`);
+      L.push(`- **${h.name}** — ${parts.join(' · ')}`);
+    });
+    if (!anyGap) L.push('Semua habit terjadwal selesai penuh. 🎉');
+    L.push('');
+  }
+
+  // Tren per minggu (khusus bulanan)
+  if (!isWeek) {
+    const chunks = [];
+    dates.forEach(ds => {
+      if (!chunks.length || sumParse(ds).getDay() === 1) chunks.push([]);
+      chunks[chunks.length - 1].push(ds);
+    });
+    L.push('## 📈 Tren per Minggu');
+    L.push('');
+    L.push('| Minggu | Rentang | Capaian habit | To-do selesai |');
+    L.push('|---|---|:-:|:-:|');
+    chunks.forEach((c, i) => {
+      let d = 0, t = 0;
+      rows.forEach(({ a }) => a.days.forEach(day => {
+        if (c.includes(day.ds) && day.slots) { d += day.done; t += day.slots; }
+      }));
+      const td = doneTodos.filter(x => c.includes(x.ds)).length;
+      L.push(`| ${i + 1} | ${sumShort(c[0])} – ${sumShort(c[c.length - 1])} | ${sumPct(d, t)} | ${td} |`);
+    });
+    L.push('');
+  }
+
+  // To-do selesai
+  L.push('## 📝 To-Do Selesai');
+  L.push('');
+  if (doneTodos.length === 0) {
+    L.push('_Belum ada to-do yang diselesaikan pada periode ini._');
+  } else {
+    let lastDS = null;
+    doneTodos.forEach(({ t, ds }) => {
+      if (ds !== lastDS) {
+        if (lastDS) L.push('');
+        const d = sumParse(ds);
+        L.push(`**${SUM_DAY_FULL[d.getDay()]}, ${sumShort(ds)}**`);
+        L.push('');
+        lastDS = ds;
+      }
+      const subs = t.subtasks || [];
+      const meta = [];
+      if (subs.length) meta.push(`${subs.filter(s => s.done).length}/${subs.length} subtask`);
+      if (t.deadline) meta.push(`deadline ${sumShort(t.deadline)} — ${ds <= t.deadline ? 'tepat waktu' : 'terlambat'}`);
+      L.push(`- [x] ${t.title}${meta.length ? ` _(${meta.join(' · ')})_` : ''}`);
+    });
+  }
+  L.push('');
+
+  // Evaluasi diri
+  L.push('## 🧭 Evaluasi Diri');
+  L.push('');
+  L.push('_Isi saat sesi review akhir pekan._');
+  L.push('');
+  L.push('- **Yang berjalan baik:** ');
+  L.push('- **Yang belum berjalan / hambatan:** ');
+  L.push('- **Pelajaran:** ');
+  L.push(`- **Fokus ${isWeek ? 'minggu' : 'bulan'} depan:** `);
+  L.push('');
+  L.push('---');
+  const notes = ['Habit dihitung sejak dibuat (atau sejak aktivitas pertama untuk habit lama); habit yang diarsipkan tidak disertakan.'];
+  if (noDateCount) notes.push(`${noDateCount} to-do lama yang selesai tanpa tanggal tercatat tidak ikut dihitung.`);
+  L.push(`_${notes.join(' ')}_`);
+  L.push('');
+
+  const fileName = isWeek
+    ? `summary-mingguan_${range.start}_${range.end}.md`
+    : `summary-bulanan_${range.start.slice(0, 7)}.md`;
+  return { md: L.join('\n'), fileName };
+}
+
+function exportSummary(kind, offset) {
+  try {
+    const { md, fileName } = sumBuildMarkdown(kind, offset);
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown;charset=utf-8' }));
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    showAlert(`File ${fileName} berhasil didownload.`, 'success', 'Summary Dibuat');
+  } catch (e) {
+    console.error('[DailyOS] summary failed:', e);
+    showAlert('Gagal membuat summary. Coba lagi.', 'error', 'Gagal');
+  }
+}
+
 // ===== SETTINGS =====
 async function exportData() {
   let coachMemory = null;
@@ -3441,6 +3698,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Settings
   document.getElementById('btnExport').onclick = exportData;
   document.getElementById('btnExportCSV').onclick = exportCSV;
+  document.getElementById('btnSummaryWeek').onclick  = () => exportSummary('week',  parseInt(document.getElementById('summaryWeekSel').value));
+  document.getElementById('btnSummaryMonth').onclick = () => exportSummary('month', parseInt(document.getElementById('summaryMonthSel').value));
   document.getElementById('btnImport').onclick = () => document.getElementById('fileImport').click();
   document.getElementById('fileImport').onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
@@ -3466,7 +3725,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           subTasks: Array.isArray(h.subTasks) ? h.subTasks : [],
           history: h.history || {},
           collapsed: h.collapsed || false,
-          archived: !!h.archived
+          archived: !!h.archived,
+          createdAt: h.createdAt || undefined
         }));
 
         // Restore todos — aman kalau tidak ada (backup lama)
