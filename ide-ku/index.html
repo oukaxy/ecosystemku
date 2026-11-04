@@ -1163,7 +1163,10 @@
 
   <!-- Content -->
   <div class="content">
-    <!-- Category distribution dashboard -->    <div class="cat-dash" id="cat-dash"></div>
+    <!-- Category distribution dashboard -->    <div class="cat-dash" id="focus-panel" style="display:none"></div>
+    <div id="jalur-bar" style="display:none;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <datalist id="jalur-list"></datalist>
+    <div class="cat-dash" id="cat-dash"></div>
     <!-- List -->
     <div id="list"></div>
   </div>
@@ -1308,6 +1311,10 @@
       <div class="form-group">
         <label class="form-label">Catatan</label>
         <textarea class="form-field" id="f-notes" placeholder="Detail, konteks, atau referensi..." rows="3"></textarea>
+      </div>
+      <div class="form-group" id="f-jalur-wrap">
+        <label class="form-label">Jalur (opsional)</label>
+        <input class="form-field" id="f-jalur" list="jalur-list" placeholder="mis. Ekosistem @pedetanpajerawat" />
       </div>
       <div class="form-row-2">
         <div class="form-group">
@@ -1537,6 +1544,7 @@ async function refreshFromShared() {
 // ── State ──
 let ideas = [];
 let filterStatus = null;
+let filterJalur = null; // null = semua, "__none" = tanpa jalur
 let filterCat = "Semua";
 let filterType = "Idea";  // "Idea" or "Wishlist"
 let addingType = "Idea"; // NEW: track which type user is adding
@@ -1544,7 +1552,8 @@ let searchQuery = "";
 let pendingDeleteId = null;
 let editingId = null;
 
-const STATUSES = ["Belum", "Proses", "Selesai"];
+const STATUSES = ["Belum", "Proses", "Selesai", "Parkir"];
+const FOCUS_LIMIT = 3; // maks ide berstatus "Proses" (Fokus aktif)
 const PRIORITIES = ["Penting", "Nanti", "Kapan-kapan"];
 const DEFAULT_CATEGORIES = ["Dev", "Bisnis", "Konten", "Belajar", "Kreatif", "Personal", "Belanja"];
 let CATEGORIES = JSON.parse(localStorage.getItem("ideku-categories") || "null") || [...DEFAULT_CATEGORIES];
@@ -1553,7 +1562,7 @@ const TYPE_ICON = {
   "Idea": `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><circle cx="7" cy="5.5" r="3"/><line x1="7" y1="8.5" x2="7" y2="10"/><line x1="5.5" y1="10.5" x2="8.5" y2="10.5"/><line x1="6" y1="11.8" x2="8" y2="11.8"/></svg>`,
   "Wishlist": `<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-1px;margin-right:4px"><path d="M1.5 2h1.2l1.6 6h6.4l1.3-4H4.5"/><circle cx="5.5" cy="11" r="0.9" fill="currentColor"/><circle cx="9.5" cy="11" r="0.9" fill="currentColor"/></svg>`
 };
-const STATUS_DOT = { "Belum": "#d1d5db", "Proses": "#f59e0b", "Selesai": "#10b981" };
+const STATUS_DOT = { "Belum": "#d1d5db", "Proses": "#f59e0b", "Selesai": "#10b981", "Parkir": "#94a3b8" };
 const PRI_COLOR  = { "Penting": "#ef4444", "Nanti": "#f59e0b", "Kapan-kapan": "#10b981" };
 
 // ── Category colors (auto-assigned, stable per category name) ──
@@ -1779,12 +1788,12 @@ function fmtDate(ts) {
 let _prevStats = {};
 function renderStats() {
   const belum = ideas.filter(i => i.status === "Belum").length;
-  const sedang = ideas.filter(i => i.status === "Proses").length;
+  const sedang = ideas.filter(i => i.status === "Proses" && i.type === "Idea").length;
   const selesai = ideas.filter(i => i.status === "Selesai").length;
   const stats = [
     { label: "Total", val: ideas.length, key: "total" },
     { label: "Belum mulai", val: belum, key: "belum" },
-    { label: "Proses", val: sedang, key: "proses" },
+    { label: `Fokus (maks ${FOCUS_LIMIT})`, val: sedang, key: "proses" },
     { label: "Selesai", val: selesai, key: "selesai" },
   ];
   document.getElementById("stats").innerHTML = stats.map(s => `
@@ -1821,8 +1830,9 @@ function renderFilters() {
       `).join("")}
     </div>`;
 
+  const parkirN = ideas.filter(i => i.type === filterType && i.status === "Parkir").length;
   const statusBtns = STATUSES.map(s =>
-    `<button class="f-btn${filterStatus === s ? " on" : ""}" onclick="setFilterStatus('${s}')">${s}</button>`
+    `<button class="f-btn${filterStatus === s ? " on" : ""}" onclick="setFilterStatus('${s}')">${s === "Parkir" ? `Parkir (${parkirN})` : s}</button>`
   ).join("");
 
   document.getElementById("filters-status").innerHTML =
@@ -1870,8 +1880,9 @@ function renderCatDash() {
 function renderList() {
   const q = searchQuery.toLowerCase();
   let filtered = ideas.filter(i =>
-    (!filterStatus || i.status === filterStatus) &&
+    (filterStatus ? i.status === filterStatus : i.status !== "Parkir") &&
     (filterCat === "Semua" || i.category === filterCat) &&
+    (!filterJalur || (filterJalur === "__none" ? !i.jalur : i.jalur === filterJalur)) &&
     (!q || i.title.toLowerCase().includes(q) || (i.notes || "").toLowerCase().includes(q))
   );
 
@@ -2097,9 +2108,59 @@ function renderList() {
 function render() {
   renderStats();
   renderFilters();
+  renderFocusPanel();
+  renderJalurBar();
   renderCatDash();
   renderViewModeToggle();
   renderList();
+}
+
+// ── Fokus aktif + langkah berikutnya ──
+function renderFocusPanel() {
+  const el = document.getElementById("focus-panel");
+  if (!el) return;
+  const fokus = ideas.filter(i => i.type === "Idea" && i.status === "Proses");
+  if (filterType !== "Idea") { el.style.display = "none"; return; }
+  el.style.display = "block";
+  const slots = Math.max(0, FOCUS_LIMIT - fokus.length);
+  el.innerHTML = `
+    <div class="cat-dash-title-row"><span class="cat-dash-title">Fokus sekarang · ${fokus.length}/${FOCUS_LIMIT}</span></div>
+    ${fokus.length === 0 ? `<div style="font-size:12.5px;color:var(--text-sub);padding:4px 0">Belum ada fokus. Buka sebuah ide lalu ubah statusnya ke “Proses”.</div>` : ""}
+    ${fokus.map(f => `
+      <button onclick="openItemModal(${f.id})" style="display:block;width:100%;text-align:left;background:none;border:none;border-top:1px solid var(--border);padding:10px 0 4px;color:var(--text);font:inherit;cursor:pointer">
+        <div style="font-size:13.5px;font-weight:600">${escHtml(f.title)}${f.jalur ? ` <span style="font-weight:400;font-size:11px;color:var(--text-sub)">· ${escHtml(f.jalur)}</span>` : ""}</div>
+        <div style="font-size:12.5px;margin-top:3px;color:${f.next ? "var(--text)" : "var(--text-sub)"}">${f.next ? "→ " + escHtml(f.next) : "+ tulis langkah berikutnya"}</div>
+      </button>`).join("")}
+    ${slots > 0 && fokus.length > 0 ? `<div style="font-size:11.5px;color:var(--text-sub);padding-top:8px">${slots} slot fokus tersisa</div>` : ""}`;
+}
+
+// ── Jalur ──
+function allJalur() {
+  const m = {};
+  ideas.filter(i => i.type === "Idea" && i.jalur).forEach(i => { m[i.jalur] = (m[i.jalur] || 0) + 1; });
+  return Object.entries(m).sort((a, b) => b[1] - a[1]);
+}
+function renderJalurBar() {
+  const dl = document.getElementById("jalur-list");
+  const list = allJalur();
+  if (dl) dl.innerHTML = list.map(([j]) => `<option value="${escAttr(j)}">`).join("");
+  const el = document.getElementById("jalur-bar");
+  if (!el) return;
+  if (filterType !== "Idea" || list.length === 0) { el.style.display = "none"; return; }
+  const none = ideas.filter(i => i.type === "Idea" && !i.jalur).length;
+  const chip = (key, label, n) => `<button class="f-btn${filterJalur === key ? " on" : ""}" onclick="setFilterJalur('${escAttr(key)}')">${escHtml(label)} (${n})</button>`;
+  el.style.display = "flex";
+  el.innerHTML = `<span class="filters-label" style="min-width:auto;align-self:center">Jalur</span>` +
+    list.map(([j, n]) => chip(j, j, n)).join("") + (none ? chip("__none", "Tanpa jalur", none) : "");
+}
+function setFilterJalur(j) { filterJalur = (filterJalur === j) ? null : j; render(); }
+function saveIdeaMeta(id) {
+  const idea = ideas.find(i => i.id === id);
+  if (!idea) return;
+  idea.jalur = (document.getElementById("m-jalur").value || "").trim();
+  idea.next = (document.getElementById("m-next").value || "").trim();
+  if (filterJalur && filterJalur !== "__none" && !ideas.some(i => i.type === "Idea" && i.jalur === filterJalur)) filterJalur = null;
+  putIdea(idea).then(() => { render(); showToast("Tersimpan"); });
 }
 
 // ── Actions ──
@@ -2121,6 +2182,9 @@ function selectType(type) {
   const wishlistFields = document.getElementById("wishlist-fields");
   const addModalTitle = document.querySelector("#add-modal .form-modal-title");
 
+  const jw = document.getElementById("f-jalur-wrap");
+  if (jw) jw.style.display = type === "Wishlist" ? "none" : "block";
+  document.getElementById("f-jalur").value = "";
   if (type === "Wishlist") {
     wishlistFields.style.display = "block";
     addModalTitle.textContent = "Wishlist Baru";
@@ -2162,6 +2226,8 @@ function submitIdea() {
     title,
     notes,
     category: cat,
+    jalur: (document.getElementById("f-jalur").value || "").trim(),
+    next: "",
     priority: pri,
     status: "Belum",
     type: addingType,  // NEW
@@ -2177,9 +2243,7 @@ function submitIdea() {
 
   putIdea(newIdea).then(() => {
     ideas.push(newIdea);
-    renderStats();
-    renderFilters();
-    renderList();
+    render();
     cancelAdd();
     showToast(addingType === "Wishlist" ? "Wishlist ditambahkan!" : "Ide ditambahkan!");
   });
@@ -2243,6 +2307,14 @@ function openItemModal(id) {
 
       ${savingBlockHtml(idea, true)}
 
+      ${idea.type === "Idea" ? `
+      <div style="margin-bottom:14px">
+        <label class="form-label">Jalur</label>
+        <input class="form-field" id="m-jalur" list="jalur-list" value="${escAttr(idea.jalur || "")}" placeholder="Kelompokkan ide yang satu ekosistem" onchange="saveIdeaMeta(${idea.id})" />
+        <label class="form-label" style="margin-top:10px;display:block">Langkah berikutnya</label>
+        <input class="form-field" id="m-next" value="${escAttr(idea.next || "")}" placeholder="Satu tindakan kecil yang bisa dikerjakan hari ini" onchange="saveIdeaMeta(${idea.id})" />
+      </div>` : ""}
+
       <div class="card-actions">
         <div class="act-row">
           <span class="act-label">Status</span>
@@ -2267,8 +2339,40 @@ function openItemModal(id) {
 function updateStatus(id, status) {
   const idea = ideas.find(i => i.id === id);
   if (!idea) return;
+  if (status === "Proses" && idea.type === "Idea" && idea.status !== "Proses") {
+    const fokus = ideas.filter(i => i.type === "Idea" && i.status === "Proses");
+    if (fokus.length >= FOCUS_LIMIT) { openFocusFull(id, fokus); return; }
+  }
   idea.status = status;
   putIdea(idea).then(() => render());
+}
+
+// Fokus penuh: pilih satu ide untuk diparkir agar yang baru bisa masuk
+function openFocusFull(newId, fokus) {
+  closeFocusFull();
+  const newIdea = ideas.find(i => i.id === newId);
+  const o = document.createElement("div");
+  o.id = "focus-full";
+  o.style.cssText = "position:fixed;inset:0;z-index:9999;background:var(--modal-overlay);display:flex;align-items:flex-end;justify-content:center";
+  o.onclick = e => { if (e.target === o) closeFocusFull(); };
+  o.innerHTML = `
+    <div style="background:var(--surface);color:var(--text);width:100%;max-width:480px;border-radius:18px 18px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow:auto">
+      <div style="font-weight:700;font-size:16px;margin-bottom:6px">Fokus sudah penuh (${FOCUS_LIMIT}/${FOCUS_LIMIT})</div>
+      <div style="font-size:13px;color:var(--text-sub);margin-bottom:14px">Untuk mengerjakan “${escHtml(newIdea ? newIdea.title : "")}”, parkir salah satu dulu. Ide yang diparkir aman dan tidak hilang.</div>
+      ${fokus.map(f => `
+        <button onclick="swapFocus(${newId},${f.id})" style="display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);background:var(--input-bg);color:var(--text);border-radius:12px;font:inherit;font-size:13.5px;cursor:pointer">
+          Parkir: ${escHtml(f.title)}
+        </button>`).join("")}
+      <button onclick="closeFocusFull()" style="width:100%;padding:11px;border:none;background:none;color:var(--text-sub);font:inherit;font-size:13px;cursor:pointer">Batal</button>
+    </div>`;
+  document.body.appendChild(o);
+}
+function closeFocusFull() { const o = document.getElementById("focus-full"); if (o) o.remove(); }
+function swapFocus(newId, parkId) {
+  const a = ideas.find(i => i.id === newId), b = ideas.find(i => i.id === parkId);
+  if (!a || !b) return;
+  b.status = "Parkir"; a.status = "Proses";
+  Promise.all([putIdea(a), putIdea(b)]).then(() => { closeFocusFull(); closeItemModal && closeItemModal(); render(); showToast("Fokus diperbarui"); });
 }
 
 function updatePriority(id, priority) {
@@ -2283,8 +2387,8 @@ function setFilterCat(c) { filterCat = c; render(); }
 function setFilterType(type) {
   filterType = type;
   filterCat = "Semua";
-  renderCatDash();
-  renderList();
+  filterJalur = null;
+  render();
 }
 
 function recommendBuy(id) {
@@ -2961,6 +3065,7 @@ function exportAsDocument() {
   .doc-status-Belum { background: #f3f4f6; color: #6b7280; }
   .doc-status-Proses { background: #fef3c7; color: #b45309; }
   .doc-status-Selesai { background: #d1fae5; color: #047857; }
+  .doc-status-Parkir { background: #e2e8f0; color: #475569; }
   .doc-item-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: #777; margin-bottom: 8px; }
   .doc-item-notes { font-size: 12.5px; line-height: 1.6; color: #444; background: #fafafa; border-radius: 8px; padding: 10px 12px; }
   .doc-item-notes-empty { color: #bbb; font-style: italic; }
