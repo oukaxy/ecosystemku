@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rem — AI Companion UI/UX Mockup</title>
+
+  <!-- Google Fonts: DM Serif Display & DM Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CSS untuk utilitas tata letak responsif -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* ==========================================================================
+       DESIGN TOKENS — ATURAN WARNA 60-30-10
+       60% Dominant : #0F0E0C (Deep Warm Black)
+       30% Secondary: #1A1917 (Dark Charcoal Grey) & #232220 (Elevated Surface)
+       10% Accent   : #5B9CF6 (Vibrant Neon Blue)
+       ========================================================================== */
+    :root {
+      --color-dominant: #0F0E0C;
+      --color-secondary: #1A1917;
+      --color-surface-elevated: #232220;
+      --color-accent: #5B9CF6;
+      --color-text-primary: #F0EFE9;
+      --color-text-muted: #9A9994;
+      --color-text-subtle: #6B6A67;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'DM Sans', sans-serif;
+      background: radial-gradient(circle at 50% 25%, #191d24 0%, #0d0e10 55%, #070706 100%);
+      color: var(--color-text-primary);
+      overflow-x: hidden;
+    }
+
+    .font-editorial {
+      font-family: 'DM Serif Display', serif;
+    }
+
+    .font-ui {
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* Bingkai Ponsel Realistis (Desktop Showcase) */
+    .phone-frame {
+      background-color: var(--color-dominant);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.14),
+        0 0 0 4px #18181b,
+        0 0 0 5px rgba(255, 255, 255, 0.08),
+        0 38px 90px -15px rgba(0, 0, 0, 0.9),
+        0 0 80px rgba(91, 156, 246, 0.06);
+    }
+
+    /* Aura Cahaya Neon Biru (10% Accent) di Belakang Karakter */
+    .character-aura {
+      background: radial-gradient(
+        ellipse 52% 48% at 50% 48%,
+        rgba(91, 156, 246, 0.28) 0%,
+        rgba(91, 156, 246, 0.11) 42%,
+        rgba(91, 156, 246, 0.02) 68%,
+        transparent 80%
+      );
+    }
+
+    .character-rim-glow {
+      filter: drop-shadow(0 0 14px rgba(91, 156, 246, 0.36))
+              drop-shadow(0 4px 24px rgba(91, 156, 246, 0.18));
+    }
+
+    /* Efek Glassmorphism untuk Tombol Melayang & Panel Chat (30% Secondary) */
+    .glass-action-btn {
+      background: rgba(26, 25, 23, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    .chat-sheet-glass {
+      background: linear-gradient(
+        180deg,
+        rgba(32, 31, 29, 0.86) 0%,
+        rgba(26, 25, 23, 0.96) 18%,
+        #1A1917 100%
+      );
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.72);
+    }
+
+    /* Cahaya Mikro pada Elemen Aksen 10% */
+    .accent-glow-mic {
+      box-shadow:
+        0 0 18px rgba(91, 156, 246, 0.58),
+        inset 0 1px 1px rgba(255, 255, 255, 0.45);
+    }
+
+    .accent-glow-send {
+      box-shadow:
+        0 0 14px rgba(91, 156, 246, 0.36),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35);
+    }
+
+    .accent-tab-bar {
+      box-shadow: 0 0 12px rgba(91, 156, 246, 0.85);
+    }
+
+    .accent-tab-dot {
+      box-shadow: 0 0 8px rgba(91, 156, 246, 0.95);
+    }
+  </style>
+</head>
+<body class="min-h-screen w-full flex items-center justify-center sm:p-6">
+
+  <!-- ========================================================================
+       PRESENTATION STAGE: Bingkai Ponsel Utama (390px x 844px di Desktop)
+       ======================================================================== -->
+  <main
+    class="phone-frame relative w-full max-w-[390px] min-h-screen sm:min-h-0 sm:h-[844px] sm:rounded-[46px] overflow-hidden flex flex-col justify-between select-none"
+    aria-label="Mockup Antarmuka Aplikasi AI Assistant Rem"
+  >
+    <!-- Tombol Samping Dekoratif Bingkai Ponsel (Tampak di Desktop) -->
+    <span class="hidden sm:block absolute -left-[6px] top-[150px] w-[3px] h-[34px] rounded-l bg-[#2a2a2e]"></span>
+    <span class="hidden sm:block absolute -left-[6px] top-[200px] w-[3px] h-[54px] rounded-l bg-[#2a2a2e]"></span>
+    <span class="hidden sm:block absolute -left-[6px] top-[266px] w-[3px] h-[54px] rounded-l bg-[#2a2a2e]"></span>
+    <span class="hidden sm:block absolute -right-[6px] top-[215px] w-[3px] h-[76px] rounded-r bg-[#2a2a2e]"></span>
+
+    <!-- ======================================================================
+         BAGIAN ATAS (~58% Tinggi): Panggung Karakter Live2D & Header Editorial
+         Warna Dominan 60%: #0F0E0C
+         ====================================================================== -->
+    <section class="relative h-[58%] min-h-[470px] w-full bg-[#0F0E0C] flex flex-col justify-between overflow-hidden">
+
+      <!-- Status Bar & Dynamic Island -->
+      <header class="relative z-20 flex items-center justify-between px-7 pt-3.5 pb-1 text-[12px] font-semibold tracking-tight text-[#F0EFE9]/90">
+        <span>9:41</span>
+
+        <!-- Dynamic Island Notch -->
+        <div class="w-[108px] h-[28px] rounded-full bg-[#050504] border border-white/[0.04] flex items-center justify-end px-3">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#131722] border border-white/[0.08]"></span>
+        </div>
+
+        <!-- Ikon Sinyal, Wi-Fi, & Baterai -->
+        <div class="flex items-center gap-1.5 text-[#F0EFE9]/90">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <rect x="1" y="10" width="2.4" height="4" rx="0.6" />
+            <rect x="4.8" y="7.5" width="2.4" height="6.5" rx="0.6" />
+            <rect x="8.6" y="5" width="2.4" height="9" rx="0.6" />
+            <rect x="12.4" y="2.5" width="2.4" height="11.5" rx="0.6" />
+          </svg>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <path d="M1.8 6.2a9.5 9.5 0 0 1 12.4 0" />
+            <path d="M4.5 9a5.8 5.8 0 0 1 7 0" />
+            <circle cx="8" cy="12.2" r="1" fill="currentColor" stroke="none" />
+          </svg>
+          <div class="w-[20px] h-[10px] rounded-[3px] border border-[#F0EFE9]/60 p-[1.5px] flex items-center">
+            <div class="w-full h-full rounded-[1.5px] bg-[#F0EFE9]"></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Baris Judul Editorial Kiri Atas & Tombol Aksi Kanan Atas -->
+      <div class="relative z-20 flex items-start justify-between px-6 pt-3">
+        <!-- Tipografi Editorial: DM Serif Display + DM Sans -->
+        <div>
+          <h1 class="font-editorial text-[36px] leading-[1.05] tracking-[-0.01em] text-[#F0EFE9]">
+            Rem
+          </h1>
+          <p class="font-ui text-[13px] font-normal tracking-[0.02em] text-[#9A9994] mt-1">
+            AI Companion
+          </p>
+        </div>
+
+        <!-- Tombol Ikon Kaca Bertumpuk Kanan Atas (30% Secondary) -->
+        <div class="flex flex-col gap-2.5" aria-label="Aksi Cepat Asisten">
+          <!-- Tombol Pengaturan Karakter -->
+          <button
+            type="button"
+            class="glass-action-btn w-[42px] h-[42px] rounded-[12px] flex items-center justify-center text-[#9A9994]"
+            aria-label="Pengaturan Karakter"
+          >
+            <svg class="w-[19px] h-[19px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+
+          <!-- Tombol Riwayat Percakapan -->
+          <button
+            type="button"
+            class="glass-action-btn w-[42px] h-[42px] rounded-[12px] flex items-center justify-center text-[#9A9994]"
+            aria-label="Riwayat Sesi"
+          >
+            <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panggung Tengah: Aura Neon Biru & Ilustrasi Vektor Karakter Rem -->
+      <div class="relative flex-1 w-full flex items-end justify-center pointer-events-none">
+        <!-- Aura Cahaya Radial Halus (#5B9CF6) -->
+        <div class="character-aura absolute inset-x-0 -top-8 bottom-[-30px]"></div>
+
+        <!-- Partikel Cahaya Halus di Sekitar Karakter -->
+        <span class="absolute left-[23%] top-[34%] w-1 h-1 rounded-full bg-[#5B9CF6]/60 blur-[0.5px]"></span>
+        <span class="absolute right-[21%] top-[24%] w-1.5 h-1.5 rounded-full bg-[#5B9CF6]/45 blur-[1px]"></span>
+        <span class="absolute right-[26%] top-[48%] w-1 h-1 rounded-full bg-[#5B9CF6]/70"></span>
+        <span class="absolute left-[27%] top-[56%] w-1 h-1 rounded-full bg-[#93C5FD]/50"></span>
+
+        <!-- Ilustrasi Vektor SVG Berkualitas Tinggi Karakter Rem -->
+        <svg
+          class="character-rim-glow relative z-10 w-[310px] h-[370px] translate-y-[18px]"
+          viewBox="0 0 320 380"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="Ilustrasi Karakter AI Assistant Rem"
+        >
+          <defs>
+            <!-- Gradien Rambut Biru Langit Rem -->
+            <linearGradient id="remHairMain" x1="160" y1="36" x2="160" y2="215" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#A8D4FF" />
+              <stop offset="45%" stop-color="#6BB2FA" />
+              <stop offset="100%" stop-color="#3F83D8" />
+            </linearGradient>
+
+            <linearGradient id="remHairBack" x1="160" y1="60" x2="160" y2="210" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#4888D6" />
+              <stop offset="100%" stop-color="#275496" />
+            </linearGradient>
+
+            <!-- Gradien Kulit Hangat -->
+            <linearGradient id="remSkin" x1="160" y1="88" x2="160" y2="225" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFEFE8" />
+              <stop offset="100%" stop-color="#F7D5C6" />
+            </linearGradient>
+
+            <!-- Gradien Iris Mata Safir -->
+            <linearGradient id="remEyeIris" x1="184" y1="133" x2="184" y2="155" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#1E40AF" />
+              <stop offset="55%" stop-color="#3B82F6" />
+              <stop offset="100%" stop-color="#93C5FD" />
+            </linearGradient>
+
+            <!-- Gradien Gaun Maid Hitam -->
+            <linearGradient id="remDressBlack" x1="160" y1="215" x2="160" y2="380" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#262830" />
+              <stop offset="55%" stop-color="#17181D" />
+              <stop offset="100%" stop-color="#0E0F12" />
+            </linearGradient>
+
+            <!-- Gradien Celemek & Renda Putih -->
+            <linearGradient id="remApronWhite" x1="160" y1="210" x2="160" y2="380" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFFFFF" />
+              <stop offset="100%" stop-color="#DDE4F0" />
+            </linearGradient>
+          </defs>
+
+          <!-- Rambut Belakang -->
+          <path
+            d="M94 132C86 168 92 198 110 212C125 222 195 222 210 212C228 198 234 168 226 132C220 92 194 64 160 64C126 64 100 92 94 132Z"
+            fill="url(#remHairBack)"
+          />
+
+          <!-- Bando Renda Putih Maid (Headdress) -->
+          <g>
+            <!-- Pita Samping Bando -->
+            <path d="M92 94C79 97 74 111 81 122C86 115 92 106 96 98Z" fill="#DCE8F8" stroke="#9BB8E0" stroke-width="1" />
+            <path d="M228 94C241 97 246 111 239 122C234 115 228 106 224 98Z" fill="#DCE8F8" stroke="#9BB8E0" stroke-width="1" />
+
+            <!-- Lengkungan Renda Utama -->
+            <path
+              d="M95 96C106 60 132 45 160 45C188 45 214 60 225 96C211 82 187 74 160 74C133 74 109 82 95 96Z"
+              fill="#F8FAFC"
+              stroke="#B8CCE8"
+              stroke-width="1.2"
+            />
+            <!-- Kelopak Renda Atas -->
+            <circle cx="110" cy="69" r="7" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="125" cy="56" r="7.5" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="142" cy="48" r="8" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="160" cy="45" r="8.5" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="178" cy="48" r="8" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="195" cy="56" r="7.5" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+            <circle cx="210" cy="69" r="7" fill="#FFFFFF" stroke="#B8CCE8" stroke-width="1" />
+
+            <!-- Aksen Pita Biru Kecil pada Bando -->
+            <path d="M126 65L135 61L132 70Z" fill="#7FB5F5" />
+            <path d="M194 65L185 61L188 70Z" fill="#7FB5F5" />
+          </g>
+
+          <!-- Leher & Bahu -->
+          <path d="M145 186H175V222H145V186Z" fill="url(#remSkin)" />
+          <path d="M145 188C153 194 167 194 175 188V198C166 202 154 202 145 198V188Z" fill="#E4B8A8" opacity="0.55" />
+
+          <!-- Gaun Maid & Lengan -->
+          <g>
+            <!-- Lengan Kiri & Kanan -->
+            <path
+              d="M106 234C84 252 68 296 58 352L86 364C96 322 106 288 116 266Z"
+              fill="url(#remDressBlack)"
+              stroke="#5B9CF6"
+              stroke-opacity="0.35"
+              stroke-width="1"
+            />
+            <path
+              d="M214 234C236 252 252 296 262 352L234 364C224 322 214 288 204 266Z"
+              fill="url(#remDressBlack)"
+              stroke="#5B9CF6"
+              stroke-opacity="0.35"
+              stroke-width="1"
+            />
+
+            <!-- Manset Putih di Lengan Atas -->
+            <path d="M93 252C101 246 111 249 116 257L111 268C104 261 95 259 88 264Z" fill="#F8FAFC" />
+            <path d="M227 252C219 246 209 249 204 257L209 268C216 261 225 259 232 264Z" fill="#F8FAFC" />
+
+            <!-- Badan Utama Gaun Hitam -->
+            <path
+              d="M112 224C126 216 194 216 208 224L226 376H94L112 224Z"
+              fill="url(#remDressBlack)"
+              stroke="#5B9CF6"
+              stroke-opacity="0.3"
+              stroke-width="1"
+            />
+
+            <!-- Panel Dada Putih & Renda Korset -->
+            <path
+              d="M133 222H187L179 294H141L133 222Z"
+              fill="url(#remApronWhite)"
+            />
+            <!-- Tali Silang Hitam Korset -->
+            <path d="M141 244L179 258M179 244L141 258M142 264L178 278M178 264L142 278" stroke="#22242C" stroke-width="2" stroke-linecap="round" />
+
+            <!-- Celemek Putih Bagian Bawah -->
+            <path
+              d="M122 294H198L216 376H104L122 294Z"
+              fill="url(#remApronWhite)"
+            />
+            <!-- Tali Bahu Celemek Berenda -->
+            <path d="M123 220L135 222L131 296L116 296Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="0.8" />
+            <path d="M197 220L185 222L189 296L204 296Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="0.8" />
+
+            <!-- Kerah Putih Peter Pan & Pita Hitam Leher -->
+            <path
+              d="M126 212C134 203 149 204 160 213C171 204 186 203 194 212C188 225 171 228 160 219C149 228 132 225 126 212Z"
+              fill="#FFFFFF"
+              stroke="#CBD5E1"
+              stroke-width="1"
+            />
+            <!-- Pita Kupu-Kupu Hitam -->
+            <path d="M160 216L144 209L147 223L160 218L173 223L176 209L160 216Z" fill="#1C1D22" />
+            <path d="M157 219L150 236M163 219L170 236" stroke="#1C1D22" stroke-width="2.6" stroke-linecap="round" />
+            <circle cx="160" cy="216.5" r="3" fill="#2E3038" />
+          </g>
+
+          <!-- Wajah Rem -->
+          <path
+            d="M114 126C114 96 134 80 160 80C186 80 206 96 206 126C206 158 192 183 160 191C128 183 114 158 114 126Z"
+            fill="url(#remSkin)"
+          />
+
+          <!-- Rona Pipi Lembut -->
+          <ellipse cx="134" cy="158" rx="9" ry="4.5" fill="#F9A8B8" opacity="0.45" />
+          <ellipse cx="187" cy="158" rx="9" ry="4.5" fill="#F9A8B8" opacity="0.45" />
+
+          <!-- Mata Kiri (Terlihat Jelas - Biru Safir Ekspresif) -->
+          <g>
+            <!-- Alis -->
+            <path d="M172 126C179 122 189 123 195 127" stroke="#3B72BD" stroke-width="2" stroke-linecap="round" />
+            <!-- Putih Mata -->
+            <path d="M171 144C174 135 189 135 194 144C191 153 175 153 171 144Z" fill="#FFFFFF" />
+            <!-- Iris Mata -->
+            <ellipse cx="183" cy="144" rx="7.5" ry="8.8" fill="url(#remEyeIris)" />
+            <!-- Pupil -->
+            <ellipse cx="183" cy="144.5" rx="3.4" ry="4.2" fill="#0F1E4A" />
+            <!-- Kilau Cahaya Mata -->
+            <circle cx="180.5" cy="140.5" r="2.4" fill="#FFFFFF" />
+            <circle cx="186" cy="147.5" r="1.2" fill="#E0F2FE" />
+            <!-- Bulu Mata Atas -->
+            <path d="M170 143C174 133 190 133 195 143" stroke="#1E293B" stroke-width="2.6" stroke-linecap="round" />
+          </g>
+
+          <!-- Hidung & Senyum Lembut -->
+          <path d="M160 155L158.5 159.5" stroke="#D99B89" stroke-width="1.5" stroke-linecap="round" />
+          <path d="M152 169C156 173.5 164 173.5 168 169" stroke="#C9736D" stroke-width="2" stroke-linecap="round" />
+
+          <!-- Rambut Depan & Poni Khas Rem (Menutupi Mata Kanan) -->
+          <g>
+            <!-- Helaian Rambut Samping Kiri & Kanan -->
+            <path
+              d="M113 102C97 124 95 164 111 196C116 176 118 152 121 132Z"
+              fill="url(#remHairMain)"
+            />
+            <path
+              d="M207 102C223 124 225 164 209 196C204 176 202 152 199 132Z"
+              fill="url(#remHairMain)"
+            />
+
+            <!-- Mahkota Rambut & Poni Menyamping -->
+            <path
+              d="M104 126C104 84 128 62 160 62C192 62 216 84 216 126C212 114 205 104 198 98C201 114 200 130 195 141C191 124 185 110 177 100C178 119 174 138 165 151C164 132 161 115 155 103C155 129 147 154 133 168C128 148 128 126 132 108C121 122 114 142 112 162C106 150 104 138 104 126Z"
+              fill="url(#remHairMain)"
+            />
+
+            <!-- Kilau Cahaya Rambut (Hair Highlight) -->
+            <path
+              d="M124 92C136 84 150 82 162 84M174 86C184 89 193 95 199 103"
+              stroke="#E0F2FE"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              opacity="0.72"
+            />
+
+            <!-- Jepit Rambut Silang Merah Muda & Pita Lavender Khas Rem -->
+            <g transform="translate(188, 102)">
+              <path d="M-7 -4L7 4M7 -4L-7 4" stroke="#F472B6" stroke-width="2.6" stroke-linecap="round" />
+              <!-- Pita Dekoratif Samping -->
+              <path d="M8 2C15 -3 21 1 18 7C14 8 10 5 8 2Z" fill="#A78BFA" stroke="#7C3AED" stroke-width="0.8" />
+              <path d="M8 3C14 7 19 13 14 16C10 14 8 8 8 3Z" fill="#C4B5FD" stroke="#7C3AED" stroke-width="0.8" />
+              <circle cx="8" cy="2.5" r="2" fill="#F472B6" />
+            </g>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         BAGIAN BAWAH (~42% Tinggi): Sheet Chat Glassmorphic & Navigasi Bawah
+         Warna Sekunder 30%: #1A1917 & #232220
+         ====================================================================== -->
+    <section class="chat-sheet-glass relative z-20 flex-1 -mt-5 rounded-t-[24px] flex flex-col justify-between">
+
+      <!-- Handle & Header Mini Sheet Chat -->
+      <div>
+        <div class="w-9 h-[4px] rounded-full bg-[#6B6A67]/70 mx-auto mt-2.5 mb-2"></div>
+
+        <div class="flex items-center justify-between px-5 pb-2.5 border-b border-white/[0.06]">
+          <!-- Ikon Obrolan dengan Aksen Biru Neon -->
+          <div class="flex items-center gap-1.5" aria-hidden="true">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 13.5C4 10.4624 6.68629 8 10 8H13C16.3137 8 19 10.4624 19 13.5C19 16.5376 16.3137 19 13 19H9L5 21V17.6C4.37 16.55 4 15.08 4 13.5Z"
+                stroke="#6B6A67"
+                stroke-width="1.5"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M11 6.5C11 4.567 12.7909 3 15 3H17C19.2091 3 21 4.567 21 6.5C21 8.433 19.2091 10 17 10H15.5L13 11.5V9.4C11.8 8.8 11 7.75 11 6.5Z"
+                fill="#5B9CF6"
+              />
+            </svg>
+          </div>
+
+          <!-- Ikon Menu Tiga Titik -->
+          <div class="flex items-center gap-1 text-[#6B6A67]" aria-label="Opsi Obrolan">
+            <span class="w-1 h-1 rounded-full bg-current"></span>
+            <span class="w-1 h-1 rounded-full bg-current"></span>
+            <span class="w-1 h-1 rounded-full bg-current"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daftar Pesan Chat (DM Sans 13.5px) -->
+      <div class="flex-1 px-4 py-3.5 flex flex-col justify-center gap-3.5 overflow-hidden">
+
+        <!-- Gelembung Pesan Pengguna (Rata Kanan) -->
+        <div class="flex justify-end">
+          <div class="max-w-[82%] bg-[#232220] border border-white/[0.06] rounded-[18px] rounded-br-[4px] px-4 py-2.5 shadow-sm">
+            <p class="font-ui text-[13.5px] leading-[1.45] text-[#F0EFE9]">
+              bisa bantu cek budget hari ini?
+            </p>
+          </div>
+        </div>
+
+        <!-- Baris Balasan Rem (Rata Kiri dengan Avatar Mini Melingkar) -->
+        <div class="flex items-start gap-2.5">
+          <!-- Avatar Mini Melingkar Rem -->
+          <div class="w-8 h-8 rounded-full bg-[#0F0E0C] border border-white/15 overflow-hidden shrink-0 mt-0.5 flex items-center justify-center shadow-inner">
+            <svg class="w-8 h-8" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="32" cy="32" r="32" fill="#13161F" />
+              <!-- Rambut Belakang -->
+              <circle cx="32" cy="33" r="19" fill="#3B82F6" />
+              <!-- Bando Putih -->
+              <path d="M16 26C19 16 25 13 32 13C39 13 45 16 48 26C43 22 38 20 32 20C26 20 21 22 16 26Z" fill="#F8FAFC" />
+              <!-- Gaun -->
+              <path d="M18 58C20 48 44 48 46 58H18Z" fill="#1E2028" />
+              <path d="M24 49L32 54L40 49" fill="#FFFFFF" />
+              <!-- Wajah -->
+              <path d="M20 31C20 22 25 18 32 18C39 18 44 22 44 31C44 40 40 46 32 48C24 46 20 40 20 31Z" fill="#FCE5DA" />
+              <!-- Mata Kiri -->
+              <circle cx="38" cy="35" r="3" fill="#2563EB" />
+              <circle cx="37.2" cy="34" r="1" fill="#FFFFFF" />
+              <!-- Senyum -->
+              <path d="M29.5 41.5C31 43 33 43 34.5 41.5" stroke="#C9736D" stroke-width="1.3" stroke-linecap="round" />
+              <!-- Poni Biru Rem -->
+              <path d="M17 31C17 20 23 15 32 15C41 15 47 20 47 31C44 26 40 24 37 23C37 28 35 33 32 36C31 30 30 26 28 23C27 30 24 36 20 40C18 37 17 34 17 31Z" fill="#7CC0FF" />
+              <!-- Jepit Pink -->
+              <path d="M38 23L42 26M42 23L38 26" stroke="#F472B6" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </div>
+
+          <!-- Gelembung Balasan Rem -->
+          <div class="max-w-[82%] bg-[#232220] border border-white/[0.06] rounded-[18px] rounded-tl-[4px] px-4 py-2.5 shadow-sm">
+            <p class="font-ui text-[13.5px] leading-[1.48] text-[#F0EFE9]">
+              Tentu! Sisa budget kamu Rp 500.000, masih aman kok! 😊
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bar Input Pesan Berbentuk Kapsul (30% Secondary + 10% Accent Tombol) -->
+      <div class="px-4 pb-3">
+        <div class="h-[48px] rounded-full bg-[#232220] border border-white/[0.07] pl-4 pr-1.5 flex items-center justify-between gap-2 shadow-inner">
+          <span class="font-ui text-[13px] text-[#6B6A67] truncate">
+            Ketik pesan...
+          </span>
+
+          <div class="flex items-center gap-1.5 shrink-0">
+            <!-- Tombol Mikrofon (10% Neon Blue Accent + Glow) -->
+            <button
+              type="button"
+              class="accent-glow-mic w-[36px] h-[36px] rounded-full bg-[#5B9CF6] flex items-center justify-center text-[#0F0E0C]"
+              aria-label="Input Suara"
+            >
+              <svg class="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="2" width="6" height="11" rx="3" fill="currentColor" fill-opacity="0.18" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+                <line x1="9" y1="21" x2="15" y2="21" />
+              </svg>
+            </button>
+
+            <!-- Tombol Kirim Paper-Plane (10% Neon Blue Accent) -->
+            <button
+              type="button"
+              class="accent-glow-send w-[36px] h-[36px] rounded-full bg-[#5B9CF6] flex items-center justify-center text-[#0F0E0C]"
+              aria-label="Kirim Pesan"
+            >
+              <svg class="w-[16px] h-[16px] translate-x-[0.5px]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           BOTTOM NAVIGATION BAR: 3 Tab (Chat Aktif, Grid, Settings)
+           ==================================================================== -->
+      <nav
+        class="bg-[#1A1917] border-t border-white/[0.06] px-4 pb-2.5"
+        aria-label="Navigasi Utama"
+      >
+        <div class="grid grid-cols-3 items-center">
+
+          <!-- Tab 1: Chat (Aktif — 10% Neon Blue Accent #5B9CF6) -->
+          <div class="flex flex-col items-center justify-center pb-1">
+            <!-- Garis Indikator Atas Menyala -->
+            <span class="accent-tab-bar w-10 h-[3px] rounded-full bg-[#5B9CF6] mb-2"></span>
+
+            <!-- Ikon Gelembung Obrolan Minimalis -->
+            <svg class="w-[21px] h-[21px] text-[#5B9CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+
+            <span class="font-ui text-[11px] font-medium text-[#5B9CF6] mt-1">
+              Chat
+            </span>
+
+            <!-- Titik Indikator Kecil Menyala di Bawah Label -->
+            <span class="accent-tab-dot w-[4px] h-[4px] rounded-full bg-[#5B9CF6] mt-1"></span>
+          </div>
+
+          <!-- Tab 2: Grid (Nonaktif — Muted Grey #9A9994) -->
+          <div class="flex flex-col items-center justify-center pb-1">
+            <span class="w-10 h-[3px] mb-2"></span>
+
+            <!-- Ikon Grid Empat Kotak -->
+            <svg class="w-[21px] h-[21px] text-[#9A9994]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+              <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+              <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+              <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+            </svg>
+
+            <span class="font-ui text-[11px] font-normal text-[#9A9994] mt-1">
+              Grid
+            </span>
+
+            <span class="w-[4px] h-[4px] mt-1"></span>
+          </div>
+
+          <!-- Tab 3: Settings (Nonaktif — Muted Grey #9A9994) -->
+          <div class="flex flex-col items-center justify-center pb-1">
+            <span class="w-10 h-[3px] mb-2"></span>
+
+            <!-- Ikon Roda Gigi -->
+            <svg class="w-[21px] h-[21px] text-[#9A9994]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+
+            <span class="font-ui text-[11px] font-normal text-[#9A9994] mt-1">
+              Settings
+            </span>
+
+            <span class="w-[4px] h-[4px] mt-1"></span>
+          </div>
+
+        </div>
+
+        <!-- Home Indicator Bar Bawah -->
+        <div class="w-[126px] h-[4px] rounded-full bg-white/20 mx-auto mt-1.5"></div>
+      </nav>
+
+    </section>
+  </main>
+
+</body>
+</html>
